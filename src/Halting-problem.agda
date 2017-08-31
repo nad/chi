@@ -548,7 +548,7 @@ half-of-the-halting-problem₂ :
   Closed eval →
   (∀ p v → Closed p → p ⟶ v → apply eval (code p) ⟶ code v) →
   (∀ p v → Closed p → apply eval (code p) ⟶ v →
-     ∃ λ v′ → p ⟶ v′ × v′ ≡ code v) →
+     ∃ λ v′ → p ⟶ v′ × v ≡ code v′) →
   Computable Half-of-the-halting-problem₂
 half-of-the-halting-problem₂ eval cl eval₁ eval₂ =
   halts , cl′ ,
@@ -636,7 +636,7 @@ half-of-the-halting-problem₂′ :
   Closed eval →
   (∀ p v → Closed p → p ⟶ v → apply eval (code p) ⟶ code v) →
   (∀ p v → Closed p → apply eval (code p) ⟶ v →
-     ∃ λ v′ → p ⟶ v′ × v′ ≡ code v) →
+     ∃ λ v′ → p ⟶ v′ × v ≡ code v′) →
   Computable Half-of-the-halting-problem₂
 half-of-the-halting-problem₂′ eval cl eval₁ eval₂ =
   halts , cl′ ,
