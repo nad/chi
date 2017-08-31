@@ -164,7 +164,7 @@ invariant :
   ∀ a₁ a₂ → P a₁ → P a₂
 invariant univ P a₁ a₂ =
   subst P (_⇔_.to propositional⇔irrelevant
-             (mono₁ 0 $ _⇔_.from contractible⇔⊤↔ $ inverse $
+             (mono₁ 0 $ _⇔_.from contractible⇔↔⊤ $
                 χ-atoms↔⊤ univ)
              a₁ a₂)
 
