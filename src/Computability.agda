@@ -196,11 +196,7 @@ Computable″ :
   A ⇀ B → Set ℓ
 Computable″ f =
   ∃ λ (p : Closed-exp) → ∀ a →
-    let cl = Closed′-closed-under-apply
-               (Closed→Closed′ (proj₂ p))
-               (Closed→Closed′ (code-closed a))
-    in
-    ∀ q → semantics [ apply (proj₁ p) (code a) , cl ]= q
+    ∀ q → semantics [ apply-cl p (code a) ]= q
             ⇔
           as-partial Closed-exp-set code ∘ f [ a ]= q
 
