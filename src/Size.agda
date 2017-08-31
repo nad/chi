@@ -111,7 +111,6 @@ closed-non-terminating-size≡2→loop (rec x e) cl _ size≡2 with e
 ... | apply e₁ e₂ = ⊥-elim $ +≮ 1 (4                      ≤⟨ (2 ∎≤) +-mono 1≤size e₁ +-mono 1≤size e₂ ⟩
                                    2 + size e₁ + size e₂  ≡⟨ size≡2 ⟩≤
                                    2                      ∎≤)
-
 ... | lambda _ e′ = ⊥-elim $ +≮ 0 (3            ≤⟨ (2 ∎≤) +-mono 1≤size e′ ⟩
                                    2 + size e′  ≡⟨ size≡2 ⟩≤
                                    2            ∎≤)
