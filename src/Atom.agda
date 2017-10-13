@@ -2,7 +2,7 @@
 -- Atoms
 ------------------------------------------------------------------------
 
-{-# OPTIONS --without-K #-}
+{-# OPTIONS --without-K --safe #-}
 
 module Atom where
 

@@ -2,7 +2,7 @@
 -- Definition of the size of an expression, along with some properties
 ------------------------------------------------------------------------
 
-{-# OPTIONS --without-K #-}
+{-# OPTIONS --without-K --safe #-}
 
 module Size where
 

@@ -2,7 +2,7 @@
 -- The "terminates" relation
 ------------------------------------------------------------------------
 
-{-# OPTIONS --without-K #-}
+{-# OPTIONS --without-K --safe #-}
 
 open import Atom
 

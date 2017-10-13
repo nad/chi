@@ -2,7 +2,7 @@
 -- Some cancellation lemmas
 ------------------------------------------------------------------------
 
-{-# OPTIONS --without-K #-}
+{-# OPTIONS --without-K --safe #-}
 
 open import Atom
 

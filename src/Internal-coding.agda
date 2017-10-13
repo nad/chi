@@ -2,7 +2,7 @@
 -- Internal coding
 ------------------------------------------------------------------------
 
-{-# OPTIONS --without-K #-}
+{-# OPTIONS --without-K --safe #-}
 
 module Internal-coding where
 

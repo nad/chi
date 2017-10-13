@@ -2,7 +2,7 @@
 -- The abstract syntax is a set, and the semantics is propositional
 ------------------------------------------------------------------------
 
-{-# OPTIONS --without-K #-}
+{-# OPTIONS --without-K --safe #-}
 
 open import Atom
 

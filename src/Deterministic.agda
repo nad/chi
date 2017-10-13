@@ -2,7 +2,7 @@
 -- The semantics is deterministic
 ------------------------------------------------------------------------
 
-{-# OPTIONS --without-K #-}
+{-# OPTIONS --without-K --safe #-}
 
 open import Atom
 

@@ -2,7 +2,7 @@
 -- Encoders and decoders
 ------------------------------------------------------------------------
 
-{-# OPTIONS --without-K #-}
+{-# OPTIONS --without-K --safe #-}
 
 open import Atom
 
