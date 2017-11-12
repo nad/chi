@@ -223,15 +223,15 @@ substs-code :
   code-as-Exp x
 substs-code x = substs-closed (code x) (code-closed x)
 
-code⟶code :
+code⇓code :
   ∀ {a} {A : Set a} ⦃ c : Code A Consts ⦄
-  (x : A) → code-as-Exp x ⟶ code x
-code⟶code x = values-compute-to-themselves (code-value x)
+  (x : A) → code-as-Exp x ⇓ code x
+code⇓code x = values-compute-to-themselves (code-value x)
 
-code⟶≡code :
+code⇓≡code :
   ∀ {a} {A : Set a} ⦃ c : Code A Consts ⦄ {v}
-  (x : A) → code-as-Exp x ⟶ v → code x ≡ v
-code⟶≡code x = values-only-compute-to-themselves (code-value x)
+  (x : A) → code-as-Exp x ⇓ v → code x ≡ v
+code⇓≡code x = values-only-compute-to-themselves (code-value x)
 
 ------------------------------------------------------------------------
 -- Instances specifying how a number of types are encoded as χ

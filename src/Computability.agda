@@ -141,9 +141,9 @@ Computable′ P f =
   ∃ λ p →
     Closed p
       ×
-    (∀ x y → f [ x ]= y → apply p (code x) ⟶ code y)
+    (∀ x y → f [ x ]= y → apply p (code x) ⇓ code y)
       ×
-    (∀ x y → apply p (code x) ⟶ y →
+    (∀ x y → apply p (code x) ⇓ y →
        P (∃ λ y′ → f [ x ]= y′ × y ≡ code y′))
 
 -- Computability.
@@ -167,25 +167,25 @@ total→almost-computable→computable :
   (∃ λ p →
      Closed p
        ×
-     (∀ x y → f [ x ]= y → apply p (code x) ⟶ code y)) →
+     (∀ x y → f [ x ]= y → apply p (code x) ⇓ code y)) →
   Computable′ P f
 total→almost-computable→computable P map f total (p , cl-p , hyp) =
     p
   , cl-p
   , hyp
-  , λ x y px⟶y →
+  , λ x y px⇓y →
       flip map (total x) λ where
         (y′ , f[x]=y′) →
-          y′ , f[x]=y′ , ⟶-deterministic px⟶y (hyp x y′ f[x]=y′)
+          y′ , f[x]=y′ , ⇓-deterministic px⇓y (hyp x y′ f[x]=y′)
 
 -- The semantics of χ as a partial function.
 
 semantics : Closed-exp ⇀ Closed-exp
 semantics = record
-  { _[_]=_        = _⟶_ on proj₁
-  ; deterministic = λ e⟶v₁ e⟶v₂ →
-      closed-equal-if-expressions-equal (⟶-deterministic e⟶v₁ e⟶v₂)
-  ; propositional = ⟶-propositional
+  { _[_]=_        = _⇓_ on proj₁
+  ; deterministic = λ e⇓v₁ e⇓v₂ →
+      closed-equal-if-expressions-equal (⇓-deterministic e⇓v₁ e⇓v₂)
+  ; propositional = ⇓-propositional
   }
 
 -- Another definition of computability.
@@ -217,7 +217,7 @@ Computable⇔Computable″ f = record { to = to; from = from }
                  P.∘
                hyp₂ a q
       ; from = λ { (b , f[a]=b , ⌜b⌝≡q) →
-                   apply p (code a)  ⟶⟨ hyp₁ a b f[a]=b ⟩T
+                   apply p (code a)  ⇓⟨ hyp₁ a b f[a]=b ⟩
                    code b            ≡⟨ cong proj₁ (lower ⌜b⌝≡q) ⟩⟶
                    q                 ■⟨ subst Value (cong proj₁ (lower ⌜b⌝≡q)) (code-value b) ⟩ }
       } }
@@ -226,17 +226,17 @@ Computable⇔Computable″ f = record { to = to; from = from }
   from ((p , cl) , hyp) =
     p , cl ,
     (λ a b f[a]=b →
-       apply p (code a)  ⟶⟨ _⇔_.from (hyp a (code b)) (post-apply f Closed-exp-set f[a]=b) ⟩■
+       apply p (code a)  ⇓⟨ _⇔_.from (hyp a (code b)) (post-apply f Closed-exp-set f[a]=b) ⟩■
        code b) ,
-    λ a q p⌜a⌝⟶q →
+    λ a q p⌜a⌝⇓q →
       let cl-q : Closed q
-          cl-q = closed⟶closed p⌜a⌝⟶q
+          cl-q = closed⇓closed p⌜a⌝⇓q
                    (Closed′-closed-under-apply
                       (Closed→Closed′ cl)
                       (Closed→Closed′ (code-closed a)))
       in
       Σ-map id (Σ-map id (cong proj₁ P.∘ sym P.∘ lower))
-        (_⇔_.to (hyp a (q , cl-q)) p⌜a⌝⟶q)
+        (_⇔_.to (hyp a (q , cl-q)) p⌜a⌝⇓q)
 
 -- Yet another definition of computability.
 
@@ -248,7 +248,7 @@ Computable‴ f =
   ∃ λ (p : Closed-exp) →
     ∀ a →
       ∃ λ b →
-        apply (proj₁ p) (code a) ⟶ code b
+        apply (proj₁ p) (code a) ⇓ code b
           ×
         f [ a ]= b
 
@@ -264,15 +264,15 @@ Computable‴→Computable f ((p , cl-p) , hyp) =
     p
   , cl-p
   , (λ a b f[a]=b → case hyp a of λ where
-       (b′ , p⌜a⌝⟶⌜b′⌝ , f[a]=b′) →
-         apply p (code a)  ⟶⟨ p⌜a⌝⟶⌜b′⌝ ⟩T
+       (b′ , p⌜a⌝⇓⌜b′⌝ , f[a]=b′) →
+         apply p (code a)  ⇓⟨ p⌜a⌝⇓⌜b′⌝ ⟩
          code b′           ≡⟨ by (_⇀_.deterministic f f[a]=b f[a]=b′) ⟩⟶
          code b            ■⟨ code-value b ⟩)
-  , (λ a v p⌜a⌝⟶v → case hyp a of λ where
-       (b , p⌜a⌝⟶⌜b⌝ , f[a]=b) →
+  , (λ a v p⌜a⌝⇓v → case hyp a of λ where
+       (b , p⌜a⌝⇓⌜b⌝ , f[a]=b) →
            b
          , f[a]=b
-         , ⟶-deterministic p⌜a⌝⟶v p⌜a⌝⟶⌜b⌝)
+         , ⇓-deterministic p⌜a⌝⇓v p⌜a⌝⇓⌜b⌝)
 
 module _  {a b c d} {A : Set a} {B : Set b} {C : Set c} {D : Set d}
           ⦃ cA : Code A Consts ⦄ ⦃ cB : Code B Consts ⦄

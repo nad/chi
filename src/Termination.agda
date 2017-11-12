@@ -21,7 +21,7 @@ open import Propositional atoms
 -- Terminates e means that e terminates with a value.
 
 Terminates : Exp → Set
-Terminates p = ∃ λ v → p ⟶ v
+Terminates p = ∃ λ v → p ⇓ v
 
 -- This relation is propositional.
 
@@ -31,5 +31,5 @@ Terminates-propositional :
 Terminates-propositional =
   _⇔_.from propositional⇔irrelevant
     λ { (_ , e₁) (_ , e₂) →
-        Σ-≡,≡→≡ (⟶-deterministic e₁ e₂)
-                (_⇔_.to propositional⇔irrelevant ⟶-propositional _ _) }
+        Σ-≡,≡→≡ (⇓-deterministic e₁ e₂)
+                (_⇔_.to propositional⇔irrelevant ⇓-propositional _ _) }

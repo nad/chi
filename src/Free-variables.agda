@@ -444,30 +444,30 @@ substs-closed e cl ((y , e′) ∷ ps) =
 
 mutual
 
-  ⟶-does-not-introduce-variables :
-    ∀ {x v e} → e ⟶ v → x ∈FV v → x ∈FV e
-  ⟶-does-not-introduce-variables lambda     q                = q
-  ⟶-does-not-introduce-variables (const ps) (const x∈v v∈vs)
-    with ⟶⋆-does-not-introduce-variables ps (_ , v∈vs , x∈v)
+  ⇓-does-not-introduce-variables :
+    ∀ {x v e} → e ⇓ v → x ∈FV v → x ∈FV e
+  ⇓-does-not-introduce-variables lambda     q                = q
+  ⇓-does-not-introduce-variables (const ps) (const x∈v v∈vs)
+    with ⇓⋆-does-not-introduce-variables ps (_ , v∈vs , x∈v)
   ... | _ , e∈es , x∈e = const x∈e e∈es
-  ⟶-does-not-introduce-variables (apply {e = e} p₁ p₂ p₃) q
-    with subst-∈FV _ e (⟶-does-not-introduce-variables p₃ q)
+  ⇓-does-not-introduce-variables (apply {e = e} p₁ p₂ p₃) q
+    with subst-∈FV _ e (⇓-does-not-introduce-variables p₃ q)
   ... | inj₂ x∈v₂         = apply-right
-                              (⟶-does-not-introduce-variables p₂ x∈v₂)
+                              (⇓-does-not-introduce-variables p₂ x∈v₂)
   ... | inj₁ (x∈e , x≢x′) = apply-left
-                              (⟶-does-not-introduce-variables p₁
+                              (⇓-does-not-introduce-variables p₁
                                  (lambda x≢x′ x∈e))
-  ⟶-does-not-introduce-variables (rec {e = e} p) q
-    with subst-∈FV _ e (⟶-does-not-introduce-variables p q)
+  ⇓-does-not-introduce-variables (rec {e = e} p) q
+    with subst-∈FV _ e (⇓-does-not-introduce-variables p q)
   ... | inj₂ x∈rec        = x∈rec
   ... | inj₁ (x∈e , x≢x′) = rec x≢x′ x∈e
-  ⟶-does-not-introduce-variables {x} {w}
+  ⇓-does-not-introduce-variables {x} {w}
     (case {e = e} {bs = bs} {c = c} {es = es} {xs = xs} {e′ = e′} {e″ = e″} p₁ p₂ p₃ p₄) =
 
-    x ∈FV w                                                   ↝⟨ ⟶-does-not-introduce-variables p₄ ⟩
+    x ∈FV w                                                   ↝⟨ ⇓-does-not-introduce-variables p₄ ⟩
     x ∈FV e″                                                  ↝⟨ lemma₁ p₃ ⟩
     (x ∈FV e′ × ¬ x ∈ xs) ⊎ ∃ (λ e″₁ → e″₁ ∈ es × x ∈FV e″₁)  ↝⟨ ⊎-map id (λ { (_ , ps , p) → const p ps }) ⟩
-    (x ∈FV e′ × ¬ x ∈ xs) ⊎ x ∈FV const c es                  ↝⟨ ⊎-map (λ p → lemma₂ p₂ , p) (⟶-does-not-introduce-variables p₁) ⟩
+    (x ∈FV e′ × ¬ x ∈ xs) ⊎ x ∈FV const c es                  ↝⟨ ⊎-map (λ p → lemma₂ p₂ , p) (⇓-does-not-introduce-variables p₁) ⟩
     (branch c xs e′ ∈ bs × x ∈FV e′ × ¬ x ∈ xs) ⊎ x ∈FV e     ↝⟨ [ (λ { (ps , p , q) → case-body p ps q }) , case-head ] ⟩
     x ∈FV case e bs                                           □
 
@@ -498,23 +498,23 @@ mutual
     lemma₂ here        = inj₁ refl
     lemma₂ (there _ p) = inj₂ (lemma₂ p)
 
-  ⟶⋆-does-not-introduce-variables :
+  ⇓⋆-does-not-introduce-variables :
     ∀ {x es vs} →
-    es ⟶⋆ vs →
+    es ⇓⋆ vs →
     (∃ λ v → v ∈ vs × x ∈FV v) →
     (∃ λ e → e ∈ es × x ∈FV e)
-  ⟶⋆-does-not-introduce-variables [] = id
-  ⟶⋆-does-not-introduce-variables (p ∷ ps) (v , inj₁ refl , q) =
-    _ , inj₁ refl , ⟶-does-not-introduce-variables p q
-  ⟶⋆-does-not-introduce-variables (p ∷ ps) (v , inj₂ v∈   , q) =
+  ⇓⋆-does-not-introduce-variables [] = id
+  ⇓⋆-does-not-introduce-variables (p ∷ ps) (v , inj₁ refl , q) =
+    _ , inj₁ refl , ⇓-does-not-introduce-variables p q
+  ⇓⋆-does-not-introduce-variables (p ∷ ps) (v , inj₂ v∈   , q) =
     Σ-map id (Σ-map inj₂ id)
-      (⟶⋆-does-not-introduce-variables ps (v , v∈ , q))
+      (⇓⋆-does-not-introduce-variables ps (v , v∈ , q))
 
 -- A closed term's value is closed.
 
-closed⟶closed : ∀ {e v xs} → e ⟶ v → Closed′ xs e → Closed′ xs v
-closed⟶closed {e} {v} {xs} p q x x∉xs =
-  x ∈FV v  ↝⟨ ⟶-does-not-introduce-variables p ⟩
+closed⇓closed : ∀ {e v xs} → e ⇓ v → Closed′ xs e → Closed′ xs v
+closed⇓closed {e} {v} {xs} p q x x∉xs =
+  x ∈FV v  ↝⟨ ⇓-does-not-introduce-variables p ⟩
   x ∈FV e  ↝⟨ q x x∉xs ⟩□
   ⊥        □
 

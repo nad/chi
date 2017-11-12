@@ -151,27 +151,27 @@ data _[_←_]↦′_ (e : Exp) : List Var → List Exp → Exp → Set where
         e‴ ≡ e″ [ x ← e′ ] → e [ xs ← es′ ]↦′ e″ →
         e [ x ∷ xs ← e′ ∷ es′ ]↦′ e‴
 
-infix 4 _⟶′_ _⟶⋆′_
+infix 4 _⇓′_ _⇓⋆′_
 
 mutual
 
-  data _⟶′_ : Exp → Exp → Set where
+  data _⇓′_ : Exp → Exp → Set where
     apply  : ∀ {e₁ e₂ x e v₂ v} →
-             e₁ ⟶′ lambda x e → e₂ ⟶′ v₂ → e [ x ← v₂ ] ⟶′ v →
-             apply e₁ e₂ ⟶′ v
+             e₁ ⇓′ lambda x e → e₂ ⇓′ v₂ → e [ x ← v₂ ] ⇓′ v →
+             apply e₁ e₂ ⇓′ v
     case   : ∀ {e bs c es xs e′ e″ v} →
-             e ⟶′ const c es → Lookup′ c bs xs e′ →
-             e′ [ xs ← es ]↦′ e″ → e″ ⟶′ v →
-             case e bs ⟶′ v
-    rec    : ∀ {x e v} → e [ x ← rec x e ] ⟶′ v → rec x e ⟶′ v
+             e ⇓′ const c es → Lookup′ c bs xs e′ →
+             e′ [ xs ← es ]↦′ e″ → e″ ⇓′ v →
+             case e bs ⇓′ v
+    rec    : ∀ {x e v} → e [ x ← rec x e ] ⇓′ v → rec x e ⇓′ v
     lambda : ∀ {x x′ e e′} →
-             x ≡ x′ → e ≡ e′ → lambda x e ⟶′ lambda x′ e′
+             x ≡ x′ → e ≡ e′ → lambda x e ⇓′ lambda x′ e′
     const  : ∀ {c c′ es vs} →
-             c ≡ c′ → es ⟶⋆′ vs → const c es ⟶′ const c′ vs
+             c ≡ c′ → es ⇓⋆′ vs → const c es ⇓′ const c′ vs
 
-  data _⟶⋆′_ : List Exp → List Exp → Set where
-    []  : [] ⟶⋆′ []
-    _∷_ : ∀ {e es v vs} → e ⟶′ v → es ⟶⋆′ vs → e ∷ es ⟶⋆′ v ∷ vs
+  data _⇓⋆′_ : List Exp → List Exp → Set where
+    []  : [] ⇓⋆′ []
+    _∷_ : ∀ {e es v vs} → e ⇓′ v → es ⇓⋆′ vs → e ∷ es ⇓⋆′ v ∷ vs
 
 -- The alternative definition is isomorphic to the other one.
 
@@ -231,8 +231,8 @@ Lookup↔Lookup′ = record
   to∘from ([] refl)  = refl
   to∘from (refl ∷ p) rewrite to∘from p = refl
 
-⟶↔⟶′ : ∀ {e v} → e ⟶ v ↔ e ⟶′ v
-⟶↔⟶′ = record
+⇓↔⇓′ : ∀ {e v} → e ⇓ v ↔ e ⇓′ v
+⇓↔⇓′ = record
   { surjection = record
     { logical-equivalence = record
       { to   = to
@@ -245,7 +245,7 @@ Lookup↔Lookup′ = record
   where
   mutual
 
-    to : ∀ {e v} → e ⟶ v → e ⟶′ v
+    to : ∀ {e v} → e ⇓ v → e ⇓′ v
     to (apply p q r)  = apply (to p) (to q) (to r)
     to (case p q r s) = case (to p) (_↔_.to Lookup↔Lookup′ q)
                              (_↔_.to ↦↔↦′ r) (to s)
@@ -253,13 +253,13 @@ Lookup↔Lookup′ = record
     to lambda         = lambda refl refl
     to (const ps)     = const refl (to⋆ ps)
 
-    to⋆ : ∀ {e v} → e ⟶⋆ v → e ⟶⋆′ v
+    to⋆ : ∀ {e v} → e ⇓⋆ v → e ⇓⋆′ v
     to⋆ []       = []
     to⋆ (p ∷ ps) = to p ∷ to⋆ ps
 
   mutual
 
-    from : ∀ {e v} → e ⟶′ v → e ⟶ v
+    from : ∀ {e v} → e ⇓′ v → e ⇓ v
     from (apply p q r)      = apply (from p) (from q) (from r)
     from (case p q r s)     = case (from p) (_↔_.from Lookup↔Lookup′ q)
                                    (_↔_.from ↦↔↦′ r) (from s)
@@ -267,13 +267,13 @@ Lookup↔Lookup′ = record
     from (lambda refl refl) = lambda
     from (const refl ps)    = const (from⋆ ps)
 
-    from⋆ : ∀ {e v} → e ⟶⋆′ v → e ⟶⋆ v
+    from⋆ : ∀ {e v} → e ⇓⋆′ v → e ⇓⋆ v
     from⋆ []       = []
     from⋆ (p ∷ ps) = from p ∷ from⋆ ps
 
   mutual
 
-    from∘to : ∀ {e v} (p : e ⟶ v) → from (to p) ≡ p
+    from∘to : ∀ {e v} (p : e ⇓ v) → from (to p) ≡ p
     from∘to (apply p q r)  rewrite from∘to p | from∘to q | from∘to r
                            = refl
     from∘to (case p q r s) rewrite from∘to p
@@ -284,13 +284,13 @@ Lookup↔Lookup′ = record
     from∘to lambda         = refl
     from∘to (const ps)     rewrite from⋆∘to⋆ ps = refl
 
-    from⋆∘to⋆ : ∀ {e v} (ps : e ⟶⋆ v) → from⋆ (to⋆ ps) ≡ ps
+    from⋆∘to⋆ : ∀ {e v} (ps : e ⇓⋆ v) → from⋆ (to⋆ ps) ≡ ps
     from⋆∘to⋆ []       = refl
     from⋆∘to⋆ (p ∷ ps) rewrite from∘to p | from⋆∘to⋆ ps = refl
 
   mutual
 
-    to∘from : ∀ {e v} (p : e ⟶′ v) → to (from p) ≡ p
+    to∘from : ∀ {e v} (p : e ⇓′ v) → to (from p) ≡ p
     to∘from (apply p q r)      rewrite to∘from p | to∘from q | to∘from r
                                = refl
     to∘from (case p q r s)     rewrite to∘from p
@@ -302,7 +302,7 @@ Lookup↔Lookup′ = record
     to∘from (lambda refl refl) = refl
     to∘from (const refl ps)    rewrite to⋆∘from⋆ ps = refl
 
-    to⋆∘from⋆ : ∀ {e v} (ps : e ⟶⋆′ v) → to⋆ (from⋆ ps) ≡ ps
+    to⋆∘from⋆ : ∀ {e v} (ps : e ⇓⋆′ v) → to⋆ (from⋆ ps) ≡ ps
     to⋆∘from⋆ []       = refl
     to⋆∘from⋆ (p ∷ ps) rewrite to∘from p | to⋆∘from⋆ ps = refl
 
@@ -322,9 +322,9 @@ Lookup′-deterministic p q =
 ↦′-deterministic p q =
   ↦-deterministic (_↔_.from ↦↔↦′ p) (_↔_.from ↦↔↦′ q)
 
-⟶′-deterministic : ∀ {e v₁ v₂} → e ⟶′ v₁ → e ⟶′ v₂ → v₁ ≡ v₂
-⟶′-deterministic p q =
-  ⟶-deterministic (_↔_.from ⟶↔⟶′ p) (_↔_.from ⟶↔⟶′ q)
+⇓′-deterministic : ∀ {e v₁ v₂} → e ⇓′ v₁ → e ⇓′ v₂ → v₁ ≡ v₂
+⇓′-deterministic p q =
+  ⇓-deterministic (_↔_.from ⇓↔⇓′ p) (_↔_.from ⇓↔⇓′ q)
 
 -- The alternative semantics is proof-irrelevant.
 
@@ -359,46 +359,46 @@ Lookup′-proof-irrelevant (there c≢c′ _) (here c≡c′ _ _) =
 
 mutual
 
-  ⟶′-proof-irrelevant : ∀ {e v} → Proof-irrelevant (e ⟶′ v)
-  ⟶′-proof-irrelevant (apply p₁ p₂ p₃) (apply q₁ q₂ q₃)
-    with ⟶′-deterministic p₁ q₁
-  ... | refl rewrite ⟶′-proof-irrelevant p₁ q₁
-                with ⟶′-deterministic p₂ q₂
-  ... | refl rewrite ⟶′-proof-irrelevant p₂ q₂
-                   | ⟶′-proof-irrelevant p₃ q₃
+  ⇓′-proof-irrelevant : ∀ {e v} → Proof-irrelevant (e ⇓′ v)
+  ⇓′-proof-irrelevant (apply p₁ p₂ p₃) (apply q₁ q₂ q₃)
+    with ⇓′-deterministic p₁ q₁
+  ... | refl rewrite ⇓′-proof-irrelevant p₁ q₁
+                with ⇓′-deterministic p₂ q₂
+  ... | refl rewrite ⇓′-proof-irrelevant p₂ q₂
+                   | ⇓′-proof-irrelevant p₃ q₃
              = refl
-  ⟶′-proof-irrelevant (case p₁ p₂ p₃ p₄) (case q₁ q₂ q₃ q₄)
-    with ⟶′-deterministic p₁ q₁
-  ... | refl rewrite ⟶′-proof-irrelevant p₁ q₁
+  ⇓′-proof-irrelevant (case p₁ p₂ p₃ p₄) (case q₁ q₂ q₃ q₄)
+    with ⇓′-deterministic p₁ q₁
+  ... | refl rewrite ⇓′-proof-irrelevant p₁ q₁
                 with Lookup′-deterministic p₂ q₂
   ... | refl , refl rewrite Lookup′-proof-irrelevant p₂ q₂
                        with ↦′-deterministic p₃ q₃
   ... | refl rewrite ↦′-proof-irrelevant p₃ q₃
-                   | ⟶′-proof-irrelevant p₄ q₄
+                   | ⇓′-proof-irrelevant p₄ q₄
     = refl
-  ⟶′-proof-irrelevant (rec p) (rec q)
-    rewrite ⟶′-proof-irrelevant p q
+  ⇓′-proof-irrelevant (rec p) (rec q)
+    rewrite ⇓′-proof-irrelevant p q
     = refl
-  ⟶′-proof-irrelevant (lambda p₁ p₂) (lambda q₁ q₂)
+  ⇓′-proof-irrelevant (lambda p₁ p₂) (lambda q₁ q₂)
     rewrite _⇔_.to set⇔UIP V.Name-set p₁ q₁
           | _⇔_.to set⇔UIP Exp-set p₂ q₂
           = refl
-  ⟶′-proof-irrelevant (const p ps) (const q qs)
+  ⇓′-proof-irrelevant (const p ps) (const q qs)
     rewrite _⇔_.to set⇔UIP C.Name-set p q
-          | ⟶⋆′-proof-irrelevant ps qs
+          | ⇓⋆′-proof-irrelevant ps qs
     = refl
 
-  ⟶⋆′-proof-irrelevant : ∀ {es vs} → Proof-irrelevant (es ⟶⋆′ vs)
-  ⟶⋆′-proof-irrelevant []       []       = refl
-  ⟶⋆′-proof-irrelevant (p ∷ ps) (q ∷ qs)
-    rewrite ⟶′-proof-irrelevant p q
-          | ⟶⋆′-proof-irrelevant ps qs
+  ⇓⋆′-proof-irrelevant : ∀ {es vs} → Proof-irrelevant (es ⇓⋆′ vs)
+  ⇓⋆′-proof-irrelevant []       []       = refl
+  ⇓⋆′-proof-irrelevant (p ∷ ps) (q ∷ qs)
+    rewrite ⇓′-proof-irrelevant p q
+          | ⇓⋆′-proof-irrelevant ps qs
     = refl
 
 -- The semantics is propositional.
 
-⟶-propositional : ∀ {e v} → Is-proposition (e ⟶ v)
-⟶-propositional {e} {v} =    $⟨ ⟶′-proof-irrelevant ⟩
-  Proof-irrelevant (e ⟶′ v)  ↝⟨ _⇔_.from propositional⇔irrelevant ⟩
-  Is-proposition (e ⟶′ v)    ↝⟨ H-level.respects-surjection (_↔_.surjection $ inverse ⟶↔⟶′) 1 ⟩□
-  Is-proposition (e ⟶ v)     □
+⇓-propositional : ∀ {e v} → Is-proposition (e ⇓ v)
+⇓-propositional {e} {v} =    $⟨ ⇓′-proof-irrelevant ⟩
+  Proof-irrelevant (e ⇓′ v)  ↝⟨ _⇔_.from propositional⇔irrelevant ⟩
+  Is-proposition (e ⇓′ v)    ↝⟨ H-level.respects-surjection (_↔_.surjection $ inverse ⇓↔⇓′) 1 ⟩□
+  Is-proposition (e ⇓ v)     □

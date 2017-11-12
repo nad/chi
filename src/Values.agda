@@ -59,39 +59,39 @@ mutual
   consts→values []       = []
   consts→values (c ∷ cs) = const→value c ∷ consts→values cs
 
--- The second argument of _⟶_ is always a Value.
+-- The second argument of _⇓_ is always a Value.
 
 mutual
 
-  ⟶-Value : ∀ {e v} → e ⟶ v → Value v
-  ⟶-Value (apply _ _ p)  = ⟶-Value p
-  ⟶-Value (case _ _ _ p) = ⟶-Value p
-  ⟶-Value (rec p)        = ⟶-Value p
-  ⟶-Value lambda         = lambda _ _
-  ⟶-Value (const ps)     = const _ (⟶⋆-Values ps)
+  ⇓-Value : ∀ {e v} → e ⇓ v → Value v
+  ⇓-Value (apply _ _ p)  = ⇓-Value p
+  ⇓-Value (case _ _ _ p) = ⇓-Value p
+  ⇓-Value (rec p)        = ⇓-Value p
+  ⇓-Value lambda         = lambda _ _
+  ⇓-Value (const ps)     = const _ (⇓⋆-Values ps)
 
-  ⟶⋆-Values : ∀ {es vs} → es ⟶⋆ vs → Values vs
-  ⟶⋆-Values []       = []
-  ⟶⋆-Values (p ∷ ps) = ⟶-Value p ∷ ⟶⋆-Values ps
+  ⇓⋆-Values : ∀ {es vs} → es ⇓⋆ vs → Values vs
+  ⇓⋆-Values []       = []
+  ⇓⋆-Values (p ∷ ps) = ⇓-Value p ∷ ⇓⋆-Values ps
 
 mutual
 
-  values-compute-to-themselves : ∀ {v} → Value v → v ⟶ v
+  values-compute-to-themselves : ∀ {v} → Value v → v ⇓ v
   values-compute-to-themselves (lambda _ _) = lambda
   values-compute-to-themselves (const _ ps) =
     const (values-compute-to-themselves⋆ ps)
 
-  values-compute-to-themselves⋆ : ∀ {vs} → Values vs → vs ⟶⋆ vs
+  values-compute-to-themselves⋆ : ∀ {vs} → Values vs → vs ⇓⋆ vs
   values-compute-to-themselves⋆ []       = []
   values-compute-to-themselves⋆ (p ∷ ps) =
     values-compute-to-themselves p ∷ values-compute-to-themselves⋆ ps
 
 values-only-compute-to-themselves :
-  ∀ {v₁ v₂} → Value v₁ → v₁ ⟶ v₂ → v₁ ≡ v₂
+  ∀ {v₁ v₂} → Value v₁ → v₁ ⇓ v₂ → v₁ ≡ v₂
 values-only-compute-to-themselves p q =
-  ⟶-deterministic (values-compute-to-themselves p) q
+  ⇓-deterministic (values-compute-to-themselves p) q
 
 values-only-compute-to-themselves⋆ :
-  ∀ {vs₁ vs₂} → Values vs₁ → vs₁ ⟶⋆ vs₂ → vs₁ ≡ vs₂
+  ∀ {vs₁ vs₂} → Values vs₁ → vs₁ ⇓⋆ vs₂ → vs₁ ≡ vs₂
 values-only-compute-to-themselves⋆ ps qs =
-  ⟶⋆-deterministic (values-compute-to-themselves⋆ ps) qs
+  ⇓⋆-deterministic (values-compute-to-themselves⋆ ps) qs

@@ -59,9 +59,9 @@ not-closed {xs} {e} cl-e =
     cl-e
     (from-⊎ (closed′?-B⋆ (Not.branches e) xs))
 
-not⟶ : ∀ b → not (code b) ⟶ code (Prelude.not b)
-not⟶ true  = case (const []) here [] (const [])
-not⟶ false = case (const []) (there (λ ()) here) [] (const [])
+not⇓ : ∀ b → not (code b) ⇓ code (Prelude.not b)
+not⇓ true  = case (const []) here [] (const [])
+not⇓ false = case (const []) (there (λ ()) here) [] (const [])
 
 -- A non-terminating expression.
 
@@ -73,10 +73,10 @@ loop-closed =
   Closed′-closed-under-rec $
   Closed′-closed-under-var (inj₁ refl)
 
-¬loop⟶ : ¬ Terminates loop
-¬loop⟶ (_ , p) = lemma p
+¬loop⇓ : ¬ Terminates loop
+¬loop⇓ (_ , p) = lemma p
   where
-  lemma : ∀ {w} → ¬ loop ⟶ w
+  lemma : ∀ {w} → ¬ loop ⇓ w
   lemma (rec p) with v-x V.≟ v-x
   ... | no  x≢x = x≢x refl
   ... | yes _   = lemma p

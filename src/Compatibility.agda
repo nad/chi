@@ -24,10 +24,10 @@ open χ-atoms atoms
 
 -- A compatibility lemma that does not hold.
 
-¬-⟶-[←]-right :
+¬-⇓-[←]-right :
   ¬ (∀ {e′ v′} e x {v} →
-     e′ ⟶ v′ → e [ x ← v′ ] ⟶ v → e [ x ← e′ ] ⟶ v)
-¬-⟶-[←]-right hyp = ¬e[x←e′]⟶v (hyp e x e′⟶v′ e[x←v′]⟶v)
+     e′ ⇓ v′ → e [ x ← v′ ] ⇓ v → e [ x ← e′ ] ⇓ v)
+¬-⇓-[←]-right hyp = ¬e[x←e′]⇓v (hyp e x e′⇓v′ e[x←v′]⇓v)
   where
   x : Var
   x = v-x
@@ -38,11 +38,11 @@ open χ-atoms atoms
   e  = lambda v-y (var v-x)
   v  = lambda v-y (const c-true [])
 
-  e′⟶v′ : e′ ⟶ v′
-  e′⟶v′ = apply lambda (const [])
+  e′⇓v′ : e′ ⇓ v′
+  e′⇓v′ = apply lambda (const [])
             (case v-x V.≟ v-x
              return (λ b → if b then const c-true []
-                                else var v-x ⟶ v′) of (λ where
+                                else var v-x ⇓ v′) of (λ where
                (yes _)   → const []
                (no  x≢x) → ⊥-elim (x≢x refl)))
 
@@ -53,15 +53,15 @@ open χ-atoms atoms
   ...   | yes _   = refl
   ...   | no  x≢x = ⊥-elim (x≢x refl)
 
-  e[x←v′]⟶v : e [ x ← v′ ] ⟶ v
-  e[x←v′]⟶v =
+  e[x←v′]⇓v : e [ x ← v′ ] ⇓ v
+  e[x←v′]⇓v =
     e [ x ← v′ ]   ≡⟨ lemma _ ⟩⟶
-    lambda v-y v′  ⟶⟨ lambda ⟩■
+    lambda v-y v′  ⇓⟨ lambda ⟩■
     v
 
-  ¬e[x←e′]⟶v : ¬ e [ x ← e′ ] ⟶ v
-  ¬e[x←e′]⟶v p with e [ x ← e′ ] | lemma e′
-  ¬e[x←e′]⟶v () | ._ | refl
+  ¬e[x←e′]⇓v : ¬ e [ x ← e′ ] ⇓ v
+  ¬e[x←e′]⇓v p with e [ x ← e′ ] | lemma e′
+  ¬e[x←e′]⇓v () | ._ | refl
 
 mutual
 
@@ -100,21 +100,21 @@ mutual
   -- If e₁ terminates with v₁ and c [ v₁ ] terminates with v₂, then
   -- c [ e₁ ] also terminates with v₂.
 
-  []⟶ :
+  []⇓ :
     ∀ c {e₁ v₁ v₂} →
-    e₁ ⟶ v₁ → c [ v₁ ] ⟶ v₂ → c [ e₁ ] ⟶ v₂
-  []⟶ ∙ {e₁} {v₁} {v₂} p q =
-    e₁  ⟶⟨ p ⟩T
-    v₁  ⟶⟨ q ⟩■
+    e₁ ⇓ v₁ → c [ v₁ ] ⇓ v₂ → c [ e₁ ] ⇓ v₂
+  []⇓ ∙ {e₁} {v₁} {v₂} p q =
+    e₁  ⇓⟨ p ⟩
+    v₁  ⇓⟨ q ⟩■
     v₂
 
-  []⟶ (apply← c) p (apply q r s)  = apply ([]⟶ c p q) r s
-  []⟶ (apply→ c) p (apply q r s)  = apply q ([]⟶ c p r) s
-  []⟶ (const c)  p (const ps)     = const ([]⟶⋆ c p ps)
-  []⟶ (case c)   p (case q r s t) = case ([]⟶ c p q) r s t
+  []⇓ (apply← c) p (apply q r s)  = apply ([]⇓ c p q) r s
+  []⇓ (apply→ c) p (apply q r s)  = apply q ([]⇓ c p r) s
+  []⇓ (const c)  p (const ps)     = const ([]⇓⋆ c p ps)
+  []⇓ (case c)   p (case q r s t) = case ([]⇓ c p q) r s t
 
-  []⟶⋆ :
+  []⇓⋆ :
     ∀ c {e v vs} →
-    e ⟶ v → c [ v ]⋆ ⟶⋆ vs → c [ e ]⋆ ⟶⋆ vs
-  []⟶⋆ (here  c) p (q ∷ qs) = []⟶ c p q ∷ qs
-  []⟶⋆ (there c) p (q ∷ qs) = q ∷ []⟶⋆ c p qs
+    e ⇓ v → c [ v ]⋆ ⇓⋆ vs → c [ e ]⋆ ⇓⋆ vs
+  []⇓⋆ (here  c) p (q ∷ qs) = []⇓ c p q ∷ qs
+  []⇓⋆ (there c) p (q ∷ qs) = q ∷ []⇓⋆ c p qs

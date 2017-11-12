@@ -132,8 +132,8 @@ closed-non-terminating-size≡2→loop (apply e₁ e₂) _ _ size≡2 =
                  1 + size e₁ + size e₂  ≡⟨ size≡2 ⟩≤
                  2                      ∎≤)
 
-closed-non-terminating-size≡2→loop (lambda x e) _ ¬⟶ _ =
-  ⊥-elim (¬⟶ (_ , lambda))
+closed-non-terminating-size≡2→loop (lambda x e) _ ¬⇓ _ =
+  ⊥-elim (¬⇓ (_ , lambda))
 
 closed-non-terminating-size≡2→loop (case e bs) _ _ size≡2 =
   ⊥-elim $ +≮ 0 (3                        ≤⟨ (1 ∎≤) +-mono 1≤size e +-mono 1≤size-B⋆ bs ⟩
@@ -143,8 +143,8 @@ closed-non-terminating-size≡2→loop (case e bs) _ _ size≡2 =
 closed-non-terminating-size≡2→loop (var x) cl _ _ =
   ⊥-elim (cl x (λ ()) (var refl))
 
-closed-non-terminating-size≡2→loop (const c []) _ ¬⟶ _ =
-  ⊥-elim (¬⟶ (_ , const []))
+closed-non-terminating-size≡2→loop (const c []) _ ¬⇓ _ =
+  ⊥-elim (¬⇓ (_ , const []))
 
 closed-non-terminating-size≡2→loop (const c (e ∷ es)) _ _ size≡2 =
   ⊥-elim $ +≮ 1 (4                       ≤⟨ (2 ∎≤) +-mono 1≤size e +-mono 1≤size-⋆ es ⟩
@@ -157,8 +157,8 @@ closed-non-terminating-size≡2→loop (const c (e ∷ es)) _ _ size≡2 =
 minimal-closed-non-terminating→loop :
   let P = λ e → Closed e × ¬ Terminates e in
   ∀ e → P e → (∀ e′ → P e′ → size e ≤ size e′) → Is-loop e
-minimal-closed-non-terminating→loop e (cl , ¬⟶) minimal =
-  closed-non-terminating-size≡2→loop e cl ¬⟶ (
+minimal-closed-non-terminating→loop e (cl , ¬⇓) minimal =
+  closed-non-terminating-size≡2→loop e cl ¬⇓ (
     ≤-antisymmetric
-      (minimal loop (loop-closed , ¬loop⟶))
+      (minimal loop (loop-closed , ¬loop⇓))
       (closed→2≤size e cl))

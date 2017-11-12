@@ -79,22 +79,22 @@ data Lookup (c : Const) : List Br → List Var → Exp → Set where
           Lookup c (branch c′ xs′ e′ ∷ bs) xs e
 
 infixr 5 _∷_
-infix 4 _⟶_ _⟶⋆_
+infix 4 _⇓_ _⇓⋆_
 
 mutual
 
-  data _⟶_ : Exp → Exp → Set where
+  data _⇓_ : Exp → Exp → Set where
     apply  : ∀ {e₁ e₂ x e v₂ v} →
-             e₁ ⟶ lambda x e → e₂ ⟶ v₂ → e [ x ← v₂ ] ⟶ v →
-             apply e₁ e₂ ⟶ v
+             e₁ ⇓ lambda x e → e₂ ⇓ v₂ → e [ x ← v₂ ] ⇓ v →
+             apply e₁ e₂ ⇓ v
     case   : ∀ {e bs c es xs e′ e″ v} →
-             e ⟶ const c es → Lookup c bs xs e′ →
-             e′ [ xs ← es ]↦ e″ → e″ ⟶ v →
-             case e bs ⟶ v
-    rec    : ∀ {x e v} → e [ x ← rec x e ] ⟶ v → rec x e ⟶ v
-    lambda : ∀ {x e} → lambda x e ⟶ lambda x e
-    const  : ∀ {c es vs} → es ⟶⋆ vs → const c es ⟶ const c vs
+             e ⇓ const c es → Lookup c bs xs e′ →
+             e′ [ xs ← es ]↦ e″ → e″ ⇓ v →
+             case e bs ⇓ v
+    rec    : ∀ {x e v} → e [ x ← rec x e ] ⇓ v → rec x e ⇓ v
+    lambda : ∀ {x e} → lambda x e ⇓ lambda x e
+    const  : ∀ {c es vs} → es ⇓⋆ vs → const c es ⇓ const c vs
 
-  data _⟶⋆_ : List Exp → List Exp → Set where
-    []  : [] ⟶⋆ []
-    _∷_ : ∀ {e es v vs} → e ⟶ v → es ⟶⋆ vs → e ∷ es ⟶⋆ v ∷ vs
+  data _⇓⋆_ : List Exp → List Exp → Set where
+    []  : [] ⇓⋆ []
+    _∷_ : ∀ {e es v vs} → e ⇓ v → es ⇓⋆ vs → e ∷ es ⇓⋆ v ∷ vs

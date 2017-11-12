@@ -34,22 +34,22 @@ Lookup-deterministic (there p₁ p₂) (there q₁ q₂) refl =
 
 mutual
 
-  ⟶-deterministic : ∀ {e v₁ v₂} → e ⟶ v₁ → e ⟶ v₂ → v₁ ≡ v₂
-  ⟶-deterministic (apply p₁ p₂ p₃) (apply q₁ q₂ q₃)
-    with ⟶-deterministic p₁ q₁ | ⟶-deterministic p₂ q₂
-  ... | refl | refl = ⟶-deterministic p₃ q₃
+  ⇓-deterministic : ∀ {e v₁ v₂} → e ⇓ v₁ → e ⇓ v₂ → v₁ ≡ v₂
+  ⇓-deterministic (apply p₁ p₂ p₃) (apply q₁ q₂ q₃)
+    with ⇓-deterministic p₁ q₁ | ⇓-deterministic p₂ q₂
+  ... | refl | refl = ⇓-deterministic p₃ q₃
 
-  ⟶-deterministic (case p₁ p₂ p₃ p₄) (case q₁ q₂ q₃ q₄)
-    with ⟶-deterministic p₁ q₁
+  ⇓-deterministic (case p₁ p₂ p₃ p₄) (case q₁ q₂ q₃ q₄)
+    with ⇓-deterministic p₁ q₁
   ... | refl with Lookup-deterministic p₂ q₂ refl
   ...   | refl , refl rewrite ↦-deterministic p₃ q₃ =
-    ⟶-deterministic p₄ q₄
+    ⇓-deterministic p₄ q₄
 
-  ⟶-deterministic (rec p)    (rec q)    = ⟶-deterministic p q
-  ⟶-deterministic lambda     lambda     = refl
-  ⟶-deterministic (const ps) (const qs) = by (⟶⋆-deterministic ps qs)
+  ⇓-deterministic (rec p)    (rec q)    = ⇓-deterministic p q
+  ⇓-deterministic lambda     lambda     = refl
+  ⇓-deterministic (const ps) (const qs) = by (⇓⋆-deterministic ps qs)
 
-  ⟶⋆-deterministic : ∀ {es vs₁ vs₂} → es ⟶⋆ vs₁ → es ⟶⋆ vs₂ → vs₁ ≡ vs₂
-  ⟶⋆-deterministic []       []       = refl
-  ⟶⋆-deterministic (p ∷ ps) (q ∷ qs) =
-    cong₂ _∷_ (⟶-deterministic p q) (⟶⋆-deterministic ps qs)
+  ⇓⋆-deterministic : ∀ {es vs₁ vs₂} → es ⇓⋆ vs₁ → es ⇓⋆ vs₂ → vs₁ ≡ vs₂
+  ⇓⋆-deterministic []       []       = refl
+  ⇓⋆-deterministic (p ∷ ps) (q ∷ qs) =
+    cong₂ _∷_ (⇓-deterministic p q) (⇓⋆-deterministic ps qs)
