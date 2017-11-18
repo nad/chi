@@ -482,51 +482,50 @@ half-of-the-halting-problem :
         (¬ Terminates p → ¬ Terminates (apply halts (code p)))
 half-of-the-halting-problem eval cl eval⇓ eval¬⇓ =
   halts , cl′ , λ p cl-p → lemma₁ p cl-p , lemma₂ p cl-p
-  where
-  branches =
-    branch c-lambda (v-x ∷ v-e  ∷ []) (code (true ⦂ Bool)) ∷
-    branch c-const  (v-c ∷ v-es ∷ []) (code (true ⦂ Bool)) ∷
-    []
-
-  halts = lambda v-p (case (apply eval (var v-p)) branches)
+  module Half-of-the-halting-problem where
+  halts = lambda v-p (apply (lambda v-underscore (code (true ⦂ Bool)))
+                            (apply eval (var v-p)))
 
   cl′ : Closed halts
   cl′ =
     Closed′-closed-under-lambda $
-    Closed′-closed-under-case
+    Closed′-closed-under-apply
+      (from-⊎ (closed′? (lambda v-underscore (code (true ⦂ Bool))) _))
       (Closed′-closed-under-apply
         (Closed→Closed′ cl)
         (Closed′-closed-under-var (inj₁ refl)))
-      (from-⊎ (closed′?-B⋆ branches (v-p ∷ [])))
 
   lemma₁ : ∀ p → Closed p → Terminates p →
            apply halts (code p) ⇓ code (true ⦂ Bool)
-  lemma₁ p cl-p p⇓ =
-    apply halts (code p)                                    ⟶⟨ apply lambda (code⇓code p) ⟩
-    case (apply (eval [ v-p ← code p ]) (code p)) branches  ≡⟨ by (subst-closed _ _ cl) ⟩⟶
-    case (apply eval (code p)) branches                     ⇓⟨ lemma₁′ p⇓ ⟩■
+  lemma₁ p cl-p (v , p⇓v) =
+    apply halts (code p)                             ⟶⟨ apply lambda (code⇓code p) ⟩
+
+    apply (lambda v-underscore (code (true ⦂ Bool)))
+          (apply (eval [ v-p ← code p ]) (code p))   ≡⟨ by (subst-closed _ _ cl) ⟩⟶
+
+    apply (lambda v-underscore (code (true ⦂ Bool)))
+          (apply eval (code p))                      ⇓⟨ apply lambda (eval⇓ p v cl-p p⇓v) (code⇓code (true ⦂ Bool)) ⟩■
+
     code (true ⦂ Bool)
-    where
-    lemma₁′ : Terminates p →
-              case (apply eval (code p)) branches ⇓ code (true ⦂ Bool)
-    lemma₁′ (v , p⇓v) with ⇓-Value p⇓v
-    lemma₁′ (.(lambda x e) , p⇓v) | lambda x e =
-      case (apply eval (code p)) branches  ⇓⟨ case (eval⇓ p _ cl-p p⇓v) here (∷ ∷ []) (code⇓code (true ⦂ Bool)) ⟩■
-      code (true ⦂ Bool)
 
-    lemma₁′ (.(const c _) , p⇓v) | const c vs =
-      case (apply eval (code p)) branches  ⇓⟨ case (eval⇓ p _ cl-p p⇓v) (there (λ ()) here) (∷ ∷ []) (code⇓code (true ⦂ Bool)) ⟩■
-      code (true ⦂ Bool)
+  halts-eval-inversion :
+    ∀ e →
+    Terminates (apply halts e) →
+    Terminates (apply eval e)
+  halts-eval-inversion e (_ , apply {v₂ = v} lambda e⇓
+                           (apply {v₂ = v₂} _ eval⇓ _)) =
+    _ , (apply eval e                ⟶⟨ []⇓ (apply→ ∙) e⇓ ⟩
+         apply eval v                ≡⟨ by (subst-closed _ _ cl) ⟩⟶
+         apply (eval [ v-p ← v ]) v  ⇓⟨ eval⇓ ⟩■
+         v₂)
 
-  lemma₂ : ∀ p → Closed p → ¬ Terminates p →
-           ¬ ∃ λ v → apply halts (code p) ⇓ v
-  lemma₂ p cl-p ¬p⇓ (_ , apply {v₂ = v} lambda code⇓
-                           (case {c = c} {es = es} eval⇓ _ _ _)) =
-    eval¬⇓ p cl-p ¬p⇓ (_ ,
-      (apply eval (code p)         ≡⟨ by (code⇓≡code p code⇓) ⟩⟶
-       apply eval v                ≡⟨ by (subst-closed _ _ cl) ⟩⟶
-       apply (eval [ v-p ← v ]) v  ⇓⟨ eval⇓ ⟩■
-       const c es))
+  lemma₂ : ∀ p → Closed p →
+           ¬ Terminates p →
+           ¬ Terminates (apply halts (code p))
+  lemma₂ p cl-p ¬p⇓ =
+    Terminates (apply halts (code p))  ↝⟨ halts-eval-inversion (code p) ⟩
+    Terminates (apply eval (code p))   ↝⟨ eval¬⇓ p cl-p ¬p⇓ ⟩□
+    ⊥                                  □
 
 -- Two statements of "half of the halting problem".
 
@@ -551,131 +550,30 @@ half-of-the-halting-problem₂ :
      ∃ λ v′ → p ⇓ v′ × v ≡ code v′) →
   Computable Half-of-the-halting-problem₂
 half-of-the-halting-problem₂ eval cl eval₁ eval₂ =
-  halts , cl′ ,
-  (λ { (p , cl-p) .true (p⇓ , refl) → lemma₁ p cl-p p⇓ }) ,
+  H.halts , H.cl′ ,
+  (λ { (p , cl-p) .true (p⇓ , refl) → H.lemma₁ p cl-p p⇓ }) ,
   (λ { (p , cl-p) v halts⌜p⌝⇓v → true ,
        Σ-map (_, refl) id (lemma₂ p v cl-p halts⌜p⌝⇓v) })
   where
-  branches =
-    branch c-lambda (v-x ∷ v-e  ∷ []) (code (true ⦂ Bool)) ∷
-    branch c-const  (v-c ∷ v-es ∷ []) (code (true ⦂ Bool)) ∷
-    []
+  eval-inversion :
+    ∀ p → Closed p →
+    Terminates (apply eval (code p)) →
+    Terminates p
+  eval-inversion p cl-p = Σ-map id proj₁ ∘ eval₂ p _ cl-p ∘ proj₂
 
-  halts = lambda v-p (case (apply eval (var v-p)) branches)
+  module H = Half-of-the-halting-problem eval cl eval₁
+               (λ { p cl-p ¬p⇓ →
+                    Terminates (apply eval (code p))  ↝⟨ eval-inversion p cl-p ⟩
+                    Terminates p                      ↝⟨ ¬p⇓ ⟩□
+                    ⊥                                 □ })
 
-  cl′ : Closed halts
-  cl′ =
-    Closed′-closed-under-lambda $
-    Closed′-closed-under-case
-      (Closed′-closed-under-apply
-        (Closed→Closed′ cl)
-        (Closed′-closed-under-var (inj₁ refl)))
-      (from-⊎ (closed′?-B⋆ branches (v-p ∷ [])))
-
-  lemma₁ : ∀ p → Closed p → Terminates p →
-           apply halts (code p) ⇓ code (true ⦂ Bool)
-  lemma₁ p cl-p p⇓ =
-    apply halts (code p)                                    ⟶⟨ apply lambda (code⇓code p) ⟩
-    case (apply (eval [ v-p ← code p ]) (code p)) branches  ≡⟨ by (subst-closed _ _ cl) ⟩⟶
-    case (apply eval (code p)) branches                     ⇓⟨ lemma₁′ p⇓ ⟩■
-    code (true ⦂ Bool)
-    where
-    lemma₁′ : Terminates p →
-              case (apply eval (code p)) branches ⇓ code (true ⦂ Bool)
-    lemma₁′ (v , p⇓v) with ⇓-Value p⇓v
-    lemma₁′ (.(lambda x e) , p⇓v) | lambda x e =
-      case (apply eval (code p)) branches  ⇓⟨ case (eval₁ p _ cl-p p⇓v) here (∷ ∷ []) (code⇓code (true ⦂ Bool)) ⟩■
-      code (true ⦂ Bool)
-
-    lemma₁′ (.(const c _) , p⇓v) | const c vs =
-      case (apply eval (code p)) branches  ⇓⟨ case (eval₁ p _ cl-p p⇓v) (there (λ ()) here) (∷ ∷ []) (code⇓code (true ⦂ Bool)) ⟩■
-      code (true ⦂ Bool)
-
-  lemma₂ : ∀ p v → Closed p → apply halts (code p) ⇓ v →
+  lemma₂ : ∀ p v → Closed p → apply H.halts (code p) ⇓ v →
            Terminates p × v ≡ code (true ⦂ Bool)
-  lemma₂ p v cl-p (apply {v₂ = v₂} lambda q
-                     (case (apply {x = x} {e = e} {v₂ = v₂′} r s t)
-                           here
-                           (∷_ {e′ = vx} (∷_ {e′ = ve} [])) (const [])))
-    with eval₂ p _ cl-p (
-           apply eval (code p)            ⟶⟨ apply r′ q ⟩
-           e [ x ← v₂ ]                   ≡⟨ by (values-only-compute-to-themselves (⇓-Value q) s) ⟩⟶
-           e [ x ← v₂′ ]                  ⇓⟨ t ⟩■
-           const c-lambda (vx ∷ ve ∷ []))
-    where
-      r′ =
-        eval               ≡⟨ by (subst-closed _ _ cl) ⟩⟶
-        eval [ v-p ← v₂ ]  ⇓⟨ r ⟩■
-        lambda x e
-  ... | _ , p⇓ , _ = (_ , p⇓) , refl
-
-  lemma₂ p v cl-p
-         (apply {v₂ = v₂} lambda q
-            (case (apply {x = x} {e = e} {v₂ = v₂′} r s t)
-                  (there _ here)
-                  (∷_ {e′ = vc} (∷_ {e′ = ves} [])) (const [])))
-    with eval₂ p _ cl-p (
-           apply eval (code p)            ⟶⟨ apply r′ q ⟩
-           e [ x ← v₂ ]                   ≡⟨ by (values-only-compute-to-themselves (⇓-Value q) s) ⟩⟶
-           e [ x ← v₂′ ]                  ⇓⟨ t ⟩■
-           const c-const (vc ∷ ves ∷ []))
-    where
-      r′ =
-        eval               ≡⟨ by (subst-closed _ _ cl) ⟩⟶
-        eval [ v-p ← v₂ ]  ⇓⟨ r ⟩■
-        lambda x e
-
-  ... | _ , p⇓ , _ = (_ , p⇓) , refl
-
-  lemma₂ _ _ _ (apply lambda _ (case _ (there _ (there _ ())) _ _))
-
--- A shorter proof.
-
-half-of-the-halting-problem₂′ :
-  (eval : Exp) →
-  Closed eval →
-  (∀ p v → Closed p → p ⇓ v → apply eval (code p) ⇓ code v) →
-  (∀ p v → Closed p → apply eval (code p) ⇓ v →
-     ∃ λ v′ → p ⇓ v′ × v ≡ code v′) →
-  Computable Half-of-the-halting-problem₂
-half-of-the-halting-problem₂′ eval cl eval₁ eval₂ =
-  halts , cl′ ,
-  (λ { (p , cl-p) .true (p⇓ , refl) → lemma₁ p cl-p p⇓ }) ,
-  (λ { (p , cl-p) v halts⌜p⌝⇓v → true ,
-       Σ-map (_, refl) id (lemma₂ p v cl-p halts⌜p⌝⇓v) })
-  where
-  halts = lambda v-p (apply (lambda v-underscore (const c-true []))
-                            (apply eval (var v-p)))
-
-  cl′ : Closed halts
-  cl′ =
-    Closed′-closed-under-lambda $
-    Closed′-closed-under-apply
-      (from-⊎ $ closed′? (lambda v-underscore (const c-true [])) _)
-      (Closed′-closed-under-apply
-         (Closed→Closed′ cl)
-         (from-⊎ $ closed′? (var v-p) (v-p ∷ [])))
-
-  lemma₁ : ∀ p → Closed p → Terminates p →
-           apply halts (code p) ⇓ code (true ⦂ Bool)
-  lemma₁ p cl-p (v , p⇓v) =
-    apply halts (code p)                                                 ⟶⟨ apply lambda (code⇓code p) ⟩
-
-    apply (lambda v-underscore (const c-true []))
-      (apply (eval [ v-p ← code p ]) (code p))                           ≡⟨ by (subst-closed _ _ cl) ⟩⟶
-
-    apply (lambda v-underscore (const c-true [])) (apply eval (code p))  ⇓⟨ apply lambda (eval₁ p _ cl-p p⇓v) (const []) ⟩■
-
-    code (true ⦂ Bool)
-
-  lemma₂ : ∀ p v → Closed p → apply halts (code p) ⇓ v →
-           Terminates p × v ≡ code (true ⦂ Bool)
-  lemma₂ p v cl-p (apply {v₂ = ⌜p⌝} lambda q (apply {v₂ = v′} lambda r (const []))) =
-      (Σ-map id proj₁ $
-         eval₂ p _ cl-p (apply eval (code p)             ⟶⟨ []⇓ (apply→ ∙) q ⟩
-                         apply eval ⌜p⌝                  ≡⟨ by (subst-closed _ _ cl) ⟩⟶
-                         apply (eval [ v-p ← ⌜p⌝ ]) ⌜p⌝  ⇓⟨ r ⟩■
-                         v′))
+  lemma₂ p v cl-p q@(apply lambda _ (apply lambda _ (const []))) =
+      (                                     $⟨ _ , q ⟩
+       Terminates (apply H.halts (code p))  ↝⟨ H.halts-eval-inversion (code p) ⟩
+       Terminates (apply eval (code p))     ↝⟨ eval-inversion p cl-p ⟩□
+       Terminates p                         □)
     , refl
 
 -- If the expression terminates with code zero as the result, then
