@@ -359,6 +359,56 @@ as-function-to-Bool₂ P P-prop =
       , (λ ¬p → false , inj₂ (¬p , refl))
       ] ⟨$⟩ excluded-middle
 
+-- If a is mapped to b by as-function-to-Bool₂ P P-prop, then a is
+-- also mapped to b by as-function-to-Bool₁ P.
+
+to-Bool₂→to-Bool₁ :
+  ∀ {a} {A : Set a} ⦃ cA : Code A Consts ⦄
+  (P : A → Set a) (P-prop : ∀ {a} → Is-proposition (P a)) {a b} →
+  proj₁ (as-function-to-Bool₂ P P-prop) [ a ]= b →
+  proj₁ (as-function-to-Bool₁ P) [ a ]= b
+to-Bool₂→to-Bool₁ _ _ = λ where
+  (inj₁ (Pa  , refl)) → (λ _ → refl) , ⊥-elim P.∘ (_$ Pa)
+  (inj₂ (¬Pa , refl)) → ⊥-elim P.∘ ¬Pa , λ _ → refl
+
+-- If a is mapped to b by as-function-to-Bool₁ P, then a is not not
+-- mapped to b by as-function-to-Bool₂ P P-prop.
+
+to-Bool₁→to-Bool₂ :
+  ∀ {a} {A : Set a} ⦃ cA : Code A Consts ⦄
+  (P : A → Set a) (P-prop : ∀ {a} → Is-proposition (P a)) {a b} →
+  proj₁ (as-function-to-Bool₁ P) [ a ]= b →
+  ¬¬ proj₁ (as-function-to-Bool₂ P P-prop) [ a ]= b
+to-Bool₁→to-Bool₂ _ _ (Pa→b≡true , ¬Pa→b≡false) =
+  ⊎-map (λ Pa → Pa , Pa→b≡true Pa) (λ ¬Pa → ¬Pa , ¬Pa→b≡false ¬Pa) ⟨$⟩
+    excluded-middle
+
+-- If as-function-to-Bool₁ P is ¬¬-computable, then
+-- as-function-to-Bool₂ P P-prop is also ¬¬-computable.
+
+to-Bool₁-computable→to-Bool₂-computable :
+  ∀ {a} {A : Set a} ⦃ cA : Code A Consts ⦄
+  (P : A → Set a) (P-prop : ∀ {a} → Is-proposition (P a)) →
+  Computable′ ¬¬_ (proj₁ (as-function-to-Bool₁ P)) →
+  Computable′ ¬¬_ (proj₁ (as-function-to-Bool₂ P P-prop))
+to-Bool₁-computable→to-Bool₂-computable
+  P P-prop (p , cl-p , hyp₁ , hyp₂) =
+    p
+  , cl-p
+  , (λ a b →
+       proj₁ (as-function-to-Bool₂ P P-prop) [ a ]= b  ↝⟨ to-Bool₂→to-Bool₁ P P-prop ⟩
+       proj₁ (as-function-to-Bool₁ P)        [ a ]= b  ↝⟨ hyp₁ a b ⟩□
+       apply p (code a) ⇓ code b                       □)
+  , λ a e →
+      apply p (code a) ⇓ e                                          ↝⟨ hyp₂ a e ⟩
+
+      ¬¬ (∃ λ b → proj₁ (as-function-to-Bool₁ P) [ a ]= b ×
+                  e ≡ code b)                                       ↝⟨ _>>= (λ { (b , =b , ≡⌜b⌝) →
+                                                                                 to-Bool₁→to-Bool₂ P P-prop =b >>= λ =b →
+                                                                                 return (b , =b , ≡⌜b⌝) }) ⟩□
+      ¬¬ (∃ λ b → proj₁ (as-function-to-Bool₂ P P-prop) [ a ]= b ×
+                  e ≡ code b)                                       □
+
 -- A lemma related to as-function-to-Bool₂.
 
 ×≡true⊎¬×≡false⇔⇔T :
