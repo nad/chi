@@ -26,6 +26,7 @@ open import Atom
 
 open import Cancellation   χ-ℕ-atoms
 open import Chi            χ-ℕ-atoms
+open import Coding         χ-ℕ-atoms hiding (id)
 open import Compatibility  χ-ℕ-atoms
 open import Computability  χ-ℕ-atoms hiding (_∘_)
 open import Constants      χ-ℕ-atoms
@@ -36,10 +37,9 @@ open import Reasoning      χ-ℕ-atoms
 open import Termination    χ-ℕ-atoms
 open import Values         χ-ℕ-atoms
 
-import Coding hiding (code-Var; code-Const; id)
-open Coding χ-ℕ-atoms
 open χ-atoms χ-ℕ-atoms
 
+import Coding.Instances.Nat
 open import Combinators as χ hiding (if_then_else_)
 open import Internal-coding
 

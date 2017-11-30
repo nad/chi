@@ -148,18 +148,16 @@ code-Consts = record
       _∷_ ⟨$⟩ return c ⊛ return cs      ≡⟨⟩
       return (c ∷ cs)                   ∎
 
-instance
+-- Converts instances of the form Code A Consts to Code A Exp.
 
-  -- Converts instances of the form Code A Consts to Code A Exp.
+code-Consts-Exp : ∀ {a} {A : Set a} ⦃ c : Code A Consts ⦄ →
+                  Code A Exp
+code-Consts-Exp ⦃ c ⦄ = proj₁ code-Consts ⊚ c
 
-  code-Consts-Exp : ∀ {a} {A : Set a} ⦃ c : Code A Consts ⦄ →
-                    Code A Exp
-  code-Consts-Exp ⦃ c ⦄ = proj₁ code-Consts ⊚ c
-
--- A definition used in some type signatures below.
+-- Codes something as an expression.
 
 code-as-Exp : ∀ {a} {A : Set a} ⦃ c : Code A Consts ⦄ → A → Exp
-code-as-Exp = code
+code-as-Exp = code ⦃ code-Consts-Exp ⦄
 
 -- code-as-Exp returns constructor applications.
 
@@ -194,14 +192,11 @@ Code.decode∘code code-Consts-Closed c =
 
   just c                                                               ∎
 
-instance
+-- Converts instances of the form Code A Consts to Code A Closed-exp.
 
-  -- Converts instances of the form Code A Consts to
-  -- Code A Closed-exp.
-
-  code-Consts-Closed-exp :
-    ∀ {a} {A : Set a} ⦃ c : Code A Consts ⦄ → Code A Closed-exp
-  code-Consts-Closed-exp ⦃ c ⦄ = code-Consts-Closed ⊚ c
+code-Consts-Closed-exp :
+  ∀ {a} {A : Set a} ⦃ c : Code A Consts ⦄ → Code A Closed-exp
+code-Consts-Closed-exp ⦃ c ⦄ = code-Consts-Closed ⊚ c
 
 -- code-as-Exp returns values.
 
@@ -214,141 +209,139 @@ code-value = const→value ∘ code-const
 
 subst-code :
   ∀ {a} {A : Set a} ⦃ c : Code A Consts ⦄ (x : A) {y e} →
-  code x [ y ← e ] ≡ code x
+  code-as-Exp x [ y ← e ] ≡ code-as-Exp x
 subst-code x = subst-closed _ _ (code-closed x)
 
 substs-code :
   ∀ {a} {A : Set a} ⦃ c : Code A Consts ⦄ (x : A) ps →
-  foldr (λ { (y , e) → _[ y ← e ] }) (code x) ps ≡
+  foldr (λ { (y , e) → _[ y ← e ] }) (code-as-Exp x) ps ≡
   code-as-Exp x
-substs-code x = substs-closed (code x) (code-closed x)
+substs-code x = substs-closed (code-as-Exp x) (code-closed x)
 
 code⇓code :
   ∀ {a} {A : Set a} ⦃ c : Code A Consts ⦄
-  (x : A) → code-as-Exp x ⇓ code x
+  (x : A) → code-as-Exp x ⇓ code-as-Exp x
 code⇓code x = values-compute-to-themselves (code-value x)
 
 code⇓≡code :
   ∀ {a} {A : Set a} ⦃ c : Code A Consts ⦄ {v}
-  (x : A) → code-as-Exp x ⇓ v → code x ≡ v
+  (x : A) → code-as-Exp x ⇓ v → code-as-Exp x ≡ v
 code⇓≡code x = values-only-compute-to-themselves (code-value x)
 
 ------------------------------------------------------------------------
--- Instances specifying how a number of types are encoded as χ
+-- Specifications of how a number of types are encoded as χ
 -- constructor applications
 
-instance
+-- Encoder for booleans.
 
-  -- Encoder for booleans.
+code-Bool : Code Bool Consts
+code-Bool = record
+  { code        = cd
+  ; decode      = dc
+  ; decode∘code = dc∘cd
+  }
+  where
+  cd : Bool → Consts
+  cd true  = const c-true  []
+  cd false = const c-false []
 
-  code-Bool : Code Bool Consts
-  code-Bool = record
-    { code        = cd
-    ; decode      = dc
-    ; decode∘code = dc∘cd
-    }
-    where
-    cd : Bool → Consts
-    cd true  = const c-true  []
-    cd false = const c-false []
+  dc : Consts → Maybe Bool
+  dc (const c args) with c-true C.≟ c | c-false C.≟ c
+  dc (const c [])   | yes _ | _     = return true
+  dc (const c [])   | _     | yes _ = return false
+  dc (const c _)    | _     | _     = nothing
 
-    dc : Consts → Maybe Bool
-    dc (const c args) with c-true C.≟ c | c-false C.≟ c
-    dc (const c [])   | yes _ | _     = return true
-    dc (const c [])   | _     | yes _ = return false
-    dc (const c _)    | _     | _     = nothing
+  dc∘cd : ∀ b → dc (cd b) ≡ just b
+  dc∘cd true with c-true C.≟ c-true
+  ... | yes _   = refl
+  ... | no  t≢t = ⊥-elim (t≢t refl)
+  dc∘cd false with c-true C.≟ c-false | c-false C.≟ c-false
+  ... | no  _   | no f≢f = ⊥-elim (f≢f refl)
+  ... | yes t≡f | _      = ⊥-elim (C.distinct-codes→distinct-names
+                                     (λ ()) t≡f)
+  ... | no _    | yes _  = refl
 
-    dc∘cd : ∀ b → dc (cd b) ≡ just b
-    dc∘cd true with c-true C.≟ c-true
-    ... | yes _   = refl
-    ... | no  t≢t = ⊥-elim (t≢t refl)
-    dc∘cd false with c-true C.≟ c-false | c-false C.≟ c-false
-    ... | no  _   | no f≢f = ⊥-elim (f≢f refl)
-    ... | yes t≡f | _      = ⊥-elim (C.distinct-codes→distinct-names
-                                       (λ ()) t≡f)
-    ... | no _    | yes _  = refl
+-- Encoder for natural numbers.
 
-  -- Encoder for natural numbers.
+code-ℕ : Code ℕ Consts
+code-ℕ = record
+  { code        = cd
+  ; decode      = dc
+  ; decode∘code = dc∘cd
+  }
+  where
+  cd : ℕ → Consts
+  cd zero    = const c-zero []
+  cd (suc n) = const c-suc (cd n ∷ [])
 
-  code-ℕ : Code ℕ Consts
-  code-ℕ = record
-    { code        = cd
-    ; decode      = dc
-    ; decode∘code = dc∘cd
-    }
-    where
-    cd : ℕ → Consts
-    cd zero    = const c-zero []
-    cd (suc n) = const c-suc (cd n ∷ [])
+  dc : Consts → Maybe ℕ
+  dc (const c args)     with c-zero C.≟ c | c-suc C.≟ c
+  dc (const c [])       | yes eq | _      = return zero
+  dc (const c (n ∷ [])) | _      | yes eq = map suc (dc n)
+  dc (const c _)        | _      | _      = nothing
 
-    dc : Consts → Maybe ℕ
-    dc (const c args)     with c-zero C.≟ c | c-suc C.≟ c
-    dc (const c [])       | yes eq | _      = return zero
-    dc (const c (n ∷ [])) | _      | yes eq = map suc (dc n)
-    dc (const c _)        | _      | _      = nothing
+  dc∘cd : ∀ n → dc (cd n) ≡ just n
+  dc∘cd zero with c-zero C.≟ c-zero
+  ... | yes _   = refl
+  ... | no  z≢z = ⊥-elim (z≢z refl)
+  dc∘cd (suc n) with c-zero C.≟ c-suc | c-suc C.≟ c-suc
+  ... | no  _   | no s≢s = ⊥-elim (s≢s refl)
+  ... | yes z≡s | _      = ⊥-elim (C.distinct-codes→distinct-names
+                                     (λ ()) z≡s)
+  ... | no _    | yes _  =
+    map suc (dc (cd n))  ≡⟨ by (dc∘cd n) ⟩
+    map suc (return n)   ≡⟨ refl ⟩∎
+    return (suc n)       ∎
 
-    dc∘cd : ∀ n → dc (cd n) ≡ just n
-    dc∘cd zero with c-zero C.≟ c-zero
-    ... | yes _   = refl
-    ... | no  z≢z = ⊥-elim (z≢z refl)
-    dc∘cd (suc n) with c-zero C.≟ c-suc | c-suc C.≟ c-suc
-    ... | no  _   | no s≢s = ⊥-elim (s≢s refl)
-    ... | yes z≡s | _      = ⊥-elim (C.distinct-codes→distinct-names
-                                       (λ ()) z≡s)
-    ... | no _    | yes _  =
-      map suc (dc (cd n))  ≡⟨ by (dc∘cd n) ⟩
-      map suc (return n)   ≡⟨ refl ⟩∎
-      return (suc n)       ∎
+-- Encoder for variables.
 
-  -- Encoder for variables.
+code-Var : Code Var Consts
+code-Var = code-ℕ ⊚ ↔→Code V.countably-infinite
 
-  code-Var : Code Var Consts
-  code-Var = code-ℕ ⊚ ↔→Code V.countably-infinite
+-- Encoder for constants.
 
-  -- Encoder for constants.
+code-Const : Code Const Consts
+code-Const = code-ℕ ⊚ ↔→Code C.countably-infinite
 
-  code-Const : Code Const Consts
-  code-Const = code-ℕ ⊚ ↔→Code C.countably-infinite
+-- Encoder for products.
 
-  -- Encoder for products.
+code-× : ∀ {a b} {A : Set a} {B : Set b}
+           ⦃ c : Code A Consts ⦄ ⦃ d : Code B Consts ⦄ →
+         Code (A × B) Consts
+code-× {A = A} {B} ⦃ c ⦄ ⦃ d ⦄ = record
+  { code        = cd
+  ; decode      = dc
+  ; decode∘code = dc∘cd
+  }
+  where
+  cd : A × B → Consts
+  cd (x , y) = const c-pair (code x ∷ code y ∷ [])
 
-  code-× : ∀ {a b} {A : Set a} {B : Set b}
-             ⦃ c : Code A Consts ⦄ ⦃ d : Code B Consts ⦄ →
-           Code (A × B) Consts
-  code-× {A = A} {B} ⦃ c ⦄ ⦃ d ⦄ = record
-    { code        = cd
-    ; decode      = dc
-    ; decode∘code = dc∘cd
-    }
-    where
-    cd : A × B → Consts
-    cd (x , y) = const c-pair (code x ∷ code y ∷ [])
+  dc : Consts → Maybe (A × B)
+  dc (const c args)         with c-pair C.≟ c
+  dc (const c (x ∷ y ∷ [])) | yes _ = decode x >>=′ λ x →
+                                      decode y >>=′ λ y →
+                                      just (x , y)
+  dc (const c args)         | _     = nothing
 
-    dc : Consts → Maybe (A × B)
-    dc (const c args)         with c-pair C.≟ c
-    dc (const c (x ∷ y ∷ [])) | yes _ = decode x >>=′ λ x →
-                                        decode y >>=′ λ y →
-                                        just (x , y)
-    dc (const c args)         | _     = nothing
+  dc∘cd : ∀ x → dc (cd x) ≡ just x
+  dc∘cd (x , y) with c-pair C.≟ c-pair
+  ... | no p≢p = ⊥-elim (p≢p refl)
+  ... | yes _  =
+    (decode ⦃ r = c ⦄ (code x) >>=′ λ x →
+     decode ⦃ r = d ⦄ (code y) >>=′ λ y →
+     just (x , y))                         ≡⟨ by (decode∘code ⦃ r = c ⦄) ⟩
 
-    dc∘cd : ∀ x → dc (cd x) ≡ just x
-    dc∘cd (x , y) with c-pair C.≟ c-pair
-    ... | no p≢p = ⊥-elim (p≢p refl)
-    ... | yes _  =
-      (decode ⦃ r = c ⦄ (code x) >>=′ λ x →
-       decode ⦃ r = d ⦄ (code y) >>=′ λ y →
-       just (x , y))                         ≡⟨ by (decode∘code ⦃ r = c ⦄) ⟩
+    (return x >>=′ λ x →
+     decode ⦃ r = d ⦄ (code y) >>=′ λ y →
+     just (x , y))                         ≡⟨⟩
 
-      (return x >>=′ λ x →
-       decode ⦃ r = d ⦄ (code y) >>=′ λ y →
-       just (x , y))                         ≡⟨⟩
+    (decode ⦃ r = d ⦄ (code y) >>=′ λ y →
+     just (x , y))                         ≡⟨ by (decode∘code ⦃ r = d ⦄) ⟩
 
-      (decode ⦃ r = d ⦄ (code y) >>=′ λ y →
-       just (x , y))                         ≡⟨ by (decode∘code ⦃ r = d ⦄) ⟩
+    (return y >>=′ λ y → just (x , y))     ≡⟨ refl ⟩∎
 
-      (return y >>=′ λ y → just (x , y))     ≡⟨ refl ⟩∎
-
-      return (x , y)                         ∎
+    return (x , y)                         ∎
 
 -- Encoder for lists.
 
@@ -385,12 +378,10 @@ code-List {A = A} ⦃ c ⦄ = record
     _∷_ ⟨$⟩ return x ⊛ return xs                    ≡⟨⟩
     return (x ∷ xs)                                 ∎
 
-instance
+-- Encoder for lists of variables.
 
-  -- Encoder for lists of variables.
-
-  code-Var⋆ : Code (List Var) Consts
-  code-Var⋆ = code-List
+code-Var⋆ : Code (List Var) Consts
+code-Var⋆ = code-List ⦃ code-Var ⦄
 
 private
 
@@ -404,15 +395,16 @@ private
 
     code-E : Exp → Consts
     code-E (apply e₁ e₂) = const c-apply (code-E e₁ ∷ code-E e₂ ∷ [])
-    code-E (lambda x e)  = const c-lambda (code x ∷ code-E e ∷ [])
+    code-E (lambda x e)  = const c-lambda (code ⦃ code-Var ⦄ x ∷ code-E e ∷ [])
     code-E (case e bs)   = const c-case (code-E e ∷ code-B⋆ bs ∷ [])
-    code-E (rec x e)     = const c-rec (code x ∷ code-E e ∷ [])
-    code-E (var x)       = const c-var (code x ∷ [])
-    code-E (const c es)  = const c-const (code c ∷ code-⋆ es ∷ [])
+    code-E (rec x e)     = const c-rec (code ⦃ code-Var ⦄ x ∷ code-E e ∷ [])
+    code-E (var x)       = const c-var (code ⦃ code-Var ⦄ x ∷ [])
+    code-E (const c es)  = const c-const (code ⦃ code-Const ⦄ c ∷ code-⋆ es ∷ [])
 
     code-B : Br → Consts
     code-B (branch c xs e) =
-      const c-branch (code c ∷ code xs ∷ code-E e ∷ [])
+      const c-branch
+        (code ⦃ code-Const ⦄ c ∷ code ⦃ code-Var⋆ ⦄ xs ∷ code-E e ∷ [])
 
     -- TODO: One could presumably use sized types to avoid repetitive
     -- code. However, I did not want to use sized types in the
@@ -440,26 +432,28 @@ private
       apply ⟨$⟩ decode-E e₁ ⊛ decode-E e₂
 
     decode-E (const c (x ∷ e ∷ [])) | _ | yes eq | _ | _ | _ | _ =
-      lambda ⟨$⟩ decode x ⊛ decode-E e
+      lambda ⟨$⟩ decode ⦃ code-Var ⦄ x ⊛ decode-E e
 
     decode-E (const c (e ∷ bs ∷ [])) | _ | _ | yes eq | _ | _ | _ =
       case ⟨$⟩ decode-E e ⊛ decode-B⋆ bs
 
     decode-E (const c (x ∷ e ∷ [])) | _ | _ | _ | yes eq | _ | _ =
-      rec ⟨$⟩ decode x ⊛ decode-E e
+      rec ⟨$⟩ decode ⦃ code-Var ⦄ x ⊛ decode-E e
 
     decode-E (const c (x ∷ [])) | _ | _ | _ | _ | yes eq | _ =
-      var ⟨$⟩ decode x
+      var ⟨$⟩ decode ⦃ code-Var ⦄ x
 
     decode-E (const c (c′ ∷ es ∷ [])) | _ | _ | _ | _ | _ | yes eq =
-      const ⟨$⟩ decode c′ ⊛ decode-⋆ es
+      const ⟨$⟩ decode ⦃ code-Const ⦄ c′ ⊛ decode-⋆ es
 
     decode-E (const c args) | _ | _ | _ | _ | _ | _ = nothing
 
     decode-B : Consts → Maybe Br
     decode-B (const c args)               with c-branch C.≟ c
     decode-B (const c (c′ ∷ xs ∷ e ∷ [])) | yes eq =
-      branch ⟨$⟩ decode c′ ⊛ decode xs ⊛ decode-E e
+      branch ⟨$⟩ decode ⦃ code-Const ⦄ c′
+               ⊛ decode ⦃ code-Var⋆ ⦄ xs
+               ⊛ decode-E e
     decode-B (const c args) | _ = nothing
 
     decode-⋆ : Consts → Maybe (List Exp)
@@ -494,10 +488,10 @@ private
     ... | yes a≡l | _      = ⊥-elim (C.distinct-codes→distinct-names
                                        (λ ()) a≡l)
     ... | no _    | yes _  =
-      lambda ⟨$⟩ Var.decode (code x) ⊛ decode-E (code-E e)  ≡⟨ by Var.decode∘code ⟩
-      lambda ⟨$⟩ return x ⊛ decode-E (code-E e)             ≡⟨ by (decode∘code-E e) ⟩
-      lambda ⟨$⟩ return x ⊛ return e                        ≡⟨⟩
-      return (lambda x e)                                   ∎
+      lambda ⟨$⟩ Var.decode (code ⦃ code-Var ⦄ x) ⊛ decode-E (code-E e)  ≡⟨ by Var.decode∘code ⟩
+      lambda ⟨$⟩ return x ⊛ decode-E (code-E e)                          ≡⟨ by (decode∘code-E e) ⟩
+      lambda ⟨$⟩ return x ⊛ return e                                     ≡⟨⟩
+      return (lambda x e)                                                ∎
 
     decode∘code-E (case e bs) with c-apply  C.≟ c-case
                                  | c-lambda C.≟ c-case
@@ -525,10 +519,10 @@ private
     ... | yes a≡r | _       | _       | _      = ⊥-elim (C.distinct-codes→distinct-names
                                                            (λ ()) a≡r)
     ... | no _    | no _    | no _    | yes _  =
-      rec ⟨$⟩ Var.decode (code x) ⊛ decode-E (code-E e)  ≡⟨ by Var.decode∘code ⟩
-      rec ⟨$⟩ return x ⊛ decode-E (code-E e)             ≡⟨ by (decode∘code-E e) ⟩
-      rec ⟨$⟩ return x ⊛ return e                        ≡⟨⟩
-      return (rec x e)                                   ∎
+      rec ⟨$⟩ Var.decode (code ⦃ code-Var ⦄ x) ⊛ decode-E (code-E e)  ≡⟨ by Var.decode∘code ⟩
+      rec ⟨$⟩ return x ⊛ decode-E (code-E e)                          ≡⟨ by (decode∘code-E e) ⟩
+      rec ⟨$⟩ return x ⊛ return e                                     ≡⟨⟩
+      return (rec x e)                                                ∎
 
     decode∘code-E (var x) with c-apply  C.≟ c-var
                              | c-lambda C.≟ c-var
@@ -545,9 +539,9 @@ private
     ... | yes a≡v | _       | _       | _       | _      = ⊥-elim (C.distinct-codes→distinct-names
                                                                      (λ ()) a≡v)
     ... | no _    | no _    | no _    | no _    | yes _  =
-      var ⟨$⟩ Var.decode (code x)  ≡⟨ by Var.decode∘code ⟩
-      var ⟨$⟩ return x             ≡⟨ refl ⟩∎
-      return (var x)               ∎
+      var ⟨$⟩ Var.decode (code ⦃ code-Var ⦄ x)  ≡⟨ by Var.decode∘code ⟩
+      var ⟨$⟩ return x                          ≡⟨ refl ⟩∎
+      return (var x)                            ∎
 
     decode∘code-E (const c es) with c-apply  C.≟ c-const
                                   | c-lambda C.≟ c-const
@@ -567,26 +561,28 @@ private
     ... | yes a≡c | _       | _       | _       | _       | _      = ⊥-elim (C.distinct-codes→distinct-names
                                                                                (λ ()) a≡c)
     ... | no _    | no _    | no _    | no _    | no _    | yes _  =
-      const ⟨$⟩ Const.decode (code c) ⊛ decode-⋆ (code-⋆ es)  ≡⟨ by Const.decode∘code ⟩
-      const ⟨$⟩ return c ⊛ decode-⋆ (code-⋆ es)               ≡⟨ by (decode∘code-⋆ es) ⟩
-      const ⟨$⟩ return c ⊛ return es                          ≡⟨⟩
-      return (const c es)                                     ∎
+      const ⟨$⟩ Const.decode (code ⦃ code-Const ⦄ c) ⊛ decode-⋆ (code-⋆ es)  ≡⟨ by Const.decode∘code ⟩
+      const ⟨$⟩ return c ⊛ decode-⋆ (code-⋆ es)                              ≡⟨ by (decode∘code-⋆ es) ⟩
+      const ⟨$⟩ return c ⊛ return es                                         ≡⟨⟩
+      return (const c es)                                                    ∎
 
     decode∘code-B : ∀ b → decode-B (code-B b) ≡ just b
     decode∘code-B (branch c xs e) with c-branch C.≟ c-branch
     ... | no b≢b = ⊥-elim (b≢b refl)
     ... | yes _  =
-      branch ⟨$⟩ Const.decode (code c) ⊛ Var⋆.decode (code xs) ⊛
-                 decode-E (code-E e)                              ≡⟨ by Const.decode∘code ⟩
+      branch ⟨$⟩ Const.decode (code ⦃ code-Const ⦄ c) ⊛
+                 Var⋆.decode (code ⦃ code-Var⋆ ⦄ xs) ⊛
+                 decode-E (code-E e)                         ≡⟨ by Const.decode∘code ⟩
 
-      branch ⟨$⟩ return c ⊛ Var⋆.decode (code xs) ⊛
-                 decode-E (code-E e)                              ≡⟨ by Var⋆.decode∘code ⟩
+      branch ⟨$⟩ return c ⊛
+                 Var⋆.decode (code ⦃ code-Var⋆ ⦄ xs) ⊛
+                 decode-E (code-E e)                         ≡⟨ by Var⋆.decode∘code ⟩
 
-      branch ⟨$⟩ return c ⊛ return xs ⊛ decode-E (code-E e)       ≡⟨ by (decode∘code-E e) ⟩
+      branch ⟨$⟩ return c ⊛ return xs ⊛ decode-E (code-E e)  ≡⟨ by (decode∘code-E e) ⟩
 
-      branch ⟨$⟩ return c ⊛ return xs ⊛ return e                  ≡⟨⟩
+      branch ⟨$⟩ return c ⊛ return xs ⊛ return e             ≡⟨⟩
 
-      return (branch c xs e)                                      ∎
+      return (branch c xs e)                                 ∎
 
     decode∘code-⋆ : ∀ es → decode-⋆ (code-⋆ es) ≡ just es
     decode∘code-⋆ [] with c-nil C.≟ c-nil
@@ -616,41 +612,39 @@ private
       _∷_ ⟨$⟩ return b ⊛ return bs                          ≡⟨⟩
       return (b ∷ bs)                                       ∎
 
-instance
+code-Exp : Code Exp Consts
+Code.code        code-Exp = code-E
+Code.decode      code-Exp = decode-E
+Code.decode∘code code-Exp = decode∘code-E
 
-  code-Exp : Code Exp Consts
-  Code.code        code-Exp = code-E
-  Code.decode      code-Exp = decode-E
-  Code.decode∘code code-Exp = decode∘code-E
+code-Br : Code Br Consts
+Code.code        code-Br = code-B
+Code.decode      code-Br = decode-B
+Code.decode∘code code-Br = decode∘code-B
 
-  code-Br : Code Br Consts
-  Code.code        code-Br = code-B
-  Code.decode      code-Br = decode-B
-  Code.decode∘code code-Br = decode∘code-B
+code-Exps : Code (List Exp) Consts
+Code.code        code-Exps = code-⋆
+Code.decode      code-Exps = decode-⋆
+Code.decode∘code code-Exps = decode∘code-⋆
 
-  code-Exps : Code (List Exp) Consts
-  Code.code        code-Exps = code-⋆
-  Code.decode      code-Exps = decode-⋆
-  Code.decode∘code code-Exps = decode∘code-⋆
+code-Brs : Code (List Br) Consts
+Code.code        code-Brs = code-B⋆
+Code.decode      code-Brs = decode-B⋆
+Code.decode∘code code-Brs = decode∘code-B⋆
 
-  code-Brs : Code (List Br) Consts
-  Code.code        code-Brs = code-B⋆
-  Code.decode      code-Brs = decode-B⋆
-  Code.decode∘code code-Brs = decode∘code-B⋆
+-- Encoder for closed expressions.
 
-  -- Encoder for closed expressions.
-
-  code-Closed : Code Closed-exp Consts
-  Code.code   code-Closed = code ∘ proj₁
-  Code.decode code-Closed c with decode c
-  ... | nothing = nothing
-  ... | just e  with closed? e
-  ...   | yes cl = just (e , cl)
-  ...   | no _   = nothing
-  Code.decode∘code code-Closed (c , cl)
-    with decode ⦃ r = code-Exp ⦄ (code c)
-       | decode∘code ⦃ r = code-Exp ⦄ c
-  ... | .(just c) | refl with closed? c
-  ...   | no  ¬cl = ⊥-elim (¬cl cl)
-  ...   | yes cl′ =
-    cong just (closed-equal-if-expressions-equal refl)
+code-Closed : Code Closed-exp Consts
+Code.code   code-Closed = code ⦃ code-Exp ⦄ ∘ proj₁
+Code.decode code-Closed c with decode ⦃ code-Exp ⦄ c
+... | nothing = nothing
+... | just e  with closed? e
+...   | yes cl = just (e , cl)
+...   | no _   = nothing
+Code.decode∘code code-Closed (c , cl)
+  with decode ⦃ r = code-Exp ⦄ (code ⦃ code-Exp ⦄ c)
+     | decode∘code ⦃ r = code-Exp ⦄ c
+... | .(just c) | refl with closed? c
+...   | no  ¬cl = ⊥-elim (¬cl cl)
+...   | yes cl′ =
+  cong just (closed-equal-if-expressions-equal refl)

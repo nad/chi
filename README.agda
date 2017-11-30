@@ -57,6 +57,14 @@ import Free-variables
 
 import Coding
 
+-- Encoder and decoder instances.
+
+import Coding.Instances
+
+-- Encoder and decoder instances for Atom.χ-ℕ-atoms.
+
+import Coding.Instances.Nat
+
 -- Internal coding.
 
 import Internal-coding

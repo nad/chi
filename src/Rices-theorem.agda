@@ -14,10 +14,10 @@ open import Prelude hiding (const; Decidable)
 open import Atom
 
 open import Chi            χ-ℕ-atoms
+open import Coding         χ-ℕ-atoms hiding (id)
 open import Free-variables χ-ℕ-atoms
 
-import Coding hiding (code-Var; code-Const; id)
-open Coding χ-ℕ-atoms
+import Coding.Instances.Nat
 
 -- The theorem is stated and proved under the assumption that a
 -- correct self-interpreter can be implemented.

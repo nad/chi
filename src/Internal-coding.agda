@@ -17,13 +17,14 @@ open import Tactic.By
 open import Atom
 
 open import Chi            χ-ℕ-atoms
+open import Coding         χ-ℕ-atoms
 open import Constants      χ-ℕ-atoms
 open import Free-variables χ-ℕ-atoms
 open import Reasoning      χ-ℕ-atoms
 
-import Coding hiding (code-Var; code-Const)
-open Coding χ-ℕ-atoms
 open χ-atoms χ-ℕ-atoms
+
+import Coding.Instances.Nat
 
 abstract
 
