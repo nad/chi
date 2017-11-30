@@ -20,47 +20,7 @@ open import Free-variables χ-ℕ-atoms
 
 open χ-atoms χ-ℕ-atoms
 
--- Equality of natural numbers.
-
-internal-equal : Exp
-internal-equal =
-  rec v-equal (lambda v-m (lambda v-n (case (var v-m) branches)))
-  module Internal-equal where
-  zero-branches =
-    branch c-zero [] (const c-true []) ∷
-    branch c-suc (v-n ∷ []) (const c-false []) ∷
-    []
-
-  suc-branches =
-    branch c-zero [] (const c-false []) ∷
-    branch c-suc (v-n ∷ []) (
-      apply (apply (var v-equal) (var v-m)) (var v-n)) ∷
-    []
-
-  branches =
-    branch c-zero [] (case (var v-n) zero-branches) ∷
-    branch c-suc (v-m ∷ []) (case (var v-n) suc-branches) ∷
-    []
-
--- Membership of a list of natural numbers.
-
-internal-member : Exp
-internal-member =
-  lambda v-x body
-  module Internal-member where
-  cons-branches =
-    branch c-true [] (const c-true []) ∷
-    branch c-false [] (apply (var v-member) (var v-xs)) ∷
-    []
-
-  branches =
-    branch c-nil [] (const c-false []) ∷
-    branch c-cons (v-y ∷ v-xs ∷ []) (
-      case (apply (apply internal-equal (var v-x)) (var v-y))
-        cons-branches) ∷
-    []
-
-  body = rec v-member (lambda v-xs (case (var v-xs) branches))
+open import Combinators
 
 -- Substitution.
 
@@ -70,7 +30,7 @@ internal-subst = lambda v-x (lambda v-new body)
   private
     rec-or-lambda = λ c →
       branch c (v-y ∷ v-e ∷ []) (
-        case (apply (apply internal-equal (var v-x)) (var v-y)) (
+        case (equal-ℕ (var v-x) (var v-y)) (
           branch c-true [] (const c (var v-y ∷ var v-e ∷ [])) ∷
           branch c-false [] (
             const c (var v-y ∷ apply (var v-subst) (var v-e) ∷ [])) ∷
@@ -89,14 +49,14 @@ internal-subst = lambda v-x (lambda v-new body)
     branch c-const (v-c ∷ v-es ∷ []) (
       const c-const (var v-c ∷ apply (var v-subst) (var v-es) ∷ [])) ∷
     branch c-var (v-y ∷ []) (
-      case (apply (apply internal-equal (var v-x)) (var v-y)) (
+      case (equal-ℕ (var v-x) (var v-y)) (
         branch c-true [] (var v-new) ∷
         branch c-false [] (const c-var (var v-y ∷ [])) ∷ [])) ∷
     branch c-branch (v-c ∷ v-ys ∷ v-e ∷ []) (
       const c-branch (
         var v-c ∷
         var v-ys ∷
-        case (apply (apply internal-member (var v-x)) (var v-ys)) (
+        case (member (var v-x) (var v-ys)) (
           branch c-true [] (var v-e) ∷
           branch c-false [] (apply (var v-subst) (var v-e)) ∷
           []) ∷ [])) ∷
@@ -115,7 +75,7 @@ internal-lookup =
   lambda v-c (rec v-lookup (lambda v-bs (case (var v-bs) (
     branch c-cons (v-b ∷ v-bs ∷ []) (case (var v-b) (
       branch c-branch (v-c′ ∷ v-underscore ∷ v-underscore ∷ []) (
-        case (apply (apply internal-equal (var v-c)) (var v-c′)) (
+        case (equal-ℕ (var v-c) (var v-c′)) (
           branch c-false [] (apply (var v-lookup) (var v-bs)) ∷
           branch c-true [] (var v-b) ∷ [])) ∷ [])) ∷ []))))
 

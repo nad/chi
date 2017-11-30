@@ -69,7 +69,7 @@ import Coding.Instances.Nat
 
 import Internal-coding
 
--- Some simple χ program combinators.
+-- Some χ program combinators.
 
 import Combinators
 

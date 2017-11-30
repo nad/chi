@@ -408,7 +408,7 @@ module _
 
           (λ _ →
              χ.not (apply p (code (arg e∉ (code e))))  ⟶⟨ []⇓ (case ∙) (hyp _ _ (arg-lemma-⇓-false e e⇓)) ⟩
-             χ.not (code (false ⦂ Bool))               ⇓⟨ not⇓ false ⟩■
+             χ.not (code (false ⦂ Bool))               ⇓⟨ not-correct false (code⇓code (false ⦂ Bool)) ⟩■
              code (true ⦂ Bool))
 
       ¬⇓-lemma :
@@ -424,7 +424,7 @@ module _
 
           (λ P-const-loop →
              χ.not (apply p (code (arg e∉ (code e))))  ⟶⟨ []⇓ (case ∙) (hyp _ _ (arg-lemma-¬⇓ e∉ e ¬e⇓ P-const-loop)) ⟩
-             χ.not (code (true ⦂ Bool))                ⇓⟨ not⇓ true ⟩■
+             χ.not (code (true ⦂ Bool))                ⇓⟨ not-correct true (code⇓code (true ⦂ Bool)) ⟩■
              code (false ⦂ Bool))
 
   rice's-theorem : ¬ Decidable P
