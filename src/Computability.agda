@@ -130,6 +130,47 @@ post-apply : ∀ {ℓ c} {A B : Set ℓ} {C : Set c}
              g [ a ]= b → as-partial C-set f ∘ g [ a ]= f b
 post-apply _ _ g[a]=b = _ , g[a]=b , lift refl
 
+-- Implements P p f means that p is an implementation of f. The
+-- definition is parametrised by P, which could be a modality.
+
+Implements :
+  ∀ {a b} {A : Set a} {B : Set b}
+    ⦃ rA : Rep A Consts ⦄ ⦃ rB : Rep B Consts ⦄ →
+  (Set (a ⊔ b) → Set (a ⊔ b)) →
+  Exp → A ⇀ B → Set (a ⊔ b)
+Implements P p f =
+  Closed p
+    ×
+  (∀ x y → f [ x ]= y → apply p ⌜ x ⌝ ⇓ ⌜ y ⌝)
+    ×
+  (∀ x y → apply p ⌜ x ⌝ ⇓ y →
+     P (∃ λ y′ → f [ x ]= y′ × y ≡ ⌜ y′ ⌝))
+
+-- If P maps propositions to propositions, then Implements P p f is a
+-- proposition.
+
+Implements-propositional :
+  ∀ {a b} {A : Set a} {B : Set b}
+    ⦃ rA : Rep A Consts ⦄ ⦃ rB : Rep B Consts ⦄ →
+    {P : Set (a ⊔ b) → Set (a ⊔ b)} {p : Exp}
+  (f : A ⇀ B) →
+  (∀ {A} → Is-proposition A → Is-proposition (P A)) →
+  Is-proposition (Implements P p f)
+Implements-propositional f pres =
+  ×-closure 1 Closed-propositional $
+  ×-closure 1 (Π-closure ext 1 λ _ →
+               Π-closure ext 1 λ _ →
+               Π-closure ext 1 λ _ →
+               ⇓-propositional)
+              (Π-closure ext 1 λ x →
+               Π-closure ext 1 λ y →
+               Π-closure ext 1 λ _ →
+               pres $
+               H-level.respects-surjection
+                 (_↔_.surjection $ inverse Σ-assoc) 1
+                 (Σ-closure 1 (_⇀_.∃[]=-propositional f) λ _ →
+                              Exp-set _ _))
+
 -- Computability. The definition is parametrised by something which
 -- could be a modality.
 
@@ -138,14 +179,7 @@ Computable′ :
     ⦃ rA : Rep A Consts ⦄ ⦃ rB : Rep B Consts ⦄ →
   (Set (a ⊔ b) → Set (a ⊔ b)) →
   A ⇀ B → Set (a ⊔ b)
-Computable′ P f =
-  ∃ λ p →
-    Closed p
-      ×
-    (∀ x y → f [ x ]= y → apply p ⌜ x ⌝ ⇓ ⌜ y ⌝)
-      ×
-    (∀ x y → apply p ⌜ x ⌝ ⇓ y →
-       P (∃ λ y′ → f [ x ]= y′ × y ≡ ⌜ y′ ⌝))
+Computable′ P f = ∃ λ p → Implements P p f
 
 -- Computability.
 
