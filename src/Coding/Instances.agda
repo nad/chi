@@ -16,49 +16,49 @@ open import Values         atoms
 
 open χ-atoms atoms
 
-open import Coding atoms as Coding using (Code)
+open import Coding atoms as Coding using (Rep; module Code)
 
 instance
 
-  code-Consts-Exp : ∀ {a} {A : Set a} ⦃ c : Code A Consts ⦄ →
-                    Code A Exp
-  code-Consts-Exp = Coding.code-Consts-Exp
+  rep-Consts-Exp : ∀ {a} {A : Set a} ⦃ r : Rep A Consts ⦄ →
+                   Rep A Exp
+  rep-Consts-Exp = Coding.rep-Consts-Exp
 
-  code-Consts-Closed-exp :
-    ∀ {a} {A : Set a} ⦃ c : Code A Consts ⦄ → Code A Closed-exp
-  code-Consts-Closed-exp = Coding.code-Consts-Closed-exp
+  rep-Consts-Closed-exp :
+    ∀ {a} {A : Set a} ⦃ r : Rep A Consts ⦄ → Rep A Closed-exp
+  rep-Consts-Closed-exp = Coding.rep-Consts-Closed-exp
 
-  code-Bool : Code Bool Consts
-  code-Bool = Coding.code-Bool
+  rep-Bool : Rep Bool Consts
+  rep-Bool = Code.rep Coding.code-Bool
 
-  code-ℕ : Code ℕ Consts
-  code-ℕ = Coding.code-ℕ
+  rep-ℕ : Rep ℕ Consts
+  rep-ℕ = Code.rep Coding.code-ℕ
 
-  code-Var : Code Var Consts
-  code-Var = Coding.code-Var
+  rep-Var : Rep Var Consts
+  rep-Var = Code.rep Coding.code-Var
 
-  code-Const : Code Const Consts
-  code-Const = Coding.code-Const
+  rep-Const : Rep Const Consts
+  rep-Const = Code.rep Coding.code-Const
 
-  code-× : ∀ {a b} {A : Set a} {B : Set b}
-             ⦃ c : Code A Consts ⦄ ⦃ d : Code B Consts ⦄ →
-           Code (A × B) Consts
-  code-× = Coding.code-×
+  rep-× : ∀ {a b} {A : Set a} {B : Set b}
+            ⦃ c : Rep A Consts ⦄ ⦃ d : Rep B Consts ⦄ →
+          Rep (A × B) Consts
+  rep-× = Coding.rep-×
 
-  code-Var⋆ : Code (List Var) Consts
-  code-Var⋆ = Coding.code-Var⋆
+  rep-Var⋆ : Rep (List Var) Consts
+  rep-Var⋆ = Code.rep Coding.code-Var⋆
 
-  code-Exp : Code Exp Consts
-  code-Exp = Coding.code-Exp
+  rep-Exp : Rep Exp Consts
+  rep-Exp = Code.rep Coding.code-Exp
 
-  code-Br : Code Br Consts
-  code-Br = Coding.code-Br
+  rep-Br : Rep Br Consts
+  rep-Br = Code.rep Coding.code-Br
 
-  code-Exps : Code (List Exp) Consts
-  code-Exps = Coding.code-Exps
+  rep-Exps : Rep (List Exp) Consts
+  rep-Exps = Code.rep Coding.code-Exps
 
-  code-Brs : Code (List Br) Consts
-  code-Brs = Coding.code-Brs
+  rep-Brs : Rep (List Br) Consts
+  rep-Brs = Code.rep Coding.code-Brs
 
-  code-Closed : Code Closed-exp Consts
-  code-Closed = Coding.code-Closed
+  rep-Closed : Rep Closed-exp Consts
+  rep-Closed = Code.rep Coding.code-Closed

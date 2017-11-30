@@ -14,7 +14,7 @@ open import Prelude hiding (const; Decidable)
 open import Atom
 
 open import Chi            χ-ℕ-atoms
-open import Coding         χ-ℕ-atoms hiding (id)
+open import Coding         χ-ℕ-atoms
 open import Free-variables χ-ℕ-atoms
 
 import Coding.Instances.Nat
@@ -25,9 +25,9 @@ import Coding.Instances.Nat
 module Rices-theorem
   (eval : Exp)
   (cl-eval : Closed eval)
-  (eval₁ : ∀ p v → Closed p → p ⇓ v → apply eval (code p) ⇓ code v)
-  (eval₂ : ∀ p v → Closed p → apply eval (code p) ⇓ v →
-           ∃ λ v′ → p ⇓ v′ × v ≡ code v′)
+  (eval₁ : ∀ p v → Closed p → p ⇓ v → apply eval ⌜ p ⌝ ⇓ ⌜ v ⌝)
+  (eval₂ : ∀ p v → Closed p → apply eval ⌜ p ⌝ ⇓ v →
+           ∃ λ v′ → p ⇓ v′ × v ≡ ⌜ v′ ⌝)
   where
 
 open import H-level.Truncation.Propositional as Trunc hiding (rec)
@@ -94,7 +94,7 @@ module _
 
     module Helper
       (p : Exp) (cl-p : Closed p)
-      (hyp : ∀ e b → P′ [ e ]= b → apply p (code e) ⇓ code b)
+      (hyp : ∀ e b → P′ [ e ]= b → apply p ⌜ e ⌝ ⇓ ⌜ b ⌝)
       where
 
       arg : Closed-exp → Closed-exp → Closed-exp
@@ -114,11 +114,11 @@ module _
 
       coded-arg : Closed-exp → Exp
       coded-arg e =
-        const c-lambda (code v-x ∷
+        const c-lambda (⌜ v-x ⌝ ∷
           const c-apply (
-            code (Exp.lambda v-underscore (apply (proj₁ e) (var v-x))) ∷
+            ⌜ Exp.lambda v-underscore (apply (proj₁ e) (var v-x)) ⌝ ∷
             const c-apply (
-              code eval ∷
+              ⌜ eval ⌝ ∷
               apply internal-code (var v-p) ∷
               []) ∷ []) ∷ [])
 
@@ -135,7 +135,7 @@ module _
            Closed→Closed′ loop-closed)
 
       ⌜const-loop⌝ : Closed-exp
-      ⌜const-loop⌝ = code (proj₁ const-loop)
+      ⌜const-loop⌝ = ⌜ proj₁ const-loop ⌝
 
       halts : Exp
       halts =
@@ -146,19 +146,19 @@ module _
         Closed′-closed-under-const λ where
           _ (inj₂ (inj₂ ()))
           _ (inj₁ refl) →
-            Closed→Closed′ (code-closed v-x)
+            Closed→Closed′ (rep-closed v-x)
           _ (inj₂ (inj₁ refl)) →
             Closed′-closed-under-const λ where
               _ (inj₂ (inj₂ ()))
               _ (inj₁ refl) →
                 Closed→Closed′ $
-                code-closed (Exp.lambda v-underscore (apply (proj₁ e) (var v-x)))
+                rep-closed (Exp.lambda v-underscore (apply (proj₁ e) (var v-x)))
               _ (inj₂ (inj₁ refl)) →
                 Closed′-closed-under-const λ where
                   _ (inj₂ (inj₂ ()))
                   _ (inj₁ refl) →
                     Closed→Closed′ $
-                    code-closed eval
+                    rep-closed eval
                   _ (inj₂ (inj₁ refl)) →
                     Closed′-closed-under-apply
                       (Closed→Closed′ internal-code-closed)
@@ -183,66 +183,63 @@ module _
                  (cl-coded-arg e∉)
              (inj₂ (inj₂ ())))
 
-      coded-arg⇓code-arg :
+      coded-arg⇓⌜arg⌝ :
         (e p : Closed-exp) →
-        coded-arg e [ v-p ← code p ] ⇓ code (arg e (code p))
-      coded-arg⇓code-arg e p =
-        coded-arg e [ v-p ← code p ]                                      ⟶⟨⟩
+        coded-arg e [ v-p ← ⌜ p ⌝ ] ⇓ ⌜ arg e ⌜ p ⌝ ⌝
+      coded-arg⇓⌜arg⌝ e p =
+        coded-arg e [ v-p ← ⌜ p ⌝ ]                                    ⟶⟨⟩
 
-        const c-lambda (code v-x ∷
+        const c-lambda (⌜ v-x ⌝ ∷
           const c-apply (
-            code (Exp.lambda v-underscore
-                    (apply (proj₁ e) (var v-x))) [ v-p ← code p ] ∷
+            ⌜ Exp.lambda v-underscore (apply (proj₁ e) (var v-x)) ⌝
+              [ v-p ← ⌜ p ⌝ ] ∷
             const c-apply (
-              code eval [ v-p ← code p ] ∷
-              apply (internal-code [ v-p ← code p ]) (code p) ∷
-                []) ∷ []) ∷ [])                                            ≡⟨ cong (λ e → const _ (_ ∷ const _ (const _ (_ ∷
-                                                                                            const _ (e ∷ _) ∷ _) ∷ _) ∷ _))
-                                                                                   (subst-code (proj₁ e)) ⟩⟶
-        const c-lambda (code v-x ∷
+              ⌜ eval ⌝ [ v-p ← ⌜ p ⌝ ] ∷
+              apply (internal-code [ v-p ← ⌜ p ⌝ ]) ⌜ p ⌝ ∷
+                []) ∷ []) ∷ [])                                        ≡⟨ cong (λ e → const _ (_ ∷ const _ (const _ (_ ∷
+                                                                                        const _ (e ∷ _) ∷ _) ∷ _) ∷ _))
+                                                                               (subst-rep (proj₁ e)) ⟩⟶
+        const c-lambda (⌜ v-x ⌝ ∷
           const c-apply (
-            code (Exp.lambda v-underscore (apply (proj₁ e) (var v-x))) ∷
+            ⌜ Exp.lambda v-underscore (apply (proj₁ e) (var v-x)) ⌝ ∷
             const c-apply (
-              code eval [ v-p ← code p ] ∷
-              apply (internal-code [ v-p ← code p ]) (code p) ∷
-                []) ∷ []) ∷ [])                                            ≡⟨ cong (λ e → const _ (_ ∷ const _ (_ ∷ const _ (e ∷
-                                                                                            apply (internal-code [ _ ← _ ]) _ ∷ _) ∷ _) ∷ _))
-                                                                                   (subst-code eval) ⟩⟶
-        const c-lambda (code v-x ∷
+              ⌜ eval ⌝ [ v-p ← ⌜ p ⌝ ] ∷
+              apply (internal-code [ v-p ← ⌜ p ⌝ ]) ⌜ p ⌝ ∷
+                []) ∷ []) ∷ [])                                        ≡⟨ cong (λ e → const _ (_ ∷ const _ (_ ∷ const _ (e ∷
+                                                                                        apply (internal-code [ _ ← _ ]) _ ∷ _) ∷ _) ∷ _))
+                                                                               (subst-rep eval) ⟩⟶
+        const c-lambda (⌜ v-x ⌝ ∷
           const c-apply (
-            code (Exp.lambda v-underscore
-                    (apply (proj₁ e) (var v-x))) ∷
+            ⌜ Exp.lambda v-underscore (apply (proj₁ e) (var v-x)) ⌝ ∷
             const c-apply (
-              code eval ∷
-              apply (internal-code [ v-p ← code p ]) (code p) ∷
-                []) ∷ []) ∷ [])                                            ≡⟨ cong (λ e′ → const _ (_ ∷ const _ (_ ∷ const _ (_ ∷
-                                                                                             apply e′ (code p) ∷ _) ∷ _) ∷ _))
-                                                                                   (subst-closed _ _ internal-code-closed) ⟩⟶
-        const c-lambda (code v-x ∷
+              ⌜ eval ⌝ ∷
+              apply (internal-code [ v-p ← ⌜ p ⌝ ]) ⌜ p ⌝ ∷
+                []) ∷ []) ∷ [])                                        ≡⟨ cong (λ e′ → const _ (_ ∷ const _ (_ ∷ const _ (_ ∷
+                                                                                         apply e′ ⌜ p ⌝ ∷ _) ∷ _) ∷ _))
+                                                                               (subst-closed _ _ internal-code-closed) ⟩⟶
+        const c-lambda (⌜ v-x ⌝ ∷
           const c-apply (
-            code (Exp.lambda v-underscore
-                    (apply (proj₁ e) (var v-x))) ∷
+            ⌜ Exp.lambda v-underscore (apply (proj₁ e) (var v-x)) ⌝ ∷
             const c-apply (
-              code eval ∷
-              apply internal-code (code p) ∷
-                []) ∷ []) ∷ [])                                            ⟶⟨ []⇓ (const (there (here (const (there (here
-                                                                                     (const (there (here ∙)))))))))
-                                                                                  (internal-code-correct (proj₁ p)) ⟩
-        const c-lambda (code v-x ∷
+              ⌜ eval ⌝ ∷
+              apply internal-code ⌜ p ⌝ ∷
+                []) ∷ []) ∷ [])                                        ⟶⟨ []⇓ (const (there (here (const (there (here
+                                                                                 (const (there (here ∙)))))))))
+                                                                              (internal-code-correct (proj₁ p)) ⟩
+        const c-lambda (⌜ v-x ⌝ ∷
           const c-apply (
-            code (Exp.lambda v-underscore
-                    (apply (proj₁ e) (var v-x))) ∷
+            ⌜ Exp.lambda v-underscore (apply (proj₁ e) (var v-x)) ⌝ ∷
             const c-apply (
-              code eval ∷
-              code (code p ⦂ Exp) ∷
-                []) ∷ []) ∷ [])                                            ⟶⟨⟩
+              ⌜ eval ⌝ ∷
+              ⌜ ⌜ p ⌝ ⦂ Exp ⌝ ∷
+                []) ∷ []) ∷ [])                                        ⟶⟨⟩
 
-        code (arg e (code p))                                              ■⟨ code-value (arg e (code p)) ⟩
+        ⌜ arg e ⌜ p ⌝ ⌝                                                ■⟨ rep-value (arg e ⌜ p ⌝) ⟩
 
       arg-lemma-⇓ :
         (e p : Closed-exp) →
         Terminates (proj₁ p) →
-        Pointwise-semantically-equivalent (arg e (code p)) e
+        Pointwise-semantically-equivalent (arg e ⌜ p ⌝) e
       arg-lemma-⇓ (e , cl-e) (p , cl-p) (vp , p⇓vp)
                   (e′ , cl-e′) (v , _) = record
         { to = λ where
@@ -266,18 +263,18 @@ module _
         ; from = λ where
             (apply {v₂ = ve′} q₁ q₂ q₃) →
 
-              proj₁ (apply-cl (arg (e , cl-e) (code p)) (e′ , cl-e′))    ⟶⟨ apply lambda q₂ ⟩
+              proj₁ (apply-cl (arg (e , cl-e) ⌜ p ⌝) (e′ , cl-e′))       ⟶⟨ apply lambda q₂ ⟩
 
               apply (lambda v-underscore (apply (e [ v-x ← ve′ ]) ve′))
-                    (apply eval (code p) [ v-x ← ve′ ])                  ≡⟨ by (subst-closed _ _ cl-e) ⟩⟶
+                    (apply eval ⌜ p ⌝ [ v-x ← ve′ ])                     ≡⟨ by (subst-closed _ _ cl-e) ⟩⟶
 
               apply (lambda v-underscore (apply e ve′))
-                    (apply eval (code p) [ v-x ← ve′ ])                  ≡⟨ by (subst-closed _ _ $
-                                                                                  Closed′-closed-under-apply cl-eval (code-closed p)) ⟩⟶
+                    (apply eval ⌜ p ⌝ [ v-x ← ve′ ])                     ≡⟨ by (subst-closed _ _ $
+                                                                                     Closed′-closed-under-apply cl-eval (rep-closed p)) ⟩⟶
               apply (lambda v-underscore (apply e ve′))
-                    (apply eval (code p))                                ⟶⟨ apply lambda (eval₁ p _ cl-p p⇓vp) ⟩
+                    (apply eval ⌜ p ⌝)                                   ⟶⟨ apply lambda (eval₁ p _ cl-p p⇓vp) ⟩
 
-              apply e ve′ [ v-underscore ← code vp ]                     ≡⟨ by (subst-closed _ _ $
+              apply e ve′ [ v-underscore ← ⌜ vp ⌝ ]                      ≡⟨ by (subst-closed _ _ $
                                                                                   Closed′-closed-under-apply cl-e (closed⇓closed q₂ cl-e′)) ⟩⟶
 
               apply e ve′                                                ⇓⟨ apply q₁ (values-compute-to-themselves (⇓-Value q₂)) q₃ ⟩■
@@ -288,31 +285,31 @@ module _
       arg-lemma-⇓-true :
         (e : Closed-exp) →
         Terminates (proj₁ e) →
-        P′ [ arg e∈ (code e) ]= true
-      arg-lemma-⇓-true e e⇓ =        $⟨ Pe∈ ⟩
-        P′ [ e∈ ]= true               ↝⟨ resp _ _ (symmetric (arg e∈ (code e)) e∈ (arg-lemma-⇓ e∈ e e⇓)) ⟩□
-        P′ [ arg e∈ (code e) ]= true  □
+        P′ [ arg e∈ ⌜ e ⌝ ]= true
+      arg-lemma-⇓-true e e⇓ =      $⟨ Pe∈ ⟩
+        P′ [ e∈ ]= true            ↝⟨ resp _ _ (symmetric (arg e∈ ⌜ e ⌝) e∈ (arg-lemma-⇓ e∈ e e⇓)) ⟩□
+        P′ [ arg e∈ ⌜ e ⌝ ]= true  □
 
       arg-lemma-⇓-false :
         (e : Closed-exp) →
         Terminates (proj₁ e) →
-        P′ [ arg e∉ (code e) ]= false
-      arg-lemma-⇓-false e e⇓ =        $⟨ ¬Pe∉ ⟩
-        P′ [ e∉ ]= false               ↝⟨ resp _ _ (symmetric (arg e∉ (code e)) e∉ (arg-lemma-⇓ e∉ e e⇓)) ⟩□
-        P′ [ arg e∉ (code e) ]= false  □
+        P′ [ arg e∉ ⌜ e ⌝ ]= false
+      arg-lemma-⇓-false e e⇓ =      $⟨ ¬Pe∉ ⟩
+        P′ [ e∉ ]= false            ↝⟨ resp _ _ (symmetric (arg e∉ ⌜ e ⌝) e∉ (arg-lemma-⇓ e∉ e e⇓)) ⟩□
+        P′ [ arg e∉ ⌜ e ⌝ ]= false  □
 
       arg-lemma-¬⇓′ :
         (e p : Closed-exp) →
         ¬ Terminates (proj₁ p) →
-        Pointwise-semantically-equivalent (arg e (code p)) const-loop
+        Pointwise-semantically-equivalent (arg e ⌜ p ⌝) const-loop
       arg-lemma-¬⇓′ (e , cl-e) (p , cl-p) ¬p⇓
                     (e′ , cl-e′) (v , _) = record
         { to = λ where
             (apply {v₂ = ve′} lambda _ (apply {v₂ = vp} _ q _)) →
               ⊥-elim $ ¬p⇓ $ Σ-map id proj₁ $
                 eval₂ p vp cl-p (
-                  apply eval (code p)                ≡⟨ by (subst-closed _ _ $ Closed′-closed-under-apply cl-eval (code-closed p)) ⟩⟶
-                  apply eval (code p) [ v-x ← ve′ ]  ⇓⟨ q ⟩■
+                  apply eval ⌜ p ⌝                ≡⟨ by (subst-closed _ _ $ Closed′-closed-under-apply cl-eval (rep-closed p)) ⟩⟶
+                  apply eval ⌜ p ⌝ [ v-x ← ve′ ]  ⇓⟨ q ⟩■
                   vp)
         ; from = λ where
             (apply lambda _ loop⇓) → ⊥-elim $ ¬loop⇓ (_ , loop⇓)
@@ -322,14 +319,14 @@ module _
         ∀ {b} (e₀ e : Closed-exp) →
         ¬ Terminates (proj₁ e) →
         P′ [ const-loop ]= b →
-        P′ [ arg e₀ (code e) ]= b
+        P′ [ arg e₀ ⌜ e ⌝ ]= b
       arg-lemma-¬⇓ {b} e₀ e ¬e⇓ =
-        P′ [ const-loop ]= b       ↝⟨ resp _ _ (symmetric (arg e₀ (code e)) const-loop (arg-lemma-¬⇓′ e₀ e ¬e⇓)) ⟩□
-        P′ [ arg e₀ (code e) ]= b  □
+        P′ [ const-loop ]= b    ↝⟨ resp _ _ (symmetric (arg e₀ ⌜ e ⌝) const-loop (arg-lemma-¬⇓′ e₀ e ¬e⇓)) ⟩□
+        P′ [ arg e₀ ⌜ e ⌝ ]= b  □
 
       ∃Bool : Set
       ∃Bool = ∃ λ (b : Bool) →
-                apply p (proj₁ ⌜const-loop⌝) ⇓ code b
+                apply p (proj₁ ⌜const-loop⌝) ⇓ ⌜ b ⌝
                   ×
                 P′ [ const-loop ]= b
 
@@ -356,76 +353,66 @@ module _
         ∃Bool →
         (e : Closed-exp) →
         (P′ [ const-loop ]= false →
-         apply p (code (arg e∈ (code e))) ⇓ v) →
+         apply p (⌜ arg e∈ ⌜ e ⌝ ⌝) ⇓ v) →
         (P′ [ const-loop ]= true →
-         χ.not (apply p (code (arg e∉ (code e)))) ⇓ v) →
-        apply halts (code e) ⇓ v
+         χ.not (apply p (⌜ arg e∉ ⌜ e ⌝ ⌝)) ⇓ v) →
+        apply halts ⌜ e ⌝ ⇓ v
       halts⇓-lemma {v} ∃bool e e∈⇓v e∉⇓v =
-        apply halts (code e)                                               ⟶⟨ apply lambda (code⇓code e) ⟩
+        apply halts ⌜ e ⌝                                                 ⟶⟨ apply lambda (rep⇓rep e) ⟩
 
-        case (apply (p [ v-p ← code e ]) (proj₁ ⌜const-loop⌝))
-          (branches [ v-p ← code e ]B⋆)                                    ≡⟨ by (subst-closed _ _ cl-p) ⟩⟶
+        case (apply (p [ v-p ← ⌜ e ⌝ ]) (proj₁ ⌜const-loop⌝))
+          (branches [ v-p ← ⌜ e ⌝ ]B⋆)                                    ≡⟨ by (subst-closed _ _ cl-p) ⟩⟶
 
-        case (apply p (proj₁ ⌜const-loop⌝)) (branches [ v-p ← code e ]B⋆)  ⇓⟨ lemma ∃bool ⟩■
+        case (apply p (proj₁ ⌜const-loop⌝)) (branches [ v-p ← ⌜ e ⌝ ]B⋆)  ⇓⟨ lemma ∃bool ⟩■
 
         v
         where
         lemma : ∃Bool → _
         lemma (true , p⌜const-loop⌝⇓true , P-const-loop) =
-          case (apply p (proj₁ ⌜const-loop⌝))
-            (branches [ v-p ← code e ]B⋆)                  ⟶⟨ case p⌜const-loop⌝⇓true (there (λ ()) here) [] ⟩
-
-          χ.not (apply p (coded-arg e∉) [ v-p ← code e ])  ≡⟨ cong (λ e → χ.not (apply e _)) (subst-closed _ _ cl-p) ⟩⟶
-
-          χ.not (apply p (coded-arg e∉ [ v-p ← code e ]))  ⟶⟨ []⇓ (case (apply→ ∙)) (coded-arg⇓code-arg e∉ e) ⟩
-
-          χ.not (apply p (code (arg e∉ (code e))))         ⇓⟨ e∉⇓v P-const-loop ⟩■
-
+          case (apply p (proj₁ ⌜const-loop⌝)) (branches [ v-p ← ⌜ e ⌝ ]B⋆)  ⟶⟨ case p⌜const-loop⌝⇓true (there (λ ()) here) [] ⟩
+          χ.not (apply p (coded-arg e∉) [ v-p ← ⌜ e ⌝ ])                    ≡⟨ cong (λ e → χ.not (apply e _)) (subst-closed _ _ cl-p) ⟩⟶
+          χ.not (apply p (coded-arg e∉ [ v-p ← ⌜ e ⌝ ]))                    ⟶⟨ []⇓ (case (apply→ ∙)) (coded-arg⇓⌜arg⌝ e∉ e) ⟩
+          χ.not (apply p (⌜ arg e∉ ⌜ e ⌝ ⌝))                                ⇓⟨ e∉⇓v P-const-loop ⟩■
           v
 
         lemma (false , p⌜const-loop⌝⇓false , ¬P-const-loop) =
-          case (apply p (proj₁ ⌜const-loop⌝))
-            (branches [ v-p ← code e ]B⋆)          ⟶⟨ case p⌜const-loop⌝⇓false here [] ⟩
-
-          apply p (coded-arg e∈) [ v-p ← code e ]  ≡⟨ cong (λ e → apply e _) (subst-closed _ _ cl-p) ⟩⟶
-
-          apply p (coded-arg e∈ [ v-p ← code e ])  ⟶⟨ []⇓ (apply→ ∙) (coded-arg⇓code-arg e∈ e) ⟩
-
-          apply p (code (arg e∈ (code e)))         ⇓⟨ e∈⇓v ¬P-const-loop ⟩■
-
+          case (apply p (proj₁ ⌜const-loop⌝)) (branches [ v-p ← ⌜ e ⌝ ]B⋆)  ⟶⟨ case p⌜const-loop⌝⇓false here [] ⟩
+          apply p (coded-arg e∈) [ v-p ← ⌜ e ⌝ ]                            ≡⟨ cong (λ e → apply e _) (subst-closed _ _ cl-p) ⟩⟶
+          apply p (coded-arg e∈ [ v-p ← ⌜ e ⌝ ])                            ⟶⟨ []⇓ (apply→ ∙) (coded-arg⇓⌜arg⌝ e∈ e) ⟩
+          apply p (⌜ arg e∈ ⌜ e ⌝ ⌝)                                        ⇓⟨ e∈⇓v ¬P-const-loop ⟩■
           v
 
       ⇓-lemma :
         ∃Bool →
         (e : Closed-exp) →
         Terminates (proj₁ e) →
-        apply halts (code e) ⇓ code (true ⦂ Bool)
+        apply halts ⌜ e ⌝ ⇓ ⌜ true ⦂ Bool ⌝
       ⇓-lemma ∃bool e e⇓ = halts⇓-lemma ∃bool e
 
           (λ _ →
-             apply p (code (arg e∈ (code e)))  ⇓⟨ hyp _ _ (arg-lemma-⇓-true e e⇓) ⟩■
-             code (true ⦂ Bool))
+             apply p (⌜ arg e∈ ⌜ e ⌝ ⌝)  ⇓⟨ hyp _ _ (arg-lemma-⇓-true e e⇓) ⟩■
+             ⌜ true ⦂ Bool ⌝)
 
           (λ _ →
-             χ.not (apply p (code (arg e∉ (code e))))  ⟶⟨ []⇓ (case ∙) (hyp _ _ (arg-lemma-⇓-false e e⇓)) ⟩
-             χ.not (code (false ⦂ Bool))               ⇓⟨ not-correct false (code⇓code (false ⦂ Bool)) ⟩■
-             code (true ⦂ Bool))
+             χ.not (apply p (⌜ arg e∉ ⌜ e ⌝ ⌝))  ⟶⟨ []⇓ (case ∙) (hyp _ _ (arg-lemma-⇓-false e e⇓)) ⟩
+             χ.not ⌜ false ⦂ Bool ⌝              ⇓⟨ not-correct false (rep⇓rep (false ⦂ Bool)) ⟩■
+             ⌜ true ⦂ Bool ⌝)
 
       ¬⇓-lemma :
         ∃Bool →
         (e : Closed-exp) →
         ¬ Terminates (proj₁ e) →
-        apply halts (code e) ⇓ code (false ⦂ Bool)
+        apply halts ⌜ e ⌝ ⇓ ⌜ false ⦂ Bool ⌝
       ¬⇓-lemma ∃bool e ¬e⇓ = halts⇓-lemma ∃bool e
 
           (λ ¬P-const-loop →
-             apply p (code (arg e∈ (code e)))  ⇓⟨ hyp _ _ (arg-lemma-¬⇓ e∈ e ¬e⇓ ¬P-const-loop) ⟩■
-             code (false ⦂ Bool))
+             apply p (⌜ arg e∈ ⌜ e ⌝ ⌝)  ⇓⟨ hyp _ _ (arg-lemma-¬⇓ e∈ e ¬e⇓ ¬P-const-loop) ⟩■
+             ⌜ false ⦂ Bool ⌝)
 
           (λ P-const-loop →
-             χ.not (apply p (code (arg e∉ (code e))))  ⟶⟨ []⇓ (case ∙) (hyp _ _ (arg-lemma-¬⇓ e∉ e ¬e⇓ P-const-loop)) ⟩
-             χ.not (code (true ⦂ Bool))                ⇓⟨ not-correct true (code⇓code (true ⦂ Bool)) ⟩■
-             code (false ⦂ Bool))
+             χ.not (apply p (⌜ arg e∉ ⌜ e ⌝ ⌝))  ⟶⟨ []⇓ (case ∙) (hyp _ _ (arg-lemma-¬⇓ e∉ e ¬e⇓ P-const-loop)) ⟩
+             χ.not ⌜ true ⦂ Bool ⌝               ⇓⟨ not-correct true (rep⇓rep (true ⦂ Bool)) ⟩■
+             ⌜ false ⦂ Bool ⌝)
 
   rice's-theorem : ¬ Decidable P
   rice's-theorem (p , cl-p , hyp , _) = ¬¬¬⊥ $
@@ -471,19 +458,19 @@ rice's-theorem′ P e∈ Pe∈ e∉ ¬Pe∉ resp =
 Equal-to-suc : Closed-exp →Bool
 Equal-to-suc =
   as-function-to-Bool₁ λ e →
-    (n : ℕ) → apply (proj₁ e) (code n) ⇓ code (suc n)
+    (n : ℕ) → apply (proj₁ e) ⌜ n ⌝ ⇓ ⌜ suc n ⌝
 
 equal-to-suc-not-decidable : ¬ Decidable Equal-to-suc
 equal-to-suc-not-decidable =
   rice's-theorem′
     _
     (s , from-⊎ (closed? s))
-    (λ n → apply lambda (code⇓code n) (code⇓code (suc n)))
+    (λ n → apply lambda (rep⇓rep n) (rep⇓rep (suc n)))
     (z , from-⊎ (closed? z))
     (λ z⌜n⌝⇓ → case z⌜n⌝⇓ 0 of λ { (apply () _ _) })
     (λ e₁ e₂ e₁∼e₂ Pe₁ n →
-       apply (proj₁ e₂) (code n)  ⇓⟨ _⇔_.to (e₁∼e₂ (code n) (code (suc n))) (Pe₁ n) ⟩■
-       code (suc n))
+       apply (proj₁ e₂) ⌜ n ⌝  ⇓⟨ _⇔_.to (e₁∼e₂ ⌜ n ⌝ ⌜ suc n ⌝) (Pe₁ n) ⟩■
+       ⌜ suc n ⌝)
   where
   z = const c-zero []
   s = lambda v-n (const c-suc (var v-n ∷ []))
@@ -494,16 +481,16 @@ equal-to-suc-not-decidable =
 
 Is-constant : Closed-exp →Bool
 Is-constant = as-function-to-Bool₁ λ e →
-  ∃ λ v → (n : ℕ) → apply (proj₁ e) (code n) ⇓ v
+  ∃ λ v → (n : ℕ) → apply (proj₁ e) ⌜ n ⌝ ⇓ v
 
 is-constant-not-decidable : ¬ Decidable Is-constant
 is-constant-not-decidable =
   rice's-theorem′
     _
     (c , from-⊎ (closed? c))
-    ((code 0 ⦂ Exp) , λ n →
-       apply c (code n)  ⇓⟨ apply lambda (code⇓code n) (const []) ⟩■
-       code 0)
+    ((⌜ 0 ⌝ ⦂ Exp) , λ n →
+       apply c ⌜ n ⌝  ⇓⟨ apply lambda (rep⇓rep n) (const []) ⟩■
+       ⌜ 0 ⌝)
     (f , from-⊎ (closed? f))
     not-constant
     (λ e₁ e₂ e₁∼e₂ → Σ-map id λ {v} ⇓v n →
@@ -511,30 +498,30 @@ is-constant-not-decidable =
            v-closed = closed⇓closed (⇓v n) $
                         Closed′-closed-under-apply
                           (proj₂ e₁)
-                          (code-closed n)
+                          (rep-closed n)
        in
-       apply (proj₁ e₂) (code n)  ⇓⟨ _⇔_.to (e₁∼e₂ (code n) (v , v-closed)) (⇓v n) ⟩■
+       apply (proj₁ e₂) ⌜ n ⌝  ⇓⟨ _⇔_.to (e₁∼e₂ ⌜ n ⌝ (v , v-closed)) (⇓v n) ⟩■
        v)
   where
-  c = lambda v-underscore (code 0)
+  c = lambda v-underscore ⌜ 0 ⌝
   f = lambda v-n (var v-n)
 
-  not-constant : ¬ ∃ λ v → (n : ℕ) → apply f (code n) ⇓ v
+  not-constant : ¬ ∃ λ v → (n : ℕ) → apply f ⌜ n ⌝ ⇓ v
   not-constant (v  , constant) = impossible
     where
-    v≡0 : v ≡ code 0
+    v≡0 : v ≡ ⌜ 0 ⌝
     v≡0 with constant 0
     ... | apply lambda (const []) (const []) = refl
 
-    v≡1 : v ≡ code 1
+    v≡1 : v ≡ ⌜ 1 ⌝
     v≡1 with constant 1
     ... | apply lambda (const (const [] ∷ [])) (const (const [] ∷ [])) =
       refl
 
     0≡1 =
-      code 0  ≡⟨ by v≡0 ⟩
-      v       ≡⟨ by v≡1 ⟩∎
-      code 1  ∎
+      ⌜ 0 ⌝  ≡⟨ by v≡0 ⟩
+      v      ≡⟨ by v≡1 ⟩∎
+      ⌜ 1 ⌝  ∎
 
     impossible : ⊥
     impossible with 0≡1

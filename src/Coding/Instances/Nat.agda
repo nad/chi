@@ -12,4 +12,4 @@ open import Atom
 -- by the code-ℕ instance.
 
 open import Coding.Instances χ-ℕ-atoms public
-  hiding (code-Var; code-Const)
+  hiding (rep-Var; rep-Const)

@@ -25,7 +25,7 @@ open import H-level.Closure equality-with-J
 open import Monad equality-with-J
 
 open import Chi            atoms
-open import Coding         atoms hiding (id)
+open import Coding         atoms
 import Coding.Instances    atoms
 open import Deterministic  atoms
 open import Free-variables atoms
@@ -135,23 +135,23 @@ post-apply _ _ g[a]=b = _ , g[a]=b , lift refl
 
 Computable′ :
   ∀ {a b} {A : Set a} {B : Set b}
-    ⦃ cA : Code A Consts ⦄ ⦃ cB : Code B Consts ⦄ →
+    ⦃ rA : Rep A Consts ⦄ ⦃ rB : Rep B Consts ⦄ →
   (Set (a ⊔ b) → Set (a ⊔ b)) →
   A ⇀ B → Set (a ⊔ b)
 Computable′ P f =
   ∃ λ p →
     Closed p
       ×
-    (∀ x y → f [ x ]= y → apply p (code x) ⇓ code y)
+    (∀ x y → f [ x ]= y → apply p ⌜ x ⌝ ⇓ ⌜ y ⌝)
       ×
-    (∀ x y → apply p (code x) ⇓ y →
-       P (∃ λ y′ → f [ x ]= y′ × y ≡ code y′))
+    (∀ x y → apply p ⌜ x ⌝ ⇓ y →
+       P (∃ λ y′ → f [ x ]= y′ × y ≡ ⌜ y′ ⌝))
 
 -- Computability.
 
 Computable :
   ∀ {a b} {A : Set a} {B : Set b}
-    ⦃ cA : Code A Consts ⦄ ⦃ cB : Code B Consts ⦄ →
+    ⦃ rA : Rep A Consts ⦄ ⦃ rB : Rep B Consts ⦄ →
   A ⇀ B → Set (a ⊔ b)
 Computable = Computable′ id
 
@@ -160,7 +160,7 @@ Computable = Computable′ id
 
 total→almost-computable→computable :
   ∀ {a b} {A : Set a} {B : Set b}
-    ⦃ cA : Code A Consts ⦄ ⦃ cB : Code B Consts ⦄
+    ⦃ rA : Rep A Consts ⦄ ⦃ rB : Rep B Consts ⦄
   (P : Set (a ⊔ b) → Set (a ⊔ b)) →
   (∀ {X Y} → (X → Y) → P X → P Y) →
   (f : A ⇀ B) →
@@ -168,7 +168,7 @@ total→almost-computable→computable :
   (∃ λ p →
      Closed p
        ×
-     (∀ x y → f [ x ]= y → apply p (code x) ⇓ code y)) →
+     (∀ x y → f [ x ]= y → apply p ⌜ x ⌝ ⇓ ⌜ y ⌝)) →
   Computable′ P f
 total→almost-computable→computable P map f total (p , cl-p , hyp) =
     p
@@ -193,18 +193,18 @@ semantics = record
 
 Computable″ :
   ∀ {ℓ} {A B : Set ℓ}
-    ⦃ cA : Code A Consts ⦄ ⦃ cB : Code B Consts ⦄ →
+    ⦃ rA : Rep A Consts ⦄ ⦃ rB : Rep B Consts ⦄ →
   A ⇀ B → Set ℓ
 Computable″ f =
   ∃ λ (p : Closed-exp) → ∀ a →
-    ∀ q → semantics [ apply-cl p (code a) ]= q
+    ∀ q → semantics [ apply-cl p ⌜ a ⌝ ]= q
             ⇔
-          as-partial Closed-exp-set code ∘ f [ a ]= q
+          as-partial Closed-exp-set ⌜_⌝ ∘ f [ a ]= q
 
 -- The two definitions of computability are logically equivalent.
 
 Computable⇔Computable″ :
-  ∀ {ℓ} {A B : Set ℓ} ⦃ cA : Code A Consts ⦄ ⦃ cB : Code B Consts ⦄ →
+  ∀ {ℓ} {A B : Set ℓ} ⦃ rA : Rep A Consts ⦄ ⦃ rB : Rep B Consts ⦄ →
   (f : A ⇀ B) →
   Computable f ⇔ Computable″ f
 Computable⇔Computable″ f = record { to = to; from = from }
@@ -218,23 +218,23 @@ Computable⇔Computable″ f = record { to = to; from = from }
                  P.∘
                hyp₂ a q
       ; from = λ { (b , f[a]=b , ⌜b⌝≡q) →
-                   apply p (code a)  ⇓⟨ hyp₁ a b f[a]=b ⟩
-                   code b            ≡⟨ cong proj₁ (lower ⌜b⌝≡q) ⟩⟶
-                   q                 ■⟨ subst Value (cong proj₁ (lower ⌜b⌝≡q)) (code-value b) ⟩ }
+                   apply p ⌜ a ⌝  ⇓⟨ hyp₁ a b f[a]=b ⟩
+                   ⌜ b ⌝          ≡⟨ cong proj₁ (lower ⌜b⌝≡q) ⟩⟶
+                   q              ■⟨ subst Value (cong proj₁ (lower ⌜b⌝≡q)) (rep-value b) ⟩ }
       } }
 
   from : Computable″ f → Computable f
   from ((p , cl) , hyp) =
     p , cl ,
     (λ a b f[a]=b →
-       apply p (code a)  ⇓⟨ _⇔_.from (hyp a (code b)) (post-apply f Closed-exp-set f[a]=b) ⟩■
-       code b) ,
+       apply p ⌜ a ⌝  ⇓⟨ _⇔_.from (hyp a ⌜ b ⌝) (post-apply f Closed-exp-set f[a]=b) ⟩■
+       ⌜ b ⌝) ,
     λ a q p⌜a⌝⇓q →
       let cl-q : Closed q
           cl-q = closed⇓closed p⌜a⌝⇓q
                    (Closed′-closed-under-apply
                       (Closed→Closed′ cl)
-                      (Closed→Closed′ (code-closed a)))
+                      (Closed→Closed′ (rep-closed a)))
       in
       Σ-map id (Σ-map id (cong proj₁ P.∘ sym P.∘ lower))
         (_⇔_.to (hyp a (q , cl-q)) p⌜a⌝⇓q)
@@ -243,13 +243,13 @@ Computable⇔Computable″ f = record { to = to; from = from }
 
 Computable‴ :
   ∀ {a b} {A : Set a} {B : Set b}
-    ⦃ cA : Code A Consts ⦄ ⦃ cB : Code B Consts ⦄ →
+    ⦃ rA : Rep A Consts ⦄ ⦃ rB : Rep B Consts ⦄ →
   A ⇀ B → Set (a ⊔ b)
 Computable‴ f =
   ∃ λ (p : Closed-exp) →
     ∀ a →
       ∃ λ b →
-        apply (proj₁ p) (code a) ⇓ code b
+        apply (proj₁ p) ⌜ a ⌝ ⇓ ⌜ b ⌝
           ×
         f [ a ]= b
 
@@ -258,7 +258,7 @@ Computable‴ f =
 
 Computable‴→Computable :
   ∀ {a b} {A : Set a} {B : Set b}
-    ⦃ cA : Code A Consts ⦄ ⦃ cB : Code B Consts ⦄ →
+    ⦃ rA : Rep A Consts ⦄ ⦃ rB : Rep B Consts ⦄ →
   (f : A ⇀ B) →
   Computable‴ f → Computable f
 Computable‴→Computable f ((p , cl-p) , hyp) =
@@ -266,9 +266,9 @@ Computable‴→Computable f ((p , cl-p) , hyp) =
   , cl-p
   , (λ a b f[a]=b → case hyp a of λ where
        (b′ , p⌜a⌝⇓⌜b′⌝ , f[a]=b′) →
-         apply p (code a)  ⇓⟨ p⌜a⌝⇓⌜b′⌝ ⟩
-         code b′           ≡⟨ by (_⇀_.deterministic f f[a]=b f[a]=b′) ⟩⟶
-         code b            ■⟨ code-value b ⟩)
+         apply p ⌜ a ⌝  ⇓⟨ p⌜a⌝⇓⌜b′⌝ ⟩
+         ⌜ b′ ⌝         ≡⟨ by (_⇀_.deterministic f f[a]=b f[a]=b′) ⟩⟶
+         ⌜ b ⌝          ■⟨ rep-value b ⟩)
   , (λ a v p⌜a⌝⇓v → case hyp a of λ where
        (b , p⌜a⌝⇓⌜b⌝ , f[a]=b) →
            b
@@ -276,8 +276,8 @@ Computable‴→Computable f ((p , cl-p) , hyp) =
          , ⇓-deterministic p⌜a⌝⇓v p⌜a⌝⇓⌜b⌝)
 
 module _  {a b c d} {A : Set a} {B : Set b} {C : Set c} {D : Set d}
-          ⦃ cA : Code A Consts ⦄ ⦃ cB : Code B Consts ⦄
-          ⦃ cC : Code C Consts ⦄ ⦃ cD : Code D Consts ⦄ where
+          ⦃ rA : Rep A Consts ⦄ ⦃ rB : Rep B Consts ⦄
+          ⦃ rC : Rep C Consts ⦄ ⦃ rD : Rep D Consts ⦄ where
 
   -- Reductions.
 
@@ -364,7 +364,7 @@ as-function-to-Bool₂ P P-prop =
 -- also mapped to b by as-function-to-Bool₁ P.
 
 to-Bool₂→to-Bool₁ :
-  ∀ {a} {A : Set a} ⦃ cA : Code A Consts ⦄
+  ∀ {a} {A : Set a} ⦃ rA : Rep A Consts ⦄
   (P : A → Set a) (P-prop : ∀ {a} → Is-proposition (P a)) {a b} →
   proj₁ (as-function-to-Bool₂ P P-prop) [ a ]= b →
   proj₁ (as-function-to-Bool₁ P) [ a ]= b
@@ -376,7 +376,7 @@ to-Bool₂→to-Bool₁ _ _ = λ where
 -- mapped to b by as-function-to-Bool₂ P P-prop.
 
 to-Bool₁→to-Bool₂ :
-  ∀ {a} {A : Set a} ⦃ cA : Code A Consts ⦄
+  ∀ {a} {A : Set a} ⦃ rA : Rep A Consts ⦄
   (P : A → Set a) (P-prop : ∀ {a} → Is-proposition (P a)) {a b} →
   proj₁ (as-function-to-Bool₁ P) [ a ]= b →
   ¬¬ proj₁ (as-function-to-Bool₂ P P-prop) [ a ]= b
@@ -388,7 +388,7 @@ to-Bool₁→to-Bool₂ _ _ (Pa→b≡true , ¬Pa→b≡false) =
 -- as-function-to-Bool₂ P P-prop is also ¬¬-computable.
 
 to-Bool₁-computable→to-Bool₂-computable :
-  ∀ {a} {A : Set a} ⦃ cA : Code A Consts ⦄
+  ∀ {a} {A : Set a} ⦃ rA : Rep A Consts ⦄
   (P : A → Set a) (P-prop : ∀ {a} → Is-proposition (P a)) →
   Computable′ ¬¬_ (proj₁ (as-function-to-Bool₁ P)) →
   Computable′ ¬¬_ (proj₁ (as-function-to-Bool₂ P P-prop))
@@ -399,16 +399,16 @@ to-Bool₁-computable→to-Bool₂-computable
   , (λ a b →
        proj₁ (as-function-to-Bool₂ P P-prop) [ a ]= b  ↝⟨ to-Bool₂→to-Bool₁ P P-prop ⟩
        proj₁ (as-function-to-Bool₁ P)        [ a ]= b  ↝⟨ hyp₁ a b ⟩□
-       apply p (code a) ⇓ code b                       □)
+       apply p ⌜ a ⌝ ⇓ ⌜ b ⌝                           □)
   , λ a e →
-      apply p (code a) ⇓ e                                          ↝⟨ hyp₂ a e ⟩
+      apply p ⌜ a ⌝ ⇓ e                                             ↝⟨ hyp₂ a e ⟩
 
       ¬¬ (∃ λ b → proj₁ (as-function-to-Bool₁ P) [ a ]= b ×
-                  e ≡ code b)                                       ↝⟨ _>>= (λ { (b , =b , ≡⌜b⌝) →
+                  e ≡ ⌜ b ⌝)                                        ↝⟨ _>>= (λ { (b , =b , ≡⌜b⌝) →
                                                                                  to-Bool₁→to-Bool₂ P P-prop =b >>= λ =b →
                                                                                  return (b , =b , ≡⌜b⌝) }) ⟩□
       ¬¬ (∃ λ b → proj₁ (as-function-to-Bool₂ P P-prop) [ a ]= b ×
-                  e ≡ code b)                                       □
+                  e ≡ ⌜ b ⌝)                                        □
 
 -- A lemma related to as-function-to-Bool₂.
 
@@ -466,7 +466,7 @@ as-partial-function-to-Bool₂ P P-prop = record
 -- booleans to be decidable.
 
 Decidable :
-  ∀ {a} {A : Set a} ⦃ cA : Code A Consts ⦄ →
+  ∀ {a} {A : Set a} ⦃ rA : Rep A Consts ⦄ →
   A →Bool → Set a
 Decidable = Computable P.∘ proj₁
 
@@ -474,6 +474,6 @@ Decidable = Computable P.∘ proj₁
 -- the booleans to be decidable.
 
 Decidable′ :
-  ∀ {a} {A : Set a} ⦃ cA : Code A Consts ⦄ →
+  ∀ {a} {A : Set a} ⦃ rA : Rep A Consts ⦄ →
   A →Bool → Set a
 Decidable′ = Computable‴ P.∘ proj₁

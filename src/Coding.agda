@@ -9,11 +9,12 @@ open import Atom
 module Coding (atoms : χ-atoms) where
 
 open import Equality.Propositional
-open import Prelude hiding (const; id)
+open import Prelude hiding (const)
 open import Tactic.By
 
 open import Bijection equality-with-J as Bijection using (_↔_)
 open import Equality.Decision-procedures equality-with-J
+open import Function-universe equality-with-J hiding (id; _∘_)
 open import Injection equality-with-J using (Injective)
 open import List equality-with-J using (foldr)
 open import Maybe equality-with-J
@@ -28,6 +29,43 @@ open χ-atoms atoms
 
 ------------------------------------------------------------------------
 -- General definitions
+
+-- Representation functions.
+
+record Rep {a b} (A : Set a) (B : Set b) : Set (a ⊔ b) where
+  field
+    -- Representation function.
+    ⌜_⌝ : A → B
+
+    -- ⌜_⌝ is injective.
+    rep-injective : Injective ⌜_⌝
+
+open Rep ⦃ … ⦄ public
+
+-- An identity encoder.
+
+id-rep : ∀ {a} {A : Set a} → Rep A A
+id-rep = record
+  { ⌜_⌝           = id
+  ; rep-injective = id
+  }
+
+-- Composition of representation functions.
+
+infixr 9 _∘-rep_
+
+_∘-rep_ : ∀ {a b c} {A : Set a} {B : Set b} {C : Set c} →
+          Rep B C → Rep A B → Rep A C
+r₁ ∘-rep r₂ = record
+  { ⌜_⌝           = R₁.⌜_⌝ ∘ R₂.⌜_⌝
+  ; rep-injective = λ {x y} →
+      R₁.⌜ R₂.⌜ x ⌝ ⌝ ≡ R₁.⌜ R₂.⌜ y ⌝ ⌝  ↝⟨ R₁.rep-injective ⟩
+      R₂.⌜ x ⌝ ≡ R₂.⌜ y ⌝                ↝⟨ R₂.rep-injective ⟩□
+      x ≡ y                              □
+  }
+  where
+  module R₁ = Rep r₁
+  module R₂ = Rep r₂
 
 -- Encoder/decoder pairs.
 
@@ -51,6 +89,15 @@ record Code {a b} (A : Set a) (B : Set b) : Set (a ⊔ b) where
     decode (code y)  ≡⟨ by decode∘code ⟩∎
     just y           ∎)
 
+  -- Encoder/decoder pairs can be turned into representation
+  -- functions.
+
+  rep : Rep A B
+  rep = record
+    { ⌜_⌝           = code
+    ; rep-injective = code-injective
+    }
+
 open Code ⦃ … ⦄ public
 
 -- Converts bijections to encoders.
@@ -68,16 +115,16 @@ open Code ⦃ … ⦄ public
 
 -- An identity encoder.
 
-id : ∀ {a} {A : Set a} → Code A A
-id = ↔→Code Bijection.id
+id-code : ∀ {a} {A : Set a} → Code A A
+id-code = ↔→Code Bijection.id
 
 -- Composition of encoders.
 
-infixr 9 _⊚_
+infixr 9 _∘-code_
 
-_⊚_ : ∀ {a b c} {A : Set a} {B : Set b} {C : Set c} →
-      Code B C → Code A B → Code A C
-c₁ ⊚ c₂ = record
+_∘-code_ : ∀ {a b c} {A : Set a} {B : Set b} {C : Set c} →
+           Code B C → Code A B → Code A C
+c₁ ∘-code c₂ = record
   { code        = C₁.code ∘ C₂.code
   ; decode      = λ c → C₁.decode c >>=′ C₂.decode
   ; decode∘code = λ a →
@@ -87,8 +134,8 @@ c₁ ⊚ c₂ = record
       return a                                        ∎
   }
   where
-  module C₂ = Code c₂
   module C₁ = Code c₁
+  module C₂ = Code c₂
 
 ------------------------------------------------------------------------
 -- Some general definitions related to χ
@@ -148,85 +195,79 @@ code-Consts = record
       _∷_ ⟨$⟩ return c ⊛ return cs      ≡⟨⟩
       return (c ∷ cs)                   ∎
 
--- Converts instances of the form Code A Consts to Code A Exp.
+-- Converts instances of the form Rep A Consts to Rep A Exp.
 
-code-Consts-Exp : ∀ {a} {A : Set a} ⦃ c : Code A Consts ⦄ →
-                  Code A Exp
-code-Consts-Exp ⦃ c ⦄ = proj₁ code-Consts ⊚ c
+rep-Consts-Exp : ∀ {a} {A : Set a} ⦃ r : Rep A Consts ⦄ →
+                 Rep A Exp
+rep-Consts-Exp ⦃ r ⦄ = rep ⦃ proj₁ code-Consts ⦄ ∘-rep r
 
--- Codes something as an expression.
+-- Represents something as an expression.
 
-code-as-Exp : ∀ {a} {A : Set a} ⦃ c : Code A Consts ⦄ → A → Exp
-code-as-Exp = code ⦃ code-Consts-Exp ⦄
+rep-as-Exp : ∀ {a} {A : Set a} ⦃ r : Rep A Consts ⦄ → A → Exp
+rep-as-Exp = ⌜_⌝ ⦃ rep-Consts-Exp ⦄
 
--- code-as-Exp returns constructor applications.
+-- rep-as-Exp returns constructor applications.
 
-code-const :
-  ∀ {a} {A : Set a} ⦃ c : Code A Consts ⦄
-  (x : A) → Constructor-application (code-as-Exp x)
-code-const = proj₂ code-Consts ∘ code
+rep-const :
+  ∀ {a} {A : Set a} ⦃ r : Rep A Consts ⦄
+  (x : A) → Constructor-application (rep-as-Exp x)
+rep-const = proj₂ code-Consts ∘ ⌜_⌝
 
--- code-as-Exp returns closed expressions.
+-- rep-as-Exp returns closed expressions.
 
-code-closed :
-  ∀ {a} {A : Set a} ⦃ c : Code A Consts ⦄
-  (x : A) → Closed (code-as-Exp x)
-code-closed = const→closed ∘ code-const
+rep-closed :
+  ∀ {a} {A : Set a} ⦃ r : Rep A Consts ⦄
+  (x : A) → Closed (rep-as-Exp x)
+rep-closed = const→closed ∘ rep-const
 
 -- Constructor applications can be encoded as closed expressions.
 
 code-Consts-Closed : Code Consts Closed-exp
 Code.code code-Consts-Closed c =
-  code-as-Exp ⦃ c = id ⦄ c , code-closed ⦃ c = id ⦄ c
+  code ⦃ r = proj₁ code-Consts ⦄ c , const→closed (proj₂ code-Consts c)
 
 Code.decode code-Consts-Closed (e , _) =
   decode ⦃ r = proj₁ code-Consts ⦄ e
 
 Code.decode∘code code-Consts-Closed c =
-  decode ⦃ r = proj₁ code-Consts ⦄ (code-as-Exp ⦃ c = id ⦄ c)          ≡⟨⟩
-
-  decode ⦃ r = proj₁ code-Consts ⦄
-    (code ⦃ r = proj₁ code-Consts ⊚ id ⦄ c)                            ≡⟨⟩
-
   decode ⦃ r = proj₁ code-Consts ⦄ (code ⦃ r = proj₁ code-Consts ⦄ c)  ≡⟨ decode∘code ⦃ r = proj₁ code-Consts ⦄ c ⟩∎
+  just c                                                              ∎
 
-  just c                                                               ∎
+-- Converts instances of the form Rep A Consts to Rep A Closed-exp.
 
--- Converts instances of the form Code A Consts to Code A Closed-exp.
+rep-Consts-Closed-exp :
+  ∀ {a} {A : Set a} ⦃ r : Rep A Consts ⦄ → Rep A Closed-exp
+rep-Consts-Closed-exp ⦃ r ⦄ = rep ⦃ r = code-Consts-Closed ⦄ ∘-rep r
 
-code-Consts-Closed-exp :
-  ∀ {a} {A : Set a} ⦃ c : Code A Consts ⦄ → Code A Closed-exp
-code-Consts-Closed-exp ⦃ c ⦄ = code-Consts-Closed ⊚ c
+-- rep-as-Exp returns values.
 
--- code-as-Exp returns values.
-
-code-value :
-  ∀ {a} {A : Set a} ⦃ c : Code A Consts ⦄
-  (x : A) → Value (code-as-Exp x)
-code-value = const→value ∘ code-const
+rep-value :
+  ∀ {a} {A : Set a} ⦃ r : Rep A Consts ⦄
+  (x : A) → Value (rep-as-Exp x)
+rep-value = const→value ∘ rep-const
 
 -- Some derived lemmas.
 
-subst-code :
-  ∀ {a} {A : Set a} ⦃ c : Code A Consts ⦄ (x : A) {y e} →
-  code-as-Exp x [ y ← e ] ≡ code-as-Exp x
-subst-code x = subst-closed _ _ (code-closed x)
+subst-rep :
+  ∀ {a} {A : Set a} ⦃ r : Rep A Consts ⦄ (x : A) {y e} →
+  rep-as-Exp x [ y ← e ] ≡ rep-as-Exp x
+subst-rep x = subst-closed _ _ (rep-closed x)
 
-substs-code :
-  ∀ {a} {A : Set a} ⦃ c : Code A Consts ⦄ (x : A) ps →
-  foldr (λ { (y , e) → _[ y ← e ] }) (code-as-Exp x) ps ≡
-  code-as-Exp x
-substs-code x = substs-closed (code-as-Exp x) (code-closed x)
+substs-rep :
+  ∀ {a} {A : Set a} ⦃ r : Rep A Consts ⦄ (x : A) ps →
+  foldr (λ { (y , e) → _[ y ← e ] }) (rep-as-Exp x) ps ≡
+  rep-as-Exp x
+substs-rep x = substs-closed (rep-as-Exp x) (rep-closed x)
 
-code⇓code :
-  ∀ {a} {A : Set a} ⦃ c : Code A Consts ⦄
-  (x : A) → code-as-Exp x ⇓ code-as-Exp x
-code⇓code x = values-compute-to-themselves (code-value x)
+rep⇓rep :
+  ∀ {a} {A : Set a} ⦃ r : Rep A Consts ⦄
+  (x : A) → rep-as-Exp x ⇓ rep-as-Exp x
+rep⇓rep x = values-compute-to-themselves (rep-value x)
 
-code⇓≡code :
-  ∀ {a} {A : Set a} ⦃ c : Code A Consts ⦄ {v}
-  (x : A) → code-as-Exp x ⇓ v → code-as-Exp x ≡ v
-code⇓≡code x = values-only-compute-to-themselves (code-value x)
+rep⇓≡rep :
+  ∀ {a} {A : Set a} ⦃ r : Rep A Consts ⦄ {v}
+  (x : A) → rep-as-Exp x ⇓ v → rep-as-Exp x ≡ v
+rep⇓≡rep x = values-only-compute-to-themselves (rep-value x)
 
 ------------------------------------------------------------------------
 -- Specifications of how a number of types are encoded as χ
@@ -296,87 +337,146 @@ code-ℕ = record
 -- Encoder for variables.
 
 code-Var : Code Var Consts
-code-Var = code-ℕ ⊚ ↔→Code V.countably-infinite
+code-Var = code-ℕ ∘-code ↔→Code V.countably-infinite
 
 -- Encoder for constants.
 
 code-Const : Code Const Consts
-code-Const = code-ℕ ⊚ ↔→Code C.countably-infinite
+code-Const = code-ℕ ∘-code ↔→Code C.countably-infinite
 
--- Encoder for products.
+-- Encoders for products.
 
-code-× : ∀ {a b} {A : Set a} {B : Set b}
-           ⦃ c : Code A Consts ⦄ ⦃ d : Code B Consts ⦄ →
-         Code (A × B) Consts
-code-× {A = A} {B} ⦃ c ⦄ ⦃ d ⦄ = record
-  { code        = cd
-  ; decode      = dc
-  ; decode∘code = dc∘cd
-  }
-  where
-  cd : A × B → Consts
-  cd (x , y) = const c-pair (code x ∷ code y ∷ [])
+module _ {a b} {A : Set a} {B : Set b} where
 
-  dc : Consts → Maybe (A × B)
-  dc (const c args)         with c-pair C.≟ c
-  dc (const c (x ∷ y ∷ [])) | yes _ = decode x >>=′ λ x →
-                                      decode y >>=′ λ y →
-                                      just (x , y)
-  dc (const c args)         | _     = nothing
+  private
 
-  dc∘cd : ∀ x → dc (cd x) ≡ just x
-  dc∘cd (x , y) with c-pair C.≟ c-pair
-  ... | no p≢p = ⊥-elim (p≢p refl)
-  ... | yes _  =
-    (decode ⦃ r = c ⦄ (code x) >>=′ λ x →
-     decode ⦃ r = d ⦄ (code y) >>=′ λ y →
-     just (x , y))                         ≡⟨ by (decode∘code ⦃ r = c ⦄) ⟩
+    encode : (A → Consts) → (B → Consts) → A × B → Consts
+    encode encA encB (x , y) = const c-pair (encA x ∷ encB y ∷ [])
 
-    (return x >>=′ λ x →
-     decode ⦃ r = d ⦄ (code y) >>=′ λ y →
-     just (x , y))                         ≡⟨⟩
+  rep-× : ⦃ r : Rep A Consts ⦄ ⦃ s : Rep B Consts ⦄ →
+          Rep (A × B) Consts
+  rep-× ⦃ r ⦄ ⦃ s ⦄ = record
+    { ⌜_⌝           = encode ⌜_⌝ ⌜_⌝
+    ; rep-injective = λ { {x₁ , x₂} {y₁ , y₂} →
+        const c-pair (⌜ x₁ ⌝ ∷ ⌜ x₂ ⌝ ∷ []) ≡
+        const c-pair (⌜ y₁ ⌝ ∷ ⌜ y₂ ⌝ ∷ [])    ↝⟨ lemma ⟩
 
-    (decode ⦃ r = d ⦄ (code y) >>=′ λ y →
-     just (x , y))                         ≡⟨ by (decode∘code ⦃ r = d ⦄) ⟩
+        ⌜ x₁ ⌝ ≡ ⌜ y₁ ⌝ × ⌜ x₂ ⌝ ≡ ⌜ y₂ ⌝      ↝⟨ Σ-map rep-injective rep-injective ⟩
 
-    (return y >>=′ λ y → just (x , y))     ≡⟨ refl ⟩∎
+        x₁ ≡ y₁ × x₂ ≡ y₂                      ↝⟨ uncurry (cong₂ _,_) ⟩□
 
-    return (x , y)                         ∎
+        (x₁ , x₂) ≡ (y₁ , y₂)                  □ }
+    }
+    where
+    lemma :
+      ∀ {c₁ c₂ x₁ x₂ y₁ y₂} →
+      Consts.const c₁ (x₁ ∷ x₂ ∷ []) ≡ const c₂ (y₁ ∷ y₂ ∷ []) →
+      x₁ ≡ y₁ × x₂ ≡ y₂
+    lemma refl = refl , refl
 
--- Encoder for lists.
+  code-× : ⦃ c : Code A Consts ⦄ ⦃ d : Code B Consts ⦄ →
+           Code (A × B) Consts
+  code-× ⦃ c ⦄ ⦃ d ⦄ = record
+    { code        = cd
+    ; decode      = dc
+    ; decode∘code = dc∘cd
+    }
+    where
+    cd : A × B → Consts
+    cd = encode code code
 
-code-List : ∀ {a} {A : Set a} ⦃ c : Code A Consts ⦄ →
-            Code (List A) Consts
-code-List {A = A} ⦃ c ⦄ = record
-  { code        = cd
-  ; decode      = dc
-  ; decode∘code = dc∘cd
-  }
-  where
-  cd : List A → Consts
-  cd []       = const c-nil []
-  cd (x ∷ xs) = const c-cons (code x ∷ cd xs ∷ [])
+    dc : Consts → Maybe (A × B)
+    dc (const c args)         with c-pair C.≟ c
+    dc (const c (x ∷ y ∷ [])) | yes _ = decode x >>=′ λ x →
+                                        decode y >>=′ λ y →
+                                        just (x , y)
+    dc (const c args)         | _     = nothing
 
-  dc : Consts → Maybe (List A)
-  dc (const c args)           with c-nil C.≟ c | c-cons C.≟ c
-  dc (const c [])             | yes eq | _      = return []
-  dc (const c′ (x ∷ xs ∷ [])) | _      | yes eq =
-    _∷_ ⟨$⟩ decode x ⊛ dc xs
-  dc (const c args) | _ | _ = nothing
+    dc∘cd : ∀ x → dc (cd x) ≡ just x
+    dc∘cd (x , y) with c-pair C.≟ c-pair
+    ... | no p≢p = ⊥-elim (p≢p refl)
+    ... | yes _  =
+      (decode ⦃ r = c ⦄ (code x) >>=′ λ x →
+       decode ⦃ r = d ⦄ (code y) >>=′ λ y →
+       just (x , y))                         ≡⟨ by (decode∘code ⦃ r = c ⦄) ⟩
 
-  dc∘cd : ∀ x → dc (cd x) ≡ just x
-  dc∘cd [] with c-nil C.≟ c-nil
-  ... | yes _   = refl
-  ... | no  n≢n = ⊥-elim (n≢n refl)
-  dc∘cd (x ∷ xs) with c-nil C.≟ c-cons | c-cons C.≟ c-cons
-  ... | no _    | no c≢c = ⊥-elim (c≢c refl)
-  ... | yes n≡c | _      = ⊥-elim (C.distinct-codes→distinct-names
-                                     (λ ()) n≡c)
-  ... | no _    | yes _  =
-    _∷_ ⟨$⟩ decode ⦃ r = c ⦄ (code x) ⊛ dc (cd xs)  ≡⟨ by (decode∘code ⦃ r = c ⦄) ⟩
-    _∷_ ⟨$⟩ return x ⊛ dc (cd xs)                   ≡⟨ by (dc∘cd xs) ⟩
-    _∷_ ⟨$⟩ return x ⊛ return xs                    ≡⟨⟩
-    return (x ∷ xs)                                 ∎
+      (return x >>=′ λ x →
+       decode ⦃ r = d ⦄ (code y) >>=′ λ y →
+       just (x , y))                         ≡⟨⟩
+
+      (decode ⦃ r = d ⦄ (code y) >>=′ λ y →
+       just (x , y))                         ≡⟨ by (decode∘code ⦃ r = d ⦄) ⟩
+
+      (return y >>=′ λ y → just (x , y))     ≡⟨ refl ⟩∎
+
+      return (x , y)                         ∎
+
+-- Encoders for lists.
+
+module _ {a} {A : Set a} where
+
+  private
+
+    encode : (A → Consts) → List A → Consts
+    encode enc []       = const c-nil []
+    encode enc (x ∷ xs) = const c-cons (enc x ∷ encode enc xs ∷ [])
+
+  rep-List : ⦃ r : Rep A Consts ⦄ → Rep (List A) Consts
+  rep-List ⦃ c ⦄ = record
+    { ⌜_⌝           = encode ⌜_⌝
+    ; rep-injective = injective
+    }
+    where
+    injective : ∀ {xs ys} → encode ⌜_⌝ xs ≡ encode ⌜_⌝ ys → xs ≡ ys
+    injective {[]}     {[]}     = λ _ → refl
+    injective {[]}     {_ ∷ _}  = λ ()
+    injective {_ ∷ _}  {[]}     = λ ()
+    injective {x ∷ xs} {y ∷ ys} =
+      const c-cons (⌜ x ⌝ ∷ encode ⌜_⌝ xs ∷ []) ≡
+      const c-cons (⌜ y ⌝ ∷ encode ⌜_⌝ ys ∷ [])      ↝⟨ lemma ⟩
+
+      ⌜ x ⌝ ≡ ⌜ y ⌝ × encode ⌜_⌝ xs ≡ encode ⌜_⌝ ys  ↝⟨ Σ-map rep-injective injective ⟩
+
+      x ≡ y × xs ≡ ys                                ↝⟨ uncurry (cong₂ _∷_) ⟩□
+
+      x ∷ xs ≡ y ∷ ys                                □
+      where
+      lemma :
+        ∀ {c₁ x₁ y₁ c₂ x₂ y₂} →
+        Consts.const c₁ (x₁ ∷ y₁ ∷ []) ≡ const c₂ (x₂ ∷ y₂ ∷ []) →
+        x₁ ≡ x₂ × y₁ ≡ y₂
+      lemma refl = refl , refl
+
+  code-List : ⦃ c : Code A Consts ⦄ → Code (List A) Consts
+  code-List ⦃ c ⦄ = record
+    { code        = cd
+    ; decode      = dc
+    ; decode∘code = dc∘cd
+    }
+    where
+    cd : List A → Consts
+    cd = encode code
+
+    dc : Consts → Maybe (List A)
+    dc (const c args)           with c-nil C.≟ c | c-cons C.≟ c
+    dc (const c [])             | yes eq | _      = return []
+    dc (const c′ (x ∷ xs ∷ [])) | _      | yes eq =
+      _∷_ ⟨$⟩ decode x ⊛ dc xs
+    dc (const c args) | _ | _ = nothing
+
+    dc∘cd : ∀ x → dc (cd x) ≡ just x
+    dc∘cd [] with c-nil C.≟ c-nil
+    ... | yes _   = refl
+    ... | no  n≢n = ⊥-elim (n≢n refl)
+    dc∘cd (x ∷ xs) with c-nil C.≟ c-cons | c-cons C.≟ c-cons
+    ... | no _    | no c≢c = ⊥-elim (c≢c refl)
+    ... | yes n≡c | _      = ⊥-elim (C.distinct-codes→distinct-names
+                                       (λ ()) n≡c)
+    ... | no _    | yes _  =
+      _∷_ ⟨$⟩ decode ⦃ r = c ⦄ (code x) ⊛ dc (cd xs)  ≡⟨ by (decode∘code ⦃ r = c ⦄) ⟩
+      _∷_ ⟨$⟩ return x ⊛ dc (cd xs)                   ≡⟨ by (dc∘cd xs) ⟩
+      _∷_ ⟨$⟩ return x ⊛ return xs                    ≡⟨⟩
+      return (x ∷ xs)                                 ∎
 
 -- Encoder for lists of variables.
 

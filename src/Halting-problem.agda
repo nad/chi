@@ -26,7 +26,7 @@ open import Atom
 
 open import Cancellation   χ-ℕ-atoms
 open import Chi            χ-ℕ-atoms
-open import Coding         χ-ℕ-atoms hiding (id)
+open import Coding         χ-ℕ-atoms
 open import Compatibility  χ-ℕ-atoms
 open import Computability  χ-ℕ-atoms hiding (_∘_)
 open import Constants      χ-ℕ-atoms
@@ -51,16 +51,16 @@ extensional-halting-problem :
         ×
       ∀ p → Closed p →
         (Terminates p →
-         apply halts (lambda v-underscore p) ⇓ code (true  ⦂ Bool))
+         apply halts (lambda v-underscore p) ⇓ ⌜ true  ⦂ Bool ⌝)
           ×
         (¬ Terminates p →
-         apply halts (lambda v-underscore p) ⇓ code (false ⦂ Bool))
+         apply halts (lambda v-underscore p) ⇓ ⌜ false ⦂ Bool ⌝)
 extensional-halting-problem (halts , cl , hyp) = contradiction
   where
   terminv : Exp → Exp
   terminv p = χ.if apply halts (lambda v-underscore p)
               then loop
-              else code zero
+              else ⌜ zero ⌝
 
   terminv-lemma : ∀ {p} → Closed p →
                   Terminates (terminv p) ⇔ ¬ Terminates p
@@ -92,20 +92,20 @@ extensional-halting-problem (halts , cl , hyp) = contradiction
          (Closed′-closed-under-lambda
             (Closed′-closed-under-var (inj₂ (inj₁ refl)))))
       (Closed→Closed′ loop-closed)
-      (Closed→Closed′ $ code-closed zero)
+      (Closed→Closed′ $ rep-closed zero)
 
   subst-lemma : terminv (var v-p) [ v-p ← strange ] ≡ terminv strange
   subst-lemma =
-    terminv (var v-p) [ v-p ← strange ]                ≡⟨⟩
+    terminv (var v-p) [ v-p ← strange ]             ≡⟨⟩
 
     χ.if apply (halts [ v-p ← strange ])
                (lambda v-underscore strange)
-    then loop else code zero                           ≡⟨ by (subst-closed _ _ cl) ⟩
+    then loop else ⌜ zero ⌝                         ≡⟨ by (subst-closed _ _ cl) ⟩
 
     χ.if apply halts (lambda v-underscore strange)
-    then loop else code zero                           ≡⟨⟩
+    then loop else ⌜ zero ⌝                         ≡⟨⟩
 
-    terminv strange                                    ∎
+    terminv strange                                 ∎
 
   strange-lemma : Terminates strange ⇔ ¬ Terminates strange
   strange-lemma =
@@ -127,7 +127,7 @@ extensional-halting-problem′ :
         ×
       ∀ p → Closed p →
         ∃ λ (b : Bool) →
-          apply halts (lambda v-underscore p) ⇓ code b
+          apply halts (lambda v-underscore p) ⇓ ⌜ b ⌝
             ×
           if b then Terminates p else (¬ Terminates p)
 extensional-halting-problem′ (halts , cl , hyp) =
@@ -139,14 +139,14 @@ extensional-halting-problem′ (halts , cl , hyp) =
     )
   where
   ⇓→⇓true : ∀ {p} → Closed p → Terminates p →
-            apply halts (lambda v-underscore p) ⇓ code (true ⦂ Bool)
+            apply halts (lambda v-underscore p) ⇓ ⌜ true ⦂ Bool ⌝
   ⇓→⇓true {p} cl p⇓ with hyp p cl
   ... | true ,  halts⇓true , _   = halts⇓true
   ... | false , _          , ¬p⇓ = ⊥-elim (¬p⇓ p⇓)
 
   ¬⇓→⇓false :
     ∀ {p} → Closed p → ¬ Terminates p →
-    apply halts (lambda v-underscore p) ⇓ code (false ⦂ Bool)
+    apply halts (lambda v-underscore p) ⇓ ⌜ false ⦂ Bool ⌝
   ¬⇓→⇓false {p} cl ¬p⇓ with hyp p cl
   ... | false ,  halts⇓false , _  = halts⇓false
   ... | true  , _            , p⇓ = ⊥-elim (¬p⇓ p⇓)
@@ -159,7 +159,7 @@ extensional-halting-problem″ :
         ×
       ∀ p → Closed p →
         ∥ (∃ λ (b : Bool) →
-             apply halts (lambda v-underscore p) ⇓ code b
+             apply halts (lambda v-underscore p) ⇓ ⌜ b ⌝
                ×
              if b then Terminates p else (¬ Terminates p)) ∥
 extensional-halting-problem″ (halts , cl , hyp) =
@@ -170,7 +170,7 @@ extensional-halting-problem″ (halts , cl , hyp) =
     )
   where
   ⇓→⇓true : ∀ {p} → Closed p → Terminates p →
-            apply halts (lambda v-underscore p) ⇓ code (true ⦂ Bool)
+            apply halts (lambda v-underscore p) ⇓ ⌜ true ⦂ Bool ⌝
   ⇓→⇓true cl p⇓ =
     flip (Trunc.rec ⇓-propositional) (hyp _ cl) λ where
       (false , _          , ¬p⇓) → ⊥-elim (¬p⇓ p⇓)
@@ -178,7 +178,7 @@ extensional-halting-problem″ (halts , cl , hyp) =
 
   ¬⇓→⇓false :
     ∀ {p} → Closed p → ¬ Terminates p →
-    apply halts (lambda v-underscore p) ⇓ code (false ⦂ Bool)
+    apply halts (lambda v-underscore p) ⇓ ⌜ false ⦂ Bool ⌝
   ¬⇓→⇓false cl ¬p⇓ =
     flip (Trunc.rec ⇓-propositional) (hyp _ cl) λ where
       (true  , _           , p⇓) → ⊥-elim (¬p⇓ p⇓)
@@ -189,7 +189,7 @@ extensional-halting-problem″ (halts , cl , hyp) =
 
 Intensional-halting-problem-of-self-application : Closed-exp →Bool
 Intensional-halting-problem-of-self-application =
-  as-function-to-Bool₁ (λ { (e , _) → Terminates (apply e (code e)) })
+  as-function-to-Bool₁ (λ { (e , _) → Terminates (apply e ⌜ e ⌝) })
 
 -- The intensional halting problem of self-application is not
 -- decidable.
@@ -199,59 +199,59 @@ intensional-halting-problem-of-self-application :
       Closed halts
         ×
       ∀ p → Closed p →
-        (Terminates (apply p (code p)) →
-           apply halts (code p) ⇓ code (true ⦂ Bool))
+        (Terminates (apply p ⌜ p ⌝) →
+           apply halts ⌜ p ⌝ ⇓ ⌜ true ⦂ Bool ⌝)
           ×
-        (¬ Terminates (apply p (code p)) →
-           apply halts (code p) ⇓ code (false ⦂ Bool))
+        (¬ Terminates (apply p ⌜ p ⌝) →
+           apply halts ⌜ p ⌝ ⇓ ⌜ false ⦂ Bool ⌝)
 intensional-halting-problem-of-self-application (halts , cl , hyp) =
   contradiction
   where
   self-apply : Exp → Exp
-  self-apply p = apply p (code p)
+  self-apply p = apply p ⌜ p ⌝
 
   terminv : Exp
   terminv = lambda v-x
               (χ.if apply halts (var v-x)
                then loop
-               else code zero)
+               else ⌜ zero ⌝)
 
   terminv-lemma : ∀ {p} → Closed p →
-                  Terminates (apply terminv (code p))
+                  Terminates (apply terminv ⌜ p ⌝)
                     ⇔
                   ¬ Terminates (self-apply p)
   terminv-lemma {p} cl-p = record { to = to; from = from }
     where
-    to : Terminates (apply terminv (code p)) →
+    to : Terminates (apply terminv ⌜ p ⌝) →
          ¬ Terminates (self-apply p)
     to (_ , apply lambda _ (case _ here [] loop⇓)) p⇓ =
       ¬loop⇓ (_ , loop⇓)
 
     to (_ , apply lambda _ (case _ (there _ (there _ ())) _  _)) p⇓
 
-    to (_ , apply lambda code-p⇓
+    to (_ , apply lambda rep-p⇓
               (case halts⇓false′ (there _ here) [] _)) p⇓ =
       C.distinct-codes→distinct-names (λ ()) $
         proj₁ $ cancel-const $
           ⇓-deterministic (proj₁ (hyp p cl-p) p⇓) halts⇓false
       where
-      halts⇓false : apply halts (code p) ⇓ code (false ⦂ Bool)
-      halts⇓false rewrite code⇓≡code p code-p⇓ =
+      halts⇓false : apply halts ⌜ p ⌝ ⇓ ⌜ false ⦂ Bool ⌝
+      halts⇓false rewrite rep⇓≡rep p rep-p⇓ =
         subst (λ e → apply e _ ⇓ _)
               (subst-closed _ _ cl)
               halts⇓false′
 
     from : ¬ Terminates (self-apply p) →
-           Terminates (apply terminv (code p))
+           Terminates (apply terminv ⌜ p ⌝)
     from ¬p⇓ =
-      _ , apply lambda (code⇓code p)
+      _ , apply lambda (rep⇓rep p)
             (case halts⇓false
                   (there (C.distinct-codes→distinct-names (λ ())) here)
                   []
                   (const []))
       where
-      halts⇓false : apply (halts [ v-x ← code p ]) (code p) ⇓
-                    code (false ⦂ Bool)
+      halts⇓false : apply (halts [ v-x ← ⌜ p ⌝ ]) ⌜ p ⌝ ⇓
+                    ⌜ false ⦂ Bool ⌝
       halts⇓false =
         subst (λ e → apply e _ ⇓ _)
               (sym $ subst-closed _ _ cl)
@@ -268,7 +268,7 @@ intensional-halting-problem-of-self-application (halts , cl , hyp) =
          (Closed→Closed′ cl)
          (Closed′-closed-under-var (inj₁ refl)))
       (Closed→Closed′ loop-closed)
-      (Closed→Closed′ $ code-closed zero)
+      (Closed→Closed′ $ rep-closed zero)
 
   strange-lemma : Terminates strange ⇔ ¬ Terminates strange
   strange-lemma = terminv-lemma terminv-closed
@@ -283,11 +283,11 @@ intensional-halting-problem₁ :
       Closed halts
         ×
       ∀ p x → Closed p → Closed x →
-        (Terminates (apply p (code x)) →
-           apply halts (code (p , x)) ⇓ code (true ⦂ Bool))
+        (Terminates (apply p ⌜ x ⌝) →
+           apply halts ⌜ p , x ⌝ ⇓ ⌜ true ⦂ Bool ⌝)
           ×
-        (¬ Terminates (apply p (code x)) →
-           apply halts (code (p , x)) ⇓ code (false ⦂ Bool))
+        (¬ Terminates (apply p ⌜ x ⌝) →
+           apply halts ⌜ p , x ⌝ ⇓ ⌜ false ⦂ Bool ⌝)
 intensional-halting-problem₁ (halts , cl , hyp) =
   intensional-halting-problem-of-self-application
     ( halts′
@@ -307,13 +307,13 @@ intensional-halting-problem₁ (halts , cl , hyp) =
       (from-⊎ (closed′? arg (v-p ∷ [])))
 
   lemma : (p : Exp) (b : Bool) →
-          apply halts (code (p , p)) ⇓ code b →
-          apply halts′ (code p) ⇓ code b
+          apply halts ⌜ p , p ⌝ ⇓ ⌜ b ⌝ →
+          apply halts′ ⌜ p ⌝ ⇓ ⌜ b ⌝
   lemma p b halts⇓ =
-    apply halts′ (code p)                          ⟶⟨ apply lambda (code⇓code p) ⟩
-    apply (halts [ v-p ← code p ]) (code (p , p))  ≡⟨ by (subst-closed _ _ cl) ⟩⟶
-    apply halts (code (p , p))                     ⇓⟨ halts⇓ ⟩■
-    code b
+    apply halts′ ⌜ p ⌝                       ⟶⟨ apply lambda (rep⇓rep p) ⟩
+    apply (halts [ v-p ← ⌜ p ⌝ ]) ⌜ p , p ⌝  ≡⟨ by (subst-closed _ _ cl) ⟩⟶
+    apply halts ⌜ p , p ⌝                    ⇓⟨ halts⇓ ⟩■
+    ⌜ b ⌝
 
 -- The intensional halting problem with zero arguments is not
 -- decidable.
@@ -323,18 +323,18 @@ intensional-halting-problem₀ :
       Closed halts
         ×
       ∀ p → Closed p →
-        (Terminates p → apply halts (code p) ⇓ code (true ⦂ Bool))
+        (Terminates p → apply halts ⌜ p ⌝ ⇓ ⌜ true ⦂ Bool ⌝)
           ×
-        (¬ Terminates p → apply halts (code p) ⇓ code (false ⦂ Bool))
+        (¬ Terminates p → apply halts ⌜ p ⌝ ⇓ ⌜ false ⦂ Bool ⌝)
 intensional-halting-problem₀ (halts , cl , hyp) =
   intensional-halting-problem-of-self-application
     ( halts′
     , cl′
     , λ p cl-p → Σ-map (lemma p true ∘_) (lemma p false ∘_)
-                       (hyp (apply p (code p))
+                       (hyp (apply p ⌜ p ⌝)
                             (Closed′-closed-under-apply
                                (Closed→Closed′ cl-p)
-                               (Closed→Closed′ (code-closed p))))
+                               (Closed→Closed′ (rep-closed p))))
     )
   where
   halts′ =
@@ -361,25 +361,25 @@ intensional-halting-problem₀ (halts , cl , hyp) =
   abstract
 
     lemma : (p : Exp) (b : Bool) →
-            apply halts (code (Exp.apply p (code p))) ⇓ code b →
-            apply halts′ (code p) ⇓ code b
+            apply halts ⌜ Exp.apply p ⌜ p ⌝ ⌝ ⇓ ⌜ b ⌝ →
+            apply halts′ ⌜ p ⌝ ⇓ ⌜ b ⌝
     lemma p b halts⇓ =
-      apply halts′ (code p)                                              ⟶⟨ apply lambda (code⇓code p) ⟩
+      apply halts′ ⌜ p ⌝                                            ⟶⟨ apply lambda (rep⇓rep p) ⟩
 
-      apply (halts [ v-p ← code p ]) (const c-apply (
-        code p ∷ apply (internal-code [ v-p ← code p ]) (code p) ∷ []))  ≡⟨ by (subst-closed _ _ cl) ⟩⟶
-
-      apply halts (const c-apply (
-        code p ∷ apply (internal-code [ v-p ← code p ]) (code p) ∷ []))  ≡⟨ by (subst-closed v-p (code p) internal-code-closed) ⟩⟶
+      apply (halts [ v-p ← ⌜ p ⌝ ]) (const c-apply (
+        ⌜ p ⌝ ∷ apply (internal-code [ v-p ← ⌜ p ⌝ ]) ⌜ p ⌝ ∷ []))  ≡⟨ by (subst-closed _ _ cl) ⟩⟶
 
       apply halts (const c-apply (
-        code p ∷ apply internal-code (code p) ∷ []))                     ⟶⟨ []⇓ (apply→ ∙) (const (code⇓code p ∷ internal-code-correct p ∷ [])) ⟩
+        ⌜ p ⌝ ∷ apply (internal-code [ v-p ← ⌜ p ⌝ ]) ⌜ p ⌝ ∷ []))  ≡⟨ by (subst-closed v-p ⌜ p ⌝ internal-code-closed) ⟩⟶
 
-      apply halts (const c-apply (code p ∷ code (code p ⦂ Exp) ∷ []))    ⟶⟨⟩
+      apply halts (const c-apply (
+        ⌜ p ⌝ ∷ apply internal-code ⌜ p ⌝ ∷ []))                    ⟶⟨ []⇓ (apply→ ∙) (const (rep⇓rep p ∷ internal-code-correct p ∷ [])) ⟩
 
-      apply halts (code (Exp.apply p (code p)))                          ⇓⟨ halts⇓ ⟩■
+      apply halts (const c-apply (⌜ p ⌝ ∷ ⌜ ⌜ p ⌝ ⦂ Exp ⌝ ∷ []))    ⟶⟨⟩
 
-      code b
+      apply halts ⌜ Exp.apply p ⌜ p ⌝ ⌝                             ⇓⟨ halts⇓ ⟩■
+
+      ⌜ b ⌝
 
 -- Two statements of the intensional halting problem with zero
 -- arguments.
@@ -402,11 +402,11 @@ intensional-halting-problem₀₁ (halts , cl , hyp , _) =
     , cl
     , λ p cl-p →
         (λ p⇓ →
-           apply halts (code p)  ⇓⟨ hyp (p , cl-p) true ((λ _ → refl) , λ ¬p⇓ → ⊥-elim (¬p⇓ p⇓)) ⟩■
-           code (true ⦂ Bool)) ,
+           apply halts ⌜ p ⌝  ⇓⟨ hyp (p , cl-p) true ((λ _ → refl) , λ ¬p⇓ → ⊥-elim (¬p⇓ p⇓)) ⟩■
+           ⌜ true ⦂ Bool ⌝) ,
         λ ¬p⇓ →
-          apply halts (code p)  ⇓⟨ hyp (p , cl-p) false ((λ p⇓ → ⊥-elim (¬p⇓ p⇓)) , λ _ → refl) ⟩■
-          code (false ⦂ Bool)
+          apply halts ⌜ p ⌝  ⇓⟨ hyp (p , cl-p) false ((λ p⇓ → ⊥-elim (¬p⇓ p⇓)) , λ _ → refl) ⟩■
+          ⌜ false ⦂ Bool ⌝
     )
 
 -- The second variant is not decidable.
@@ -419,11 +419,11 @@ intensional-halting-problem₀₂ (halts , cl , hyp , _) =
     , cl
     , λ p cl-p →
           (λ p⇓  →
-             apply halts (code p)  ⇓⟨ hyp (p , cl-p) true (inj₁ (p⇓  , refl)) ⟩■
-             code (true ⦂ Bool))
+             apply halts ⌜ p ⌝  ⇓⟨ hyp (p , cl-p) true (inj₁ (p⇓  , refl)) ⟩■
+             ⌜ true ⦂ Bool ⌝)
         , (λ ¬p⇓ →
-             apply halts (code p)  ⇓⟨ hyp (p , cl-p) false (inj₂ (¬p⇓ , refl)) ⟩■
-             code (false ⦂ Bool))
+             apply halts ⌜ p ⌝  ⇓⟨ hyp (p , cl-p) false (inj₂ (¬p⇓ , refl)) ⟩■
+             ⌜ false ⦂ Bool ⌝)
     )
 
 -- Under the assumption of excluded middle one can prove that
@@ -470,43 +470,43 @@ Intensional-halting-problem₀₁→Intensional-halting-problem₀₂ em =
 half-of-the-halting-problem :
   (eval : Exp) →
   Closed eval →
-  (∀ p v → Closed p → p ⇓ v → apply eval (code p) ⇓ code v) →
+  (∀ p v → Closed p → p ⇓ v → apply eval ⌜ p ⌝ ⇓ ⌜ v ⌝) →
   (∀ p → Closed p → ¬ Terminates p →
-     ¬ Terminates (apply eval (code p))) →
+     ¬ Terminates (apply eval ⌜ p ⌝)) →
   ∃ λ halts →
       Closed halts
         ×
       ∀ p → Closed p →
-        (Terminates p → apply halts (code p) ⇓ code (true ⦂ Bool))
+        (Terminates p → apply halts ⌜ p ⌝ ⇓ ⌜ true ⦂ Bool ⌝)
           ×
-        (¬ Terminates p → ¬ Terminates (apply halts (code p)))
+        (¬ Terminates p → ¬ Terminates (apply halts ⌜ p ⌝))
 half-of-the-halting-problem eval cl eval⇓ eval¬⇓ =
   halts , cl′ , λ p cl-p → lemma₁ p cl-p , lemma₂ p cl-p
   module Half-of-the-halting-problem where
-  halts = lambda v-p (apply (lambda v-underscore (code (true ⦂ Bool)))
+  halts = lambda v-p (apply (lambda v-underscore ⌜ true ⦂ Bool ⌝)
                             (apply eval (var v-p)))
 
   cl′ : Closed halts
   cl′ =
     Closed′-closed-under-lambda $
     Closed′-closed-under-apply
-      (from-⊎ (closed′? (lambda v-underscore (code (true ⦂ Bool))) _))
+      (from-⊎ (closed′? (lambda v-underscore ⌜ true ⦂ Bool ⌝) _))
       (Closed′-closed-under-apply
         (Closed→Closed′ cl)
         (Closed′-closed-under-var (inj₁ refl)))
 
   lemma₁ : ∀ p → Closed p → Terminates p →
-           apply halts (code p) ⇓ code (true ⦂ Bool)
+           apply halts ⌜ p ⌝ ⇓ ⌜ true ⦂ Bool ⌝
   lemma₁ p cl-p (v , p⇓v) =
-    apply halts (code p)                             ⟶⟨ apply lambda (code⇓code p) ⟩
+    apply halts ⌜ p ⌝                            ⟶⟨ apply lambda (rep⇓rep p) ⟩
 
-    apply (lambda v-underscore (code (true ⦂ Bool)))
-          (apply (eval [ v-p ← code p ]) (code p))   ≡⟨ by (subst-closed _ _ cl) ⟩⟶
+    apply (lambda v-underscore ⌜ true ⦂ Bool ⌝)
+          (apply (eval [ v-p ← ⌜ p ⌝ ]) ⌜ p ⌝)   ≡⟨ by (subst-closed _ _ cl) ⟩⟶
 
-    apply (lambda v-underscore (code (true ⦂ Bool)))
-          (apply eval (code p))                      ⇓⟨ apply lambda (eval⇓ p v cl-p p⇓v) (code⇓code (true ⦂ Bool)) ⟩■
+    apply (lambda v-underscore ⌜ true ⦂ Bool ⌝)
+          (apply eval ⌜ p ⌝)                     ⇓⟨ apply lambda (eval⇓ p v cl-p p⇓v) (rep⇓rep (true ⦂ Bool)) ⟩■
 
-    code (true ⦂ Bool)
+    ⌜ true ⦂ Bool ⌝
 
   halts-eval-inversion :
     ∀ e →
@@ -521,11 +521,11 @@ half-of-the-halting-problem eval cl eval⇓ eval¬⇓ =
 
   lemma₂ : ∀ p → Closed p →
            ¬ Terminates p →
-           ¬ Terminates (apply halts (code p))
+           ¬ Terminates (apply halts ⌜ p ⌝)
   lemma₂ p cl-p ¬p⇓ =
-    Terminates (apply halts (code p))  ↝⟨ halts-eval-inversion (code p) ⟩
-    Terminates (apply eval (code p))   ↝⟨ eval¬⇓ p cl-p ¬p⇓ ⟩□
-    ⊥                                  □
+    Terminates (apply halts ⌜ p ⌝)  ↝⟨ halts-eval-inversion ⌜ p ⌝ ⟩
+    Terminates (apply eval ⌜ p ⌝)   ↝⟨ eval¬⇓ p cl-p ¬p⇓ ⟩□
+    ⊥                               □
 
 -- Two statements of "half of the halting problem".
 
@@ -545,9 +545,9 @@ Half-of-the-halting-problem₂ =
 half-of-the-halting-problem₂ :
   (eval : Exp) →
   Closed eval →
-  (∀ p v → Closed p → p ⇓ v → apply eval (code p) ⇓ code v) →
-  (∀ p v → Closed p → apply eval (code p) ⇓ v →
-     ∃ λ v′ → p ⇓ v′ × v ≡ code v′) →
+  (∀ p v → Closed p → p ⇓ v → apply eval ⌜ p ⌝ ⇓ ⌜ v ⌝) →
+  (∀ p v → Closed p → apply eval ⌜ p ⌝ ⇓ v →
+     ∃ λ v′ → p ⇓ v′ × v ≡ ⌜ v′ ⌝) →
   Computable Half-of-the-halting-problem₂
 half-of-the-halting-problem₂ eval cl eval₁ eval₂ =
   H.halts , H.cl′ ,
@@ -557,33 +557,33 @@ half-of-the-halting-problem₂ eval cl eval₁ eval₂ =
   where
   eval-inversion :
     ∀ p → Closed p →
-    Terminates (apply eval (code p)) →
+    Terminates (apply eval ⌜ p ⌝) →
     Terminates p
   eval-inversion p cl-p = Σ-map id proj₁ ∘ eval₂ p _ cl-p ∘ proj₂
 
   module H = Half-of-the-halting-problem eval cl eval₁
                (λ { p cl-p ¬p⇓ →
-                    Terminates (apply eval (code p))  ↝⟨ eval-inversion p cl-p ⟩
-                    Terminates p                      ↝⟨ ¬p⇓ ⟩□
-                    ⊥                                 □ })
+                    Terminates (apply eval ⌜ p ⌝)  ↝⟨ eval-inversion p cl-p ⟩
+                    Terminates p                   ↝⟨ ¬p⇓ ⟩□
+                    ⊥                              □ })
 
-  lemma₂ : ∀ p v → Closed p → apply H.halts (code p) ⇓ v →
-           Terminates p × v ≡ code (true ⦂ Bool)
+  lemma₂ : ∀ p v → Closed p → apply H.halts ⌜ p ⌝ ⇓ v →
+           Terminates p × v ≡ ⌜ true ⦂ Bool ⌝
   lemma₂ p v cl-p q@(apply lambda _ (apply lambda _ (const []))) =
-      (                                     $⟨ _ , q ⟩
-       Terminates (apply H.halts (code p))  ↝⟨ H.halts-eval-inversion (code p) ⟩
-       Terminates (apply eval (code p))     ↝⟨ eval-inversion p cl-p ⟩□
-       Terminates p                         □)
+      (                                  $⟨ _ , q ⟩
+       Terminates (apply H.halts ⌜ p ⌝)  ↝⟨ H.halts-eval-inversion ⌜ p ⌝ ⟩
+       Terminates (apply eval ⌜ p ⌝)     ↝⟨ eval-inversion p cl-p ⟩□
+       Terminates p                      □)
     , refl
 
--- If the expression terminates with code zero as the result, then
--- this (total partial) function returns true. If the expression does
--- not terminate with code zero as the result, then the function
--- returns false.
+-- If the expression terminates with ⌜ zero ⌝ as the result, then this
+-- (total partial) function returns true. If the expression does not
+-- terminate with ⌜ zero ⌝ as the result, then the function returns
+-- false.
 
 Halts-with-zero : Closed-exp →Bool
 Halts-with-zero =
-  as-function-to-Bool₁ (λ { (e , _) → e ⇓ code zero })
+  as-function-to-Bool₁ (λ { (e , _) → e ⇓ ⌜ zero ⌝ })
 
 -- Halts-with-zero is not decidable.
 
@@ -607,7 +607,7 @@ halts-with-zero =
 
     coded-argument : Exp → Exp
     coded-argument p = const c-apply (
-      code (Exp.lambda v-x (const c-zero [])) ∷
+      ⌜ Exp.lambda v-x (const c-zero []) ⌝ ∷
       p ∷
       [])
 
@@ -622,7 +622,7 @@ halts-with-zero =
         (Closed→Closed′ cl)
         (Closed′-closed-under-const λ where
            _ (inj₁ refl)        → Closed→Closed′ $
-                                    code-closed (Exp.lambda v-x (const c-zero []))
+                                    rep-closed (Exp.lambda v-x (const c-zero []))
            _ (inj₂ (inj₁ refl)) → Closed′-closed-under-var (inj₁ refl)
            _ (inj₂ (inj₂ ())))
 
@@ -641,13 +641,13 @@ halts-with-zero =
       , λ _ → refl
 
     hyp₁′ : ∀ p b → proj₁ Intensional-halting-problem₀₁ [ p ]= b →
-            apply halts (code p) ⇓ code b
+            apply halts ⌜ p ⌝ ⇓ ⌜ b ⌝
     hyp₁′ p b halts[p]=b =
-      apply halts (code p)                                                ⟶⟨ apply lambda (code⇓code p) ⟩
-      apply (halts-with-zero [ v-p ← code p ]) (coded-argument (code p))  ≡⟨ by (subst-closed _ _ cl) ⟩⟶
-      apply halts-with-zero (coded-argument (code p))                     ⟶⟨⟩
-      apply halts-with-zero (code (argument p))                           ⇓⟨ hyp₁ (argument p) b (lemma₁ p _ halts[p]=b) ⟩■
-      code b
+      apply halts ⌜ p ⌝                                               ⟶⟨ apply lambda (rep⇓rep p) ⟩
+      apply (halts-with-zero [ v-p ← ⌜ p ⌝ ]) (coded-argument ⌜ p ⌝)  ≡⟨ by (subst-closed _ _ cl) ⟩⟶
+      apply halts-with-zero (coded-argument ⌜ p ⌝)                    ⟶⟨⟩
+      apply halts-with-zero ⌜ argument p ⌝                            ⇓⟨ hyp₁ (argument p) b (lemma₁ p _ halts[p]=b) ⟩■
+      ⌜ b ⌝
 
     pattern coded-argument-⇓ p =
       const (const (const (const (const (const [] ∷ []) ∷ []) ∷ []) ∷
@@ -658,19 +658,19 @@ halts-with-zero =
 
     lemma₂ :
       ∀ p v →
-      apply halts (code p) ⇓ v →
-      apply halts-with-zero (code (argument p)) ⇓ v
+      apply halts ⌜ p ⌝ ⇓ v →
+      apply halts-with-zero ⌜ argument p ⌝ ⇓ v
     lemma₂ p v (apply {v₂ = v₂} lambda q r) =
-      apply halts-with-zero (code (argument p))                       ≡⟨ by (subst-closed _ _ cl) ⟩⟶
-      apply (halts-with-zero [ v-p ← v₂ ]) (coded-argument (code p))  ⟶⟨ []⇓ (apply→ ∙) (coded-argument-⇓ q) ⟩
-      apply (halts-with-zero [ v-p ← v₂ ]) (coded-argument v₂)        ⇓⟨ r ⟩■
+      apply halts-with-zero ⌜ argument p ⌝                         ≡⟨ by (subst-closed _ _ cl) ⟩⟶
+      apply (halts-with-zero [ v-p ← v₂ ]) (coded-argument ⌜ p ⌝)  ⟶⟨ []⇓ (apply→ ∙) (coded-argument-⇓ q) ⟩
+      apply (halts-with-zero [ v-p ← v₂ ]) (coded-argument v₂)     ⇓⟨ r ⟩■
       v
 
-    hyp₂′ : ∀ p v → apply halts (code p) ⇓ v →
+    hyp₂′ : ∀ p v → apply halts ⌜ p ⌝ ⇓ v →
             ∃ λ v′ →
               proj₁ Intensional-halting-problem₀₁ [ p ]= v′
                 ×
-              v ≡ code v′
+              v ≡ ⌜ v′ ⌝
     hyp₂′ p v q =
       Σ-map id
         (Σ-map

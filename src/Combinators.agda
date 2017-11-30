@@ -91,83 +91,83 @@ equal-ℕ-closed {xs} cl-e₁ cl-e₂ =
 
 equal-ℕ-correct :
   ∀ m n →
-  equal-ℕ (code m) (code n) ⇓
-  code (Prelude.if m Nat.≟ n then true else false)
+  equal-ℕ ⌜ m ⌝ ⌜ n ⌝ ⇓
+  ⌜ Prelude.if m Nat.≟ n then true else false ⌝
 equal-ℕ-correct m n =
-  equal-ℕ (code m) (code n)                           ⟶⟨⟩
+  equal-ℕ ⌜ m ⌝ ⌜ n ⌝                               ⟶⟨⟩
 
-  apply (apply equal-ℕ′ (code m)) (code n)            ⟶⟨ apply (apply (rec lambda) (code⇓code m) lambda) (code⇓code n) ⟩
+  apply (apply equal-ℕ′ ⌜ m ⌝) ⌜ n ⌝                ⟶⟨ apply (apply (rec lambda) (rep⇓rep m) lambda) (rep⇓rep n) ⟩
 
-  case (code m [ v-n ← code n ])
+  case (⌜ m ⌝ [ v-n ← ⌜ n ⌝ ])
     (branches [ v-equal ← equal-ℕ′ ]B⋆
-              [ v-m ← code m ]B⋆ [ v-n ← code n ]B⋆)  ≡⟨ by (subst-code m) ⟩⟶
+              [ v-m ← ⌜ m ⌝ ]B⋆ [ v-n ← ⌜ n ⌝ ]B⋆)  ≡⟨ by (subst-rep m) ⟩⟶
 
-  case (code m)
+  case ⌜ m ⌝
     (branches [ v-equal ← equal-ℕ′ ]B⋆
-              [ v-m ← code m ]B⋆ [ v-n ← code n ]B⋆)  ⇓⟨ lemma m n ⟩■
+              [ v-m ← ⌜ m ⌝ ]B⋆ [ v-n ← ⌜ n ⌝ ]B⋆)  ⇓⟨ lemma m n ⟩■
 
-  code (Prelude.if m Nat.≟ n then true else false)
+  ⌜ Prelude.if m Nat.≟ n then true else false ⌝
   where
   open Equal-ℕ
 
   lemma :
     ∀ m n →
-    case (code m)
+    case ⌜ m ⌝
       (branches [ v-equal ← equal-ℕ′ ]B⋆
-                [ v-m ← code m ]B⋆ [ v-n ← code n ]B⋆)
+                [ v-m ← ⌜ m ⌝ ]B⋆ [ v-n ← ⌜ n ⌝ ]B⋆)
       ⇓
-    code (Prelude.if m Nat.≟ n then true else false)
+    ⌜ Prelude.if m Nat.≟ n then true else false ⌝
   lemma zero zero =
-    case (code zero)
+    case ⌜ zero ⌝
       (branches [ v-equal ← equal-ℕ′ ]B⋆
-                [ v-m ← code zero ]B⋆ [ v-n ← code zero ]B⋆)  ⟶⟨ _⇓_.case (code⇓code zero) here [] ⟩
+                [ v-m ← ⌜ zero ⌝ ]B⋆ [ v-n ← ⌜ zero ⌝ ]B⋆)  ⟶⟨ _⇓_.case (rep⇓rep zero) here [] ⟩
 
-    case (code zero) zero-branches                            ⇓⟨ case (code⇓code zero) here [] (code⇓code (true ⦂ Bool)) ⟩■
+    case ⌜ zero ⌝ zero-branches                             ⇓⟨ case (rep⇓rep zero) here [] (rep⇓rep (true ⦂ Bool)) ⟩■
 
-    code (true ⦂ Bool)
+    ⌜ true ⦂ Bool ⌝
 
   lemma zero (suc n) =
-    case (code zero)
+    case ⌜ zero ⌝
       (branches [ v-equal ← equal-ℕ′ ]B⋆
-                [ v-m ← code zero ]B⋆ [ v-n ← code (suc n) ]B⋆)  ⟶⟨ case (code⇓code zero) here [] ⟩
+                [ v-m ← ⌜ zero ⌝ ]B⋆ [ v-n ← ⌜ suc n ⌝ ]B⋆)  ⟶⟨ case (rep⇓rep zero) here [] ⟩
 
-    case (code (suc n)) zero-branches                            ⇓⟨ case (code⇓code (suc n)) (there (λ ()) here) (∷ [])
-                                                                         (code⇓code (false ⦂ Bool)) ⟩■
-    code (false ⦂ Bool)
+    case ⌜ suc n ⌝ zero-branches                             ⇓⟨ case (rep⇓rep (suc n)) (there (λ ()) here) (∷ [])
+                                                                     (rep⇓rep (false ⦂ Bool)) ⟩■
+    ⌜ false ⦂ Bool ⌝
 
   lemma (suc m) zero =
-    case (code (suc m))
+    case ⌜ suc m ⌝
       (branches [ v-equal ← equal-ℕ′ ]B⋆
-                [ v-m ← code (suc m) ]B⋆ [ v-n ← code zero ]B⋆)        ⟶⟨ case (code⇓code (suc m)) (there (λ ()) here) (∷ []) ⟩
+                [ v-m ← ⌜ suc m ⌝ ]B⋆ [ v-n ← ⌜ zero ⌝ ]B⋆)     ⟶⟨ case (rep⇓rep (suc m)) (there (λ ()) here) (∷ []) ⟩
 
-    case (code zero)
-      (suc-branches [ v-equal ← equal-ℕ′ ]B⋆ [ v-m ← code m ]B⋆
-                    [ v-n ← code zero ]B⋆)                             ⇓⟨ case (code⇓code zero) here [] (code⇓code (false ⦂ Bool)) ⟩■
+    case ⌜ zero ⌝
+      (suc-branches [ v-equal ← equal-ℕ′ ]B⋆ [ v-m ← ⌜ m ⌝ ]B⋆
+                    [ v-n ← ⌜ zero ⌝ ]B⋆)                       ⇓⟨ case (rep⇓rep zero) here [] (rep⇓rep (false ⦂ Bool)) ⟩■
 
-    code (false ⦂ Bool)
+    ⌜ false ⦂ Bool ⌝
 
   lemma (suc m) (suc n) =
-    case (code (suc m))
+    case ⌜ suc m ⌝
       (branches [ v-equal ← equal-ℕ′ ]B⋆
-                [ v-m ← code (suc m) ]B⋆ [ v-n ← code (suc n) ]B⋆)  ⟶⟨ case (code⇓code (suc m)) (there (λ ()) here) (∷ []) ⟩
+                [ v-m ← ⌜ suc m ⌝ ]B⋆ [ v-n ← ⌜ suc n ⌝ ]B⋆)    ⟶⟨ case (rep⇓rep (suc m)) (there (λ ()) here) (∷ []) ⟩
 
-    case (code (suc n) [ v-m ← code m ])
-      (suc-branches [ v-equal ← equal-ℕ′ ]B⋆ [ v-m ← code m ]B⋆
-                    [ v-n ← code (suc n) ]B⋆)                       ≡⟨ by (subst-code (suc n)) ⟩⟶
+    case (⌜ suc n ⌝ [ v-m ← ⌜ m ⌝ ])
+      (suc-branches [ v-equal ← equal-ℕ′ ]B⋆ [ v-m ← ⌜ m ⌝ ]B⋆
+                    [ v-n ← ⌜ suc n ⌝ ]B⋆)                      ≡⟨ by (subst-rep (suc n)) ⟩⟶
 
-    case (code (suc n))
-      (suc-branches [ v-equal ← equal-ℕ′ ]B⋆ [ v-m ← code m ]B⋆
-                    [ v-n ← code (suc n) ]B⋆)                       ⟶⟨ case (code⇓code (suc n)) (there (λ ()) here) (∷ []) ⟩
+    case ⌜ suc n ⌝
+      (suc-branches [ v-equal ← equal-ℕ′ ]B⋆ [ v-m ← ⌜ m ⌝ ]B⋆
+                    [ v-n ← ⌜ suc n ⌝ ]B⋆)                      ⟶⟨ case (rep⇓rep (suc n)) (there (λ ()) here) (∷ []) ⟩
 
-    apply (apply equal-ℕ′ (code m [ v-n ← code n ])) (code n)       ≡⟨ by (subst-code m) ⟩⟶
+    apply (apply equal-ℕ′ (⌜ m ⌝ [ v-n ← ⌜ n ⌝ ])) ⌜ n ⌝        ≡⟨ by (subst-rep m) ⟩⟶
 
-    apply (apply equal-ℕ′ (code m)) (code n)                        ⟶⟨⟩
+    apply (apply equal-ℕ′ ⌜ m ⌝) ⌜ n ⌝                          ⟶⟨⟩
 
-    equal-ℕ (code m) (code n)                                       ⇓⟨ equal-ℕ-correct m n ⟩
+    equal-ℕ ⌜ m ⌝ ⌜ n ⌝                                         ⇓⟨ equal-ℕ-correct m n ⟩
 
-    code (Prelude.if m Nat.≟ n then true else false)                ≡⟨ by lem ⟩⟶
+    ⌜ Prelude.if m Nat.≟ n then true else false ⌝               ≡⟨ by lem ⟩⟶
 
-    code (Prelude.if suc m Nat.≟ suc n then true else false)        ■⟨ code-value (Prelude.if suc m Nat.≟ suc n then true else false) ⟩
+    ⌜ Prelude.if suc m Nat.≟ suc n then true else false ⌝       ■⟨ rep-value (Prelude.if suc m Nat.≟ suc n then true else false) ⟩
     where
     lem : Prelude.if m Nat.≟ n then true else false ≡
           Prelude.if suc m Nat.≟ suc n then true else false
@@ -179,8 +179,8 @@ private
 
   equal-ℕ-correct′ :
     ∀ m n {v} →
-    equal-ℕ (code m) (code n) ⇓ v →
-    v ≡ code (Prelude.if m Nat.≟ n then true else false)
+    equal-ℕ ⌜ m ⌝ ⌜ n ⌝ ⇓ v →
+    v ≡ ⌜ Prelude.if m Nat.≟ n then true else false ⌝
   equal-ℕ-correct′ m n p =
     ⇓-deterministic p (equal-ℕ-correct m n)
 
@@ -224,89 +224,89 @@ member-closed cl-m cl-ns =
 
 member-correct :
   ∀ m ns →
-  member (code m) (code ns) ⇓
-  code (Prelude.if V.member m ns then true else false)
+  member ⌜ m ⌝ ⌜ ns ⌝ ⇓
+  ⌜ Prelude.if V.member m ns then true else false ⌝
 member-correct m ns =
-  member (code m) (code ns)                                               ⟶⟨⟩
+  member ⌜ m ⌝ ⌜ ns ⌝                                                   ⟶⟨⟩
 
-  apply (apply member′ (code m)) (code ns)                                ⟶⟨ apply (apply lambda (code⇓code m) (rec lambda)) (code⇓code ns) ⟩
+  apply (apply member′ ⌜ m ⌝) ⌜ ns ⌝                                    ⟶⟨ apply (apply lambda (rep⇓rep m) (rec lambda)) (rep⇓rep ns) ⟩
 
-  case (code ns)
-    (branches [ v-x ← code m ]B⋆ [ v-member ← body [ v-x ← code m ] ]B⋆)  ⇓⟨ lemma ns ⟩■
+  case ⌜ ns ⌝
+    (branches [ v-x ← ⌜ m ⌝ ]B⋆ [ v-member ← body [ v-x ← ⌜ m ⌝ ] ]B⋆)  ⇓⟨ lemma ns ⟩■
 
-  code (Prelude.if V.member m ns then true else false)
+  ⌜ Prelude.if V.member m ns then true else false ⌝
   where
   open Member
 
   lemma :
     ∀ ns →
-    case (code ns) (branches [ v-x ← code m ]B⋆
-                             [ v-member ← body [ v-x ← code m ] ]B⋆)
+    case ⌜ ns ⌝ (branches [ v-x ← ⌜ m ⌝ ]B⋆
+                             [ v-member ← body [ v-x ← ⌜ m ⌝ ] ]B⋆)
       ⇓
-    code (Prelude.if V.member m ns then true else false)
+    ⌜ Prelude.if V.member m ns then true else false ⌝
   lemma [] =
-    case (code ([] ⦂ List ℕ))
-      (branches [ v-x ← code m ]B⋆
-                [ v-member ← body [ v-x ← code m ] ]B⋆)           ⇓⟨ case (code⇓code ([] ⦂ List ℕ)) here [] (const []) ⟩■
+    case ⌜ [] ⦂ List ℕ ⌝
+      (branches [ v-x ← ⌜ m ⌝ ]B⋆
+                [ v-member ← body [ v-x ← ⌜ m ⌝ ] ]B⋆)           ⇓⟨ case (rep⇓rep ([] ⦂ List ℕ)) here [] (const []) ⟩■
 
-    code (false ⦂ Bool)
+    ⌜ false ⦂ Bool ⌝
 
   lemma (n ∷ ns) =
-    case (code (n List.∷ ns))
-      (branches [ v-x ← code m ]B⋆
-                [ v-member ← body [ v-x ← code m ] ]B⋆)           ⟶⟨ case (code⇓code (n List.∷ ns)) (there (λ ()) here) (∷ ∷ []) ⟩
+    case ⌜ n List.∷ ns ⌝
+      (branches [ v-x ← ⌜ m ⌝ ]B⋆
+                [ v-member ← body [ v-x ← ⌜ m ⌝ ] ]B⋆)        ⟶⟨ case (rep⇓rep (n List.∷ ns)) (there (λ ()) here) (∷ ∷ []) ⟩
 
-    case (equal-ℕ (code m [ v-member ← body [ v-x ← code m ] ]
-                          [ v-xs ← code ns ] [ v-y ← code n ])
-                  (code n))
-      (cons-branches [ v-x ← code m ]B⋆
-                     [ v-member ← body [ v-x ← code m ] ]B⋆
-                     [ v-xs ← code ns ]B⋆ [ v-y ← code n ]B⋆)     ≡⟨ cong (λ e → case (apply (apply _ e) _)
-                                                                                   (cons-branches [ v-x ← code m ]B⋆
-                                                                                                  [ v-member ← body [ v-x ← code m ] ]B⋆
-                                                                                                  [ v-xs ← code ns ]B⋆ [ v-y ← code n ]B⋆))
-                                                                       (substs-code m ((v-y , code n) ∷ (v-xs , code ns) ∷
-                                                                                       (v-member , body [ v-x ← code m ]) ∷ [])) ⟩⟶
-    case (equal-ℕ (code m) (code n))
-      (cons-branches [ v-x ← code m ]B⋆
-                     [ v-member ← body [ v-x ← code m ] ]B⋆
-                     [ v-xs ← code ns ]B⋆ [ v-y ← code n ]B⋆)     ≡⟨ by (subst-∉-B⋆ _ _ (code m) (from-⊎ (v-x ∈?-B⋆ cons-branches))) ⟩⟶
+    case (equal-ℕ (⌜ m ⌝ [ v-member ← body [ v-x ← ⌜ m ⌝ ] ]
+                          [ v-xs ← ⌜ ns ⌝ ] [ v-y ← ⌜ n ⌝ ])
+                  ⌜ n ⌝)
+      (cons-branches [ v-x ← ⌜ m ⌝ ]B⋆
+                     [ v-member ← body [ v-x ← ⌜ m ⌝ ] ]B⋆
+                     [ v-xs ← ⌜ ns ⌝ ]B⋆ [ v-y ← ⌜ n ⌝ ]B⋆)   ≡⟨ cong (λ e → case (apply (apply _ e) _)
+                                                                                  (cons-branches [ v-x ← ⌜ m ⌝ ]B⋆
+                                                                                                 [ v-member ← body [ v-x ← ⌜ m ⌝ ] ]B⋆
+                                                                                                 [ v-xs ← ⌜ ns ⌝ ]B⋆ [ v-y ← ⌜ n ⌝ ]B⋆))
+                                                                      (substs-rep m ((v-y , ⌜ n ⌝) ∷ (v-xs , ⌜ ns ⌝) ∷
+                                                                                      (v-member , body [ v-x ← ⌜ m ⌝ ]) ∷ [])) ⟩⟶
+    case (equal-ℕ ⌜ m ⌝ ⌜ n ⌝)
+      (cons-branches [ v-x ← ⌜ m ⌝ ]B⋆
+                     [ v-member ← body [ v-x ← ⌜ m ⌝ ] ]B⋆
+                     [ v-xs ← ⌜ ns ⌝ ]B⋆ [ v-y ← ⌜ n ⌝ ]B⋆)   ≡⟨ by (subst-∉-B⋆ _ _ ⌜ m ⌝ (from-⊎ (v-x ∈?-B⋆ cons-branches))) ⟩⟶
 
-    case (equal-ℕ (code m) (code n))
-      (cons-branches [ v-member ← body [ v-x ← code m ] ]B⋆
-                     [ v-xs ← code ns ]B⋆ [ v-y ← code n ]B⋆)     ≡⟨ cong (case _)
-                                                                       (subst-∉-B⋆ _ _ _
-                                                                          λ { (._ , ._ , ._ , inj₁ refl        , const _ ()        , _)
-                                                                            ; (._ , ._ , ._ , inj₂ (inj₁ refl) , y∈FV[body[x←m]ns] , _) →
-                                                                              Closed′-closed-under-apply
-                                                                                (Closed′-closed-under-subst body-closed (code-closed m))
-                                                                                (code-closed ns)
-                                                                                v-y (λ ()) y∈FV[body[x←m]ns]
-                                                                            ; (_ , _ , _ , (inj₂ (inj₂ ())) , _) }) ⟩⟶
-    case (equal-ℕ (code m) (code n))
-      (cons-branches [ v-member ← body [ v-x ← code m ] ]B⋆
-                     [ v-xs ← code ns ]B⋆)                        ⇓⟨ lemma′ (m Nat.≟ n) (equal-ℕ-correct m n) ⟩■
+    case (equal-ℕ ⌜ m ⌝ ⌜ n ⌝)
+      (cons-branches [ v-member ← body [ v-x ← ⌜ m ⌝ ] ]B⋆
+                     [ v-xs ← ⌜ ns ⌝ ]B⋆ [ v-y ← ⌜ n ⌝ ]B⋆)   ≡⟨ cong (case _)
+                                                                      (subst-∉-B⋆ _ _ _
+                                                                         λ { (._ , ._ , ._ , inj₁ refl        , const _ ()        , _)
+                                                                           ; (._ , ._ , ._ , inj₂ (inj₁ refl) , y∈FV[body[x←m]ns] , _) →
+                                                                             Closed′-closed-under-apply
+                                                                               (Closed′-closed-under-subst body-closed (rep-closed m))
+                                                                               (rep-closed ns)
+                                                                               v-y (λ ()) y∈FV[body[x←m]ns]
+                                                                           ; (_ , _ , _ , (inj₂ (inj₂ ())) , _) }) ⟩⟶
+    case (equal-ℕ ⌜ m ⌝ ⌜ n ⌝)
+      (cons-branches [ v-member ← body [ v-x ← ⌜ m ⌝ ] ]B⋆
+                     [ v-xs ← ⌜ ns ⌝ ]B⋆)                     ⇓⟨ lemma′ (m Nat.≟ n) (equal-ℕ-correct m n) ⟩■
 
-    code (Prelude.if V.member m (n ∷ ns) then true else false)
+    ⌜ Prelude.if V.member m (n ∷ ns) then true else false ⌝
     where
     lemma′ :
       (m≟n : Dec (m ≡ n)) →
-      equal-ℕ (code m) (code n)
+      equal-ℕ ⌜ m ⌝ ⌜ n ⌝
         ⇓
-      code (Prelude.if m≟n then true else false) →
-      case (equal-ℕ (code m) (code n))
-        (cons-branches [ v-member ← body [ v-x ← code m ] ]B⋆
-                       [ v-xs ← code ns ]B⋆)
+      ⌜ Prelude.if m≟n then true else false ⌝ →
+      case (equal-ℕ ⌜ m ⌝ ⌜ n ⌝)
+        (cons-branches [ v-member ← body [ v-x ← ⌜ m ⌝ ] ]B⋆
+                       [ v-xs ← ⌜ ns ⌝ ]B⋆)
         ⇓
-      code (Prelude.if V.member m (n ∷ ns) then true else false)
+      ⌜ Prelude.if V.member m (n ∷ ns) then true else false ⌝
     lemma′ (yes m≡n) hyp =
-      case (equal-ℕ (code m) (code n))
-        (cons-branches [ v-member ← body [ v-x ← code m ] ]B⋆
-                       [ v-xs ← code ns ]B⋆)                      ⟶⟨ case hyp here [] ⟩
+      case (equal-ℕ ⌜ m ⌝ ⌜ n ⌝)
+        (cons-branches [ v-member ← body [ v-x ← ⌜ m ⌝ ] ]B⋆
+                       [ v-xs ← ⌜ ns ⌝ ]B⋆)                    ⟶⟨ case hyp here [] ⟩
 
-      code (true ⦂ Bool)                                          ≡⟨ cong code lem ⟩⟶
+      ⌜ true ⦂ Bool ⌝                                          ≡⟨ cong ⌜_⌝ lem ⟩⟶
 
-      code (Prelude.if V.member m (n ∷ ns) then true else false)  ■⟨ code-value (Prelude.if V.member m (n ∷ ns) then true else false) ⟩
+      ⌜ Prelude.if V.member m (n ∷ ns) then true else false ⌝  ■⟨ rep-value (Prelude.if V.member m (n ∷ ns) then true else false) ⟩
       where
       lem : true ≡ Prelude.if V.member m (n ∷ ns) then true else false
       lem with m Nat.≟ n
@@ -314,22 +314,22 @@ member-correct m ns =
       ... | no  m≢n = ⊥-elim (m≢n m≡n)
 
     lemma′ (no m≢n) hyp =
-      case (equal-ℕ (code m) (code n))
-        (cons-branches [ v-member ← body [ v-x ← code m ] ]B⋆
-                       [ v-xs ← code ns ]B⋆)                      ⟶⟨ case hyp (there (λ ()) here) [] ⟩
+      case (equal-ℕ ⌜ m ⌝ ⌜ n ⌝)
+        (cons-branches [ v-member ← body [ v-x ← ⌜ m ⌝ ] ]B⋆
+                       [ v-xs ← ⌜ ns ⌝ ]B⋆)                    ⟶⟨ case hyp (there (λ ()) here) [] ⟩
 
-      apply (body [ v-x ← code m ] [ v-xs ← code ns ]) (code ns)  ≡⟨ by (subst-closed v-x (code ns)
-                                                                           (Closed′-closed-under-subst body-closed (code-closed m))) ⟩⟶
+      apply (body [ v-x ← ⌜ m ⌝ ] [ v-xs ← ⌜ ns ⌝ ]) ⌜ ns ⌝    ≡⟨ by (subst-closed v-x ⌜ ns ⌝
+                                                                        (Closed′-closed-under-subst body-closed (rep-closed m))) ⟩⟶
 
-      apply (body [ v-x ← code m ]) (code ns)                     ⟶⟨ apply (rec lambda) (code⇓code ns) ⟩
+      apply (body [ v-x ← ⌜ m ⌝ ]) ⌜ ns ⌝                      ⟶⟨ apply (rec lambda) (rep⇓rep ns) ⟩
 
-      case (code ns)
-        (branches [ v-x ← code m ]B⋆
-                  [ v-member ← body [ v-x ← code m ] ]B⋆)         ⇓⟨ lemma ns ⟩
+      case ⌜ ns ⌝
+        (branches [ v-x ← ⌜ m ⌝ ]B⋆
+                  [ v-member ← body [ v-x ← ⌜ m ⌝ ] ]B⋆)       ⇓⟨ lemma ns ⟩
 
-      code (Prelude.if V.member m      ns  then true else false)  ≡⟨ cong code lem ⟩⟶
+      ⌜ Prelude.if V.member m      ns  then true else false ⌝  ≡⟨ cong ⌜_⌝ lem ⟩⟶
 
-      code (Prelude.if V.member m (n ∷ ns) then true else false)  ■⟨ code-value (Prelude.if V.member m (n ∷ ns) then true else false) ⟩
+      ⌜ Prelude.if V.member m (n ∷ ns) then true else false ⌝  ■⟨ rep-value (Prelude.if V.member m (n ∷ ns) then true else false) ⟩
       where
       lem : Prelude.if V.member m      ns  then true else false ≡
             Prelude.if V.member m (n ∷ ns) then true else false
@@ -365,10 +365,10 @@ if-then-else-closed c-cl t-cl f-cl =
       (inj₂ (inj₂ ()))
 
 if-then-else-correct :
-  ∀ {A : Set} ⦃ cA : Code A Consts ⦄ {e₁ e₂ e₃}
+  ∀ {A : Set} ⦃ cA : Rep A Consts ⦄ {e₁ e₂ e₃}
   (b₁ : Bool) (v₂ v₃ : A) →
-  e₁ ⇓ code b₁ → e₂ ⇓ code v₂ → e₃ ⇓ code v₃ →
-  if e₁ then e₂ else e₃ ⇓ code (Prelude.if b₁ then v₂ else v₃)
+  e₁ ⇓ ⌜ b₁ ⌝ → e₂ ⇓ ⌜ v₂ ⌝ → e₃ ⇓ ⌜ v₃ ⌝ →
+  if e₁ then e₂ else e₃ ⇓ ⌜ Prelude.if b₁ then v₂ else v₃ ⌝
 if-then-else-correct true  _ _ e₁⇓ e₂⇓ e₃⇓ = case e₁⇓ here [] e₂⇓
 if-then-else-correct false _ _ e₁⇓ e₂⇓ e₃⇓ =
   case e₁⇓ (there (λ ()) here) [] e₃⇓
@@ -376,24 +376,24 @@ if-then-else-correct false _ _ e₁⇓ e₂⇓ e₃⇓ =
 -- Negation of booleans.
 
 not : Exp → Exp
-not e = if e then code (false ⦂ Bool) else code (true ⦂ Bool)
+not e = if e then ⌜ false ⦂ Bool ⌝ else ⌜ true ⦂ Bool ⌝
 
 not-closed : ∀ {xs e} → Closed′ xs e → Closed′ xs (not e)
 not-closed cl-e =
   if-then-else-closed
     cl-e
-    (Closed→Closed′ (from-⊎ (closed? (code (false ⦂ Bool)))))
-    (Closed→Closed′ (from-⊎ (closed? (code (true  ⦂ Bool)))))
+    (Closed→Closed′ (from-⊎ (closed? ⌜ false ⦂ Bool ⌝)))
+    (Closed→Closed′ (from-⊎ (closed? ⌜ true  ⦂ Bool ⌝)))
 
-not-correct : ∀ {e} b → e ⇓ code b → not e ⇓ code (Prelude.not b)
+not-correct : ∀ {e} b → e ⇓ ⌜ b ⌝ → not e ⇓ ⌜ Prelude.not b ⌝
 not-correct b e⇓ =
   if-then-else-correct b false true
-    e⇓ (code⇓code (false ⦂ Bool)) (code⇓code (true ⦂ Bool))
+    e⇓ (rep⇓rep (false ⦂ Bool)) (rep⇓rep (true ⦂ Bool))
 
 -- Conjunction.
 
 and : Exp → Exp → Exp
-and e₁ e₂ = if e₁ then e₂ else code (false ⦂ Bool)
+and e₁ e₂ = if e₁ then e₂ else ⌜ false ⦂ Bool ⌝
 
 and-closed :
   ∀ {xs e₁ e₂} → Closed′ xs e₁ → Closed′ xs e₂ → Closed′ xs (and e₁ e₂)
@@ -401,34 +401,34 @@ and-closed cl-e₁ cl-e₂ =
   if-then-else-closed
     cl-e₁
     cl-e₂
-    (Closed→Closed′ (from-⊎ (closed? (code (false ⦂ Bool)))))
+    (Closed→Closed′ (from-⊎ (closed? ⌜ false ⦂ Bool ⌝)))
 
 and-correct :
   ∀ {e₁ e₂} b₁ b₂ →
-  e₁ ⇓ code b₁ → e₂ ⇓ code b₂ →
-  and e₁ e₂ ⇓ code (b₁ ∧ b₂)
+  e₁ ⇓ ⌜ b₁ ⌝ → e₂ ⇓ ⌜ b₂ ⌝ →
+  and e₁ e₂ ⇓ ⌜ b₁ ∧ b₂ ⌝
 and-correct b₁ b₂ e₁⇓ e₂⇓ =
-  if-then-else-correct b₁ b₂ false e₁⇓ e₂⇓ (code⇓code (false ⦂ Bool))
+  if-then-else-correct b₁ b₂ false e₁⇓ e₂⇓ (rep⇓rep (false ⦂ Bool))
 
 -- Disjunction.
 
 or : Exp → Exp → Exp
-or e₁ e₂ = if e₁ then code (true ⦂ Bool) else e₂
+or e₁ e₂ = if e₁ then ⌜ true ⦂ Bool ⌝ else e₂
 
 or-closed :
   ∀ {xs e₁ e₂} → Closed′ xs e₁ → Closed′ xs e₂ → Closed′ xs (or e₁ e₂)
 or-closed cl-e₁ cl-e₂ =
   if-then-else-closed
     cl-e₁
-    (Closed→Closed′ (from-⊎ (closed? (code (true ⦂ Bool)))))
+    (Closed→Closed′ (from-⊎ (closed? ⌜ true ⦂ Bool ⌝)))
     cl-e₂
 
 or-correct :
   ∀ {e₁ e₂} b₁ b₂ →
-  e₁ ⇓ code b₁ → e₂ ⇓ code b₂ →
-  or e₁ e₂ ⇓ code (b₁ ∨ b₂)
+  e₁ ⇓ ⌜ b₁ ⌝ → e₂ ⇓ ⌜ b₂ ⌝ →
+  or e₁ e₂ ⇓ ⌜ b₁ ∨ b₂ ⌝
 or-correct b₁ b₂ e₁⇓ e₂⇓ =
-  if-then-else-correct b₁ true b₂ e₁⇓ (code⇓code (true ⦂ Bool)) e₂⇓
+  if-then-else-correct b₁ true b₂ e₁⇓ (rep⇓rep (true ⦂ Bool)) e₂⇓
 
 -- Equality of booleans.
 
@@ -444,12 +444,12 @@ equal-Bool-closed cl-e₁ cl-e₂ =
 
 equal-Bool-correct :
   ∀ {e₁ e₂} b₁ b₂ →
-  e₁ ⇓ code b₁ → e₂ ⇓ code b₂ →
-  equal-Bool e₁ e₂ ⇓ code (Prelude.if b₁ Bool.≟ b₂ then true else false)
+  e₁ ⇓ ⌜ b₁ ⌝ → e₂ ⇓ ⌜ b₂ ⌝ →
+  equal-Bool e₁ e₂ ⇓ ⌜ Prelude.if b₁ Bool.≟ b₂ then true else false ⌝
 equal-Bool-correct {e₁} {e₂} b₁ b₂ e₁⇓ e₂⇓ =
-  equal-Bool e₁ e₂                                     ⇓⟨ if-then-else-correct b₁ b₂ (Prelude.not b₂) e₁⇓ e₂⇓ (not-correct b₂ e₂⇓) ⟩
-  code (Prelude.if b₁ then b₂ else Prelude.not b₂)     ≡⟨ cong code (lemma b₁ b₂) ⟩⟶
-  code (Prelude.if b₁ Bool.≟ b₂ then true else false)  ■⟨ code-value (Prelude.if b₁ Bool.≟ b₂ then true else false) ⟩
+  equal-Bool e₁ e₂                                  ⇓⟨ if-then-else-correct b₁ b₂ (Prelude.not b₂) e₁⇓ e₂⇓ (not-correct b₂ e₂⇓) ⟩
+  ⌜ Prelude.if b₁ then b₂ else Prelude.not b₂ ⌝     ≡⟨ cong ⌜_⌝ (lemma b₁ b₂) ⟩⟶
+  ⌜ Prelude.if b₁ Bool.≟ b₂ then true else false ⌝  ■⟨ rep-value (Prelude.if b₁ Bool.≟ b₂ then true else false) ⟩
   where
   lemma :
     ∀ b₁ b₂ →
@@ -466,7 +466,7 @@ decode-Bool : Exp → Exp
 decode-Bool e =
   case e
     (branch c-const (v-c ∷ v-es ∷ [])
-       (equal-ℕ (var v-c) (code c-true)) ∷ [])
+       (equal-ℕ (var v-c) ⌜ c-true ⌝) ∷ [])
 
 decode-Bool-closed :
   ∀ {xs e} → Closed′ xs e → Closed′ xs (decode-Bool e)
@@ -477,12 +477,12 @@ decode-Bool-closed cl-e =
       (inj₁ refl) → equal-ℕ-closed
                       (Closed′-closed-under-var
                          (from-⊎ (V.member v-c (v-c ∷ v-es ∷ _))))
-                      (Closed→Closed′ (code-closed c-true))
+                      (Closed→Closed′ (rep-closed c-true))
       (inj₂ ())
 
 decode-Bool-correct :
   ∀ {e} (b : Bool) →
-  e ⇓ code (code b ⦂ Exp) → decode-Bool e ⇓ code b
+  e ⇓ ⌜ ⌜ b ⌝ ⦂ Exp ⌝ → decode-Bool e ⇓ ⌜ b ⌝
 decode-Bool-correct true e⇓ =
   case e⇓ here (∷ ∷ []) (equal-ℕ-correct c-true c-true)
 decode-Bool-correct false e⇓ =
