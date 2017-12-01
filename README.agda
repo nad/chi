@@ -93,3 +93,7 @@ import Halting-problem
 -- Rice's theorem.
 
 import Rices-theorem
+
+-- A theorem related to pointwise equality.
+
+import Pointwise-equality
