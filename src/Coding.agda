@@ -255,7 +255,7 @@ subst-rep x = subst-closed _ _ (rep-closed x)
 
 substs-rep :
   ∀ {a} {A : Set a} ⦃ r : Rep A Consts ⦄ (x : A) ps →
-  foldr (λ { (y , e) → _[ y ← e ] }) (rep-as-Exp x) ps ≡
+  foldr (λ ye → _[ proj₁ ye ← proj₂ ye ]) (rep-as-Exp x) ps ≡
   rep-as-Exp x
 substs-rep x = substs-closed (rep-as-Exp x) (rep-closed x)
 

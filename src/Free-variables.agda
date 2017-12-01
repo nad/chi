@@ -429,7 +429,8 @@ subst-closed _ _ c = subst-∉ _ _ (c _ (λ ()))
 -- An n-ary variant of the previous lemma.
 
 substs-closed :
-  ∀ e → Closed e → ∀ ps → foldr (λ { (y , e) → _[ y ← e ] }) e ps ≡ e
+  ∀ e → Closed e → ∀ ps →
+  foldr (λ ye → _[ proj₁ ye ← proj₂ ye ]) e ps ≡ e
 substs-closed e cl []              = refl
 substs-closed e cl ((y , e′) ∷ ps) =
   foldr (λ { (y , e) → _[ y ← e ] }) e ps [ y ← e′ ]  ≡⟨ cong _[ y ← e′ ] (substs-closed e cl ps) ⟩

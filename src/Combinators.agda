@@ -254,38 +254,33 @@ member-correct m ns =
   lemma (n ∷ ns) =
     case ⌜ n List.∷ ns ⌝
       (branches [ v-x ← ⌜ m ⌝ ]B⋆
-                [ v-member ← body [ v-x ← ⌜ m ⌝ ] ]B⋆)        ⟶⟨ case (rep⇓rep (n List.∷ ns)) (there (λ ()) here) (∷ ∷ []) ⟩
+                [ v-member ← body [ v-x ← ⌜ m ⌝ ] ]B⋆)         ⟶⟨ case (rep⇓rep (n List.∷ ns)) (there (λ ()) here) (∷ ∷ []) ⟩
 
-    case (equal-ℕ (⌜ m ⌝ [ v-member ← body [ v-x ← ⌜ m ⌝ ] ]
-                          [ v-xs ← ⌜ ns ⌝ ] [ v-y ← ⌜ n ⌝ ])
+    case (equal-ℕ ⟨ ⌜ m ⌝ [ v-member ← body [ v-x ← ⌜ m ⌝ ] ]
+                          [ v-xs ← ⌜ ns ⌝ ] [ v-y ← ⌜ n ⌝ ] ⟩
                   ⌜ n ⌝)
       (cons-branches [ v-x ← ⌜ m ⌝ ]B⋆
                      [ v-member ← body [ v-x ← ⌜ m ⌝ ] ]B⋆
-                     [ v-xs ← ⌜ ns ⌝ ]B⋆ [ v-y ← ⌜ n ⌝ ]B⋆)   ≡⟨ cong (λ e → case (apply (apply _ e) _)
-                                                                                  (cons-branches [ v-x ← ⌜ m ⌝ ]B⋆
-                                                                                                 [ v-member ← body [ v-x ← ⌜ m ⌝ ] ]B⋆
-                                                                                                 [ v-xs ← ⌜ ns ⌝ ]B⋆ [ v-y ← ⌜ n ⌝ ]B⋆))
-                                                                      (substs-rep m ((v-y , ⌜ n ⌝) ∷ (v-xs , ⌜ ns ⌝) ∷
+                     [ v-xs ← ⌜ ns ⌝ ]B⋆ [ v-y ← ⌜ n ⌝ ]B⋆)    ≡⟨ ⟨by⟩ (substs-rep m ((v-y , ⌜ n ⌝) ∷ (v-xs , ⌜ ns ⌝) ∷
                                                                                       (v-member , body [ v-x ← ⌜ m ⌝ ]) ∷ [])) ⟩⟶
     case (equal-ℕ ⌜ m ⌝ ⌜ n ⌝)
-      (cons-branches [ v-x ← ⌜ m ⌝ ]B⋆
-                     [ v-member ← body [ v-x ← ⌜ m ⌝ ] ]B⋆
-                     [ v-xs ← ⌜ ns ⌝ ]B⋆ [ v-y ← ⌜ n ⌝ ]B⋆)   ≡⟨ by (subst-∉-B⋆ _ _ ⌜ m ⌝ (from-⊎ (v-x ∈?-B⋆ cons-branches))) ⟩⟶
+      (⟨ cons-branches [ v-x ← ⌜ m ⌝ ]B⋆ ⟩
+                       [ v-member ← body [ v-x ← ⌜ m ⌝ ] ]B⋆
+                       [ v-xs ← ⌜ ns ⌝ ]B⋆ [ v-y ← ⌜ n ⌝ ]B⋆)  ≡⟨ ⟨by⟩ (subst-∉-B⋆ _ _ ⌜ m ⌝ (from-⊎ (v-x ∈?-B⋆ cons-branches))) ⟩⟶
 
     case (equal-ℕ ⌜ m ⌝ ⌜ n ⌝)
-      (cons-branches [ v-member ← body [ v-x ← ⌜ m ⌝ ] ]B⋆
-                     [ v-xs ← ⌜ ns ⌝ ]B⋆ [ v-y ← ⌜ n ⌝ ]B⋆)   ≡⟨ cong (case _)
-                                                                      (subst-∉-B⋆ _ _ _
-                                                                         λ { (._ , ._ , ._ , inj₁ refl        , const _ ()        , _)
-                                                                           ; (._ , ._ , ._ , inj₂ (inj₁ refl) , y∈FV[body[x←m]ns] , _) →
-                                                                             Closed′-closed-under-apply
-                                                                               (Closed′-closed-under-subst body-closed (rep-closed m))
-                                                                               (rep-closed ns)
-                                                                               v-y (λ ()) y∈FV[body[x←m]ns]
-                                                                           ; (_ , _ , _ , (inj₂ (inj₂ ())) , _) }) ⟩⟶
+      ⟨ cons-branches [ v-member ← body [ v-x ← ⌜ m ⌝ ] ]B⋆
+                      [ v-xs ← ⌜ ns ⌝ ]B⋆ [ v-y ← ⌜ n ⌝ ]B⋆ ⟩  ≡⟨ ⟨by⟩ (subst-∉-B⋆ _ _ _
+                                                                          λ { (._ , ._ , ._ , inj₁ refl        , const _ ()        , _)
+                                                                            ; (._ , ._ , ._ , inj₂ (inj₁ refl) , y∈FV[body[x←m]ns] , _) →
+                                                                              Closed′-closed-under-apply
+                                                                                (Closed′-closed-under-subst body-closed (rep-closed m))
+                                                                                (rep-closed ns)
+                                                                                v-y (λ ()) y∈FV[body[x←m]ns]
+                                                                            ; (_ , _ , _ , (inj₂ (inj₂ ())) , _) }) ⟩⟶
     case (equal-ℕ ⌜ m ⌝ ⌜ n ⌝)
       (cons-branches [ v-member ← body [ v-x ← ⌜ m ⌝ ] ]B⋆
-                     [ v-xs ← ⌜ ns ⌝ ]B⋆)                     ⇓⟨ lemma′ (m Nat.≟ n) (equal-ℕ-correct m n) ⟩■
+                     [ v-xs ← ⌜ ns ⌝ ]B⋆)                      ⇓⟨ lemma′ (m Nat.≟ n) (equal-ℕ-correct m n) ⟩■
 
     ⌜ Prelude.if V.member m (n ∷ ns) then true else false ⌝
     where

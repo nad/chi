@@ -136,21 +136,20 @@ abstract
       ⌜ ⌜ [] ⦂ List Var ⌝ ⦂ Exp ⌝
 
     lemma (x ∷ xs) =
-      case ⌜ x List.∷ xs ⌝ branches′                                    ⟶⟨ case (rep⇓rep (x List.∷ xs))
+      case ⌜ x List.∷ xs ⌝ branches′                                      ⟶⟨ case (rep⇓rep (x List.∷ xs))
                                                                                 (there (λ ()) (there (λ ()) (there (λ ()) here))) (∷ ∷ []) ⟩
       const c-const (⌜ c-cons ⌝ ∷
         const c-cons (apply internal-code ⌜ x ⌝ ∷
-          const c-cons (apply internal-code (⌜ xs ⌝ [ v-x ← ⌜ x ⌝ ]) ∷
-            ⌜ [] ⦂ List Exp ⌝ ∷ []) ∷ []) ∷ [])                         ≡⟨ cong (λ e → const _
-                                                                                         (_ ∷ const _ (_ ∷ const _ (apply _ e ∷ _) ∷ _) ∷ _))
-                                                                                (subst-rep xs) ⟩⟶
+          const c-cons (apply internal-code ⟨ ⌜ xs ⌝ [ v-x ← ⌜ x ⌝ ] ⟩ ∷
+            ⌜ [] ⦂ List Exp ⌝ ∷ []) ∷ []) ∷ [])                           ≡⟨ ⟨by⟩ (subst-rep xs) ⟩⟶
+
       const c-const (⌜ c-cons ⌝ ∷
         const c-cons (apply internal-code ⌜ x ⌝ ∷
           const c-cons (apply internal-code ⌜ xs ⌝ ∷
-            ⌜ [] ⦂ List Exp ⌝ ∷ []) ∷ []) ∷ [])                         ⇓⟨ const (rep⇓rep c-cons ∷
-                                                                             const (internal-code-correct-ℕ x ∷
-                                                                               const (internal-code-correct-Var⋆ xs ∷
-                                                                                 rep⇓rep ([] ⦂ List Exp) ∷ []) ∷ []) ∷ []) ⟩■
+            ⌜ [] ⦂ List Exp ⌝ ∷ []) ∷ []) ∷ [])                           ⇓⟨ const (rep⇓rep c-cons ∷
+                                                                               const (internal-code-correct-ℕ x ∷
+                                                                                 const (internal-code-correct-Var⋆ xs ∷
+                                                                                   rep⇓rep ([] ⦂ List Exp) ∷ []) ∷ []) ∷ []) ⟩■
       ⌜ ⌜ x List.∷ xs ⌝ ⦂ Exp ⌝
 
   mutual
@@ -169,78 +168,78 @@ abstract
 
       lemma : (p : Exp) → case ⌜ p ⌝ branches′ ⇓ ⌜ ⌜ p ⌝ ⦂ Exp ⌝
       lemma (apply p₁ p₂) =
-        case ⌜ Exp.apply p₁ p₂ ⌝ branches′                               ⟶⟨ case (rep⇓rep (Exp.apply p₁ p₂))
-                                                                                 (there (λ ()) (there (λ ()) (there (λ ()) (there (λ ()) here))))
-                                                                                 (∷ ∷ []) ⟩
+        case ⌜ Exp.apply p₁ p₂ ⌝ branches′                                   ⟶⟨ case (rep⇓rep (Exp.apply p₁ p₂))
+                                                                                     (there (λ ()) (there (λ ()) (there (λ ())
+                                                                                        (there (λ ()) here))))
+                                                                                     (∷ ∷ []) ⟩
         const c-const (⌜ c-apply ⌝ ∷
           const c-cons (apply internal-code ⌜ p₁ ⌝ ∷
-            const c-cons (apply internal-code ⌜ p₂ ⌝ [ v-x ← ⌜ p₁ ⌝ ] ∷
-              ⌜ [] ⦂ List Exp ⌝ ∷ []) ∷ []) ∷ [])                        ≡⟨ cong (λ e → const _ (_ ∷ const _ (_ ∷ const _ (apply _ e ∷ _) ∷ _) ∷ _))
-                                                                                 (subst-rep p₂) ⟩⟶
+            const c-cons (apply internal-code ⟨ ⌜ p₂ ⌝ [ v-x ← ⌜ p₁ ⌝ ] ⟩ ∷
+              ⌜ [] ⦂ List Exp ⌝ ∷ []) ∷ []) ∷ [])                            ≡⟨ ⟨by⟩ (subst-rep p₂) ⟩⟶
+
         const c-const (⌜ c-apply ⌝ ∷
           const c-cons (apply internal-code ⌜ p₁ ⌝ ∷
             const c-cons (apply internal-code ⌜ p₂ ⌝ ∷
-              ⌜ [] ⦂ List Exp ⌝ ∷ []) ∷ []) ∷ [])                        ⇓⟨ const (rep⇓rep c-apply ∷
-                                                                              const (internal-code-correct p₁ ∷
-                                                                                const (internal-code-correct p₂ ∷
-                                                                                  rep⇓rep ([] ⦂ List Exp) ∷ []) ∷ []) ∷ []) ⟩■
+              ⌜ [] ⦂ List Exp ⌝ ∷ []) ∷ []) ∷ [])                            ⇓⟨ const (rep⇓rep c-apply ∷
+                                                                                  const (internal-code-correct p₁ ∷
+                                                                                    const (internal-code-correct p₂ ∷
+                                                                                      rep⇓rep ([] ⦂ List Exp) ∷ []) ∷ []) ∷ []) ⟩■
         ⌜ ⌜ Exp.apply p₁ p₂ ⌝ ⦂ Exp ⌝
 
       lemma (lambda x p) =
-        case ⌜ Exp.lambda x p ⌝ branches′                              ⟶⟨ case (rep⇓rep (Exp.lambda x p))
-                                                                               (there (λ ()) (there (λ ()) (there (λ ())
-                                                                                  (there (λ ()) (there (λ ()) here)))))
-                                                                               (∷ ∷ []) ⟩
+        case ⌜ Exp.lambda x p ⌝ branches′                                  ⟶⟨ case (rep⇓rep (Exp.lambda x p))
+                                                                                   (there (λ ()) (there (λ ()) (there (λ ())
+                                                                                      (there (λ ()) (there (λ ()) here)))))
+                                                                                   (∷ ∷ []) ⟩
         const c-const (⌜ c-lambda ⌝ ∷
           const c-cons (apply internal-code ⌜ x ⌝ ∷
-            const c-cons (apply internal-code ⌜ p ⌝ [ v-x ← ⌜ x ⌝ ] ∷
-              ⌜ [] ⦂ List Exp ⌝ ∷ []) ∷ []) ∷ [])                      ≡⟨ cong (λ e → const _ (_ ∷ const _ (_ ∷ const _ (apply _ e ∷ _) ∷ _) ∷ _))
-                                                                               (subst-rep p) ⟩⟶
+            const c-cons (apply internal-code ⟨ ⌜ p ⌝ [ v-x ← ⌜ x ⌝ ] ⟩ ∷
+              ⌜ [] ⦂ List Exp ⌝ ∷ []) ∷ []) ∷ [])                          ≡⟨ ⟨by⟩ (subst-rep p) ⟩⟶
+
         const c-const (⌜ c-lambda ⌝ ∷
           const c-cons (apply internal-code ⌜ x ⌝ ∷
             const c-cons (apply internal-code ⌜ p ⌝ ∷
-              ⌜ [] ⦂ List Exp ⌝ ∷ []) ∷ []) ∷ [])                      ⇓⟨ const (rep⇓rep c-lambda ∷
-                                                                            const (internal-code-correct-ℕ x ∷
-                                                                              const (internal-code-correct p ∷
-                                                                                rep⇓rep ([] ⦂ List Exp) ∷ []) ∷ []) ∷ []) ⟩■
+              ⌜ [] ⦂ List Exp ⌝ ∷ []) ∷ []) ∷ [])                          ⇓⟨ const (rep⇓rep c-lambda ∷
+                                                                                const (internal-code-correct-ℕ x ∷
+                                                                                  const (internal-code-correct p ∷
+                                                                                    rep⇓rep ([] ⦂ List Exp) ∷ []) ∷ []) ∷ []) ⟩■
         ⌜ ⌜ Exp.lambda x p ⌝ ⦂ Exp ⌝
 
       lemma (case p bs) =
-        case ⌜ Exp.case p bs ⌝ branches′                                ⟶⟨ case (rep⇓rep (Exp.case p bs))
-                                                                                (there (λ ()) (there (λ ()) (there (λ ())
-                                                                                   (there (λ ()) (there (λ ()) (there (λ ()) here))))))
-                                                                                (∷ ∷ []) ⟩
+        case ⌜ Exp.case p bs ⌝ branches′                                    ⟶⟨ case (rep⇓rep (Exp.case p bs))
+                                                                                    (there (λ ()) (there (λ ()) (there (λ ())
+                                                                                       (there (λ ()) (there (λ ()) (there (λ ()) here))))))
+                                                                                    (∷ ∷ []) ⟩
         const c-const (⌜ c-case ⌝ ∷
           const c-cons (apply internal-code ⌜ p ⌝ ∷
-            const c-cons (apply internal-code ⌜ bs ⌝ [ v-x ← ⌜ p ⌝ ] ∷
-              ⌜ [] ⦂ List Exp ⌝ ∷ []) ∷ []) ∷ [])                       ≡⟨ cong (λ e → const _ (_ ∷ const _ (_ ∷ const _ (apply _ e ∷ _) ∷ _) ∷ _))
-                                                                                (subst-rep bs) ⟩⟶
+            const c-cons (apply internal-code ⟨ ⌜ bs ⌝ [ v-x ← ⌜ p ⌝ ] ⟩ ∷
+              ⌜ [] ⦂ List Exp ⌝ ∷ []) ∷ []) ∷ [])                           ≡⟨ ⟨by⟩ (subst-rep bs) ⟩⟶
+
         const c-const (⌜ c-case ⌝ ∷
           const c-cons (apply internal-code ⌜ p ⌝ ∷
             const c-cons (apply internal-code ⌜ bs ⌝ ∷
-              ⌜ [] ⦂ List Exp ⌝ ∷ []) ∷ []) ∷ [])                       ⇓⟨ const (rep⇓rep c-case ∷
-                                                                             const (internal-code-correct p ∷
-                                                                               const (internal-code-correct-B⋆ bs ∷
-                                                                                 rep⇓rep ([] ⦂ List Exp) ∷ []) ∷ []) ∷ []) ⟩■
+              ⌜ [] ⦂ List Exp ⌝ ∷ []) ∷ []) ∷ [])                           ⇓⟨ const (rep⇓rep c-case ∷
+                                                                                 const (internal-code-correct p ∷
+                                                                                   const (internal-code-correct-B⋆ bs ∷
+                                                                                     rep⇓rep ([] ⦂ List Exp) ∷ []) ∷ []) ∷ []) ⟩■
         ⌜ ⌜ Exp.case p bs ⌝ ⦂ Exp ⌝
 
       lemma (rec x p) =
-        case ⌜ Exp.rec x p ⌝ branches′                                 ⟶⟨ case (rep⇓rep (Exp.rec x p))
-                                                                               (there (λ ()) (there (λ ()) (there (λ ()) (there (λ ())
-                                                                                  (there (λ ()) (there (λ ()) (there (λ ()) here)))))))
-                                                                               (∷ ∷ []) ⟩
+        case ⌜ Exp.rec x p ⌝ branches′                                     ⟶⟨ case (rep⇓rep (Exp.rec x p))
+                                                                                   (there (λ ()) (there (λ ()) (there (λ ()) (there (λ ())
+                                                                                      (there (λ ()) (there (λ ()) (there (λ ()) here)))))))
+                                                                                   (∷ ∷ []) ⟩
         const c-const (⌜ c-rec ⌝ ∷
           const c-cons (apply internal-code ⌜ x ⌝ ∷
-            const c-cons (apply internal-code ⌜ p ⌝ [ v-x ← ⌜ x ⌝ ] ∷
-              ⌜ [] ⦂ List Exp ⌝ ∷ []) ∷ []) ∷ [])                      ≡⟨ cong (λ e → const _ (_ ∷ const _ (_ ∷ const _ (apply _ e ∷ _) ∷ _) ∷ _))
-                                                                               (subst-rep p) ⟩⟶
+            const c-cons (apply internal-code ⟨ ⌜ p ⌝ [ v-x ← ⌜ x ⌝ ] ⟩ ∷
+              ⌜ [] ⦂ List Exp ⌝ ∷ []) ∷ []) ∷ [])                          ≡⟨ ⟨by⟩ (subst-rep p) ⟩⟶
         const c-const (⌜ c-rec ⌝ ∷
           const c-cons (apply internal-code ⌜ x ⌝ ∷
             const c-cons (apply internal-code ⌜ p ⌝ ∷
-              ⌜ [] ⦂ List Exp ⌝ ∷ []) ∷ []) ∷ [])                      ⇓⟨ const (rep⇓rep c-rec ∷
-                                                                            const (internal-code-correct-ℕ x ∷
-                                                                              const (internal-code-correct p ∷
-                                                                                rep⇓rep ([] ⦂ List Exp) ∷ []) ∷ []) ∷ []) ⟩■
+              ⌜ [] ⦂ List Exp ⌝ ∷ []) ∷ []) ∷ [])                          ⇓⟨ const (rep⇓rep c-rec ∷
+                                                                                const (internal-code-correct-ℕ x ∷
+                                                                                  const (internal-code-correct p ∷
+                                                                                    rep⇓rep ([] ⦂ List Exp) ∷ []) ∷ []) ∷ []) ⟩■
         ⌜ ⌜ Exp.rec x p ⌝ ⦂ Exp ⌝
 
       lemma (var x) =
@@ -255,23 +254,23 @@ abstract
         ⌜ ⌜ Exp.var x ⌝ ⦂ Exp ⌝
 
       lemma (const c ps) =
-        case ⌜ Exp.const c ps ⌝ branches′                               ⟶⟨ case (rep⇓rep (Exp.const c ps))
-                                                                                (there (λ ()) (there (λ ()) (there (λ ()) (there (λ ())
-                                                                                   (there (λ ()) (there (λ ()) (there (λ ()) (there (λ ())
-                                                                                      (there (λ ()) here)))))))))
-                                                                                (∷ ∷ []) ⟩
+        case ⌜ Exp.const c ps ⌝ branches′                                   ⟶⟨ case (rep⇓rep (Exp.const c ps))
+                                                                                    (there (λ ()) (there (λ ()) (there (λ ()) (there (λ ())
+                                                                                       (there (λ ()) (there (λ ()) (there (λ ()) (there (λ ())
+                                                                                          (there (λ ()) here)))))))))
+                                                                                    (∷ ∷ []) ⟩
         const c-const (⌜ c-const ⌝ ∷
           const c-cons (apply internal-code ⌜ c ⌝ ∷
-            const c-cons (apply internal-code ⌜ ps ⌝ [ v-x ← ⌜ c ⌝ ] ∷
-              ⌜ [] ⦂ List Exp ⌝ ∷ []) ∷ []) ∷ [])                       ≡⟨ cong (λ e → const _ (_ ∷ const _ (_ ∷ const _ (apply _ e ∷ _) ∷ _) ∷ _))
-                                                                                (subst-rep ps) ⟩⟶
+            const c-cons (apply internal-code ⟨ ⌜ ps ⌝ [ v-x ← ⌜ c ⌝ ] ⟩ ∷
+              ⌜ [] ⦂ List Exp ⌝ ∷ []) ∷ []) ∷ [])                           ≡⟨ ⟨by⟩ (subst-rep ps) ⟩⟶
+
         const c-const (⌜ c-const ⌝ ∷
           const c-cons (apply internal-code ⌜ c ⌝ ∷
             const c-cons (apply internal-code ⌜ ps ⌝ ∷
-              ⌜ [] ⦂ List Exp ⌝ ∷ []) ∷ []) ∷ [])                       ⇓⟨ const (rep⇓rep c-const ∷
-                                                                             const (internal-code-correct-ℕ c ∷
-                                                                               const (internal-code-correct-⋆ ps ∷
-                                                                                 rep⇓rep ([] ⦂ List Exp) ∷ []) ∷ []) ∷ []) ⟩■
+              ⌜ [] ⦂ List Exp ⌝ ∷ []) ∷ []) ∷ [])                           ⇓⟨ const (rep⇓rep c-const ∷
+                                                                                 const (internal-code-correct-ℕ c ∷
+                                                                                   const (internal-code-correct-⋆ ps ∷
+                                                                                     rep⇓rep ([] ⦂ List Exp) ∷ []) ∷ []) ∷ []) ⟩■
         ⌜ ⌜ Exp.const c ps ⌝ ⦂ Exp ⌝
 
     -- The internal coder encodes branches correctly.
@@ -279,37 +278,35 @@ abstract
     internal-code-correct-B :
       (b : Br) → apply internal-code ⌜ b ⌝ ⇓ ⌜ ⌜ b ⌝ ⦂ Exp ⌝
     internal-code-correct-B (branch c xs e) =
-      apply internal-code ⌜ branch c xs e ⌝                              ⟶⟨ apply (rec lambda) (rep⇓rep (branch c xs e)) ⟩
+      apply internal-code ⌜ branch c xs e ⌝                                ⟶⟨ apply (rec lambda) (rep⇓rep (branch c xs e)) ⟩
 
-      case ⌜ branch c xs e ⌝ branches′                                   ⟶⟨ case (rep⇓rep (branch c xs e))
-                                                                                 (there (λ ()) (there (λ ()) (there (λ ()) (there (λ ())
-                                                                                    (there (λ ()) (there (λ ()) (there (λ ()) (there (λ ())
-                                                                                       (there (λ ()) (there (λ ()) here))))))))))
-                                                                                 (∷ ∷ ∷ []) ⟩
+      case ⌜ branch c xs e ⌝ branches′                                     ⟶⟨ case (rep⇓rep (branch c xs e))
+                                                                                   (there (λ ()) (there (λ ()) (there (λ ()) (there (λ ())
+                                                                                      (there (λ ()) (there (λ ()) (there (λ ()) (there (λ ())
+                                                                                         (there (λ ()) (there (λ ()) here))))))))))
+                                                                                   (∷ ∷ ∷ []) ⟩
       const c-const (⌜ c-branch ⌝ ∷
         const c-cons (apply internal-code ⌜ c ⌝ ∷
           const c-cons (apply internal-code ⌜ xs ⌝ [ v-x ← ⌜ c ⌝ ] ∷
-            const c-cons (apply internal-code (⌜ e ⌝ [ v-y ← ⌜ xs ⌝ ]
-                                                     [ v-x ← ⌜ c ⌝ ]) ∷
-              ⌜ [] ⦂ List Exp ⌝ ∷ []) ∷ []) ∷ []) ∷ [])                  ≡⟨ cong (λ e → const _ (_ ∷ const _ (_ ∷ const _ (_ ∷
-                                                                                          const _ (apply _ e ∷ _) ∷ _) ∷ _) ∷ _))
-                                                                                 (substs-rep e ((v-x , ⌜ c ⌝) ∷ (v-y , ⌜ xs ⌝) ∷ [])) ⟩⟶
+            const c-cons (apply internal-code ⟨ ⌜ e ⌝ [ v-y ← ⌜ xs ⌝ ]
+                                                      [ v-x ← ⌜ c ⌝ ] ⟩ ∷
+              ⌜ [] ⦂ List Exp ⌝ ∷ []) ∷ []) ∷ []) ∷ [])                    ≡⟨ ⟨by⟩ (substs-rep e ((v-x , ⌜ c ⌝) ∷ (v-y , ⌜ xs ⌝) ∷ [])) ⟩⟶
+
       const c-const (⌜ c-branch ⌝ ∷
         const c-cons (apply internal-code ⌜ c ⌝ ∷
-          const c-cons (apply internal-code ⌜ xs ⌝ [ v-x ← ⌜ c ⌝ ] ∷
+          const c-cons (apply internal-code ⟨ ⌜ xs ⌝ [ v-x ← ⌜ c ⌝ ] ⟩ ∷
             const c-cons (apply internal-code ⌜ e ⌝ ∷
-              ⌜ [] ⦂ List Exp ⌝ ∷ []) ∷ []) ∷ []) ∷ [])                  ≡⟨ cong (λ e → const _ (_ ∷ const _ (_ ∷
-                                                                                          const _ (apply _ e ∷ _ ∷ _) ∷ _) ∷ _))
-                                                                                 (subst-rep xs) ⟩⟶
+              ⌜ [] ⦂ List Exp ⌝ ∷ []) ∷ []) ∷ []) ∷ [])                    ≡⟨ ⟨by⟩ (subst-rep xs) ⟩⟶
+
       const c-const (⌜ c-branch ⌝ ∷
         const c-cons (apply internal-code ⌜ c ⌝ ∷
           const c-cons (apply internal-code ⌜ xs ⌝ ∷
             const c-cons (apply internal-code ⌜ e ⌝ ∷
-              ⌜ [] ⦂ List Exp ⌝ ∷ []) ∷ []) ∷ []) ∷ [])                  ⇓⟨ const (rep⇓rep c-branch ∷
-                                                                              const (internal-code-correct-ℕ c ∷
-                                                                                const (internal-code-correct-Var⋆ xs ∷
-                                                                                  const (internal-code-correct e ∷
-                                                                                    rep⇓rep ([] ⦂ List Exp) ∷ []) ∷ []) ∷ []) ∷ []) ⟩■
+              ⌜ [] ⦂ List Exp ⌝ ∷ []) ∷ []) ∷ []) ∷ [])                    ⇓⟨ const (rep⇓rep c-branch ∷
+                                                                                const (internal-code-correct-ℕ c ∷
+                                                                                  const (internal-code-correct-Var⋆ xs ∷
+                                                                                    const (internal-code-correct e ∷
+                                                                                      rep⇓rep ([] ⦂ List Exp) ∷ []) ∷ []) ∷ []) ∷ []) ⟩■
       ⌜ ⌜ branch c xs e ⌝ ⦂ Exp ⌝
       where
       branches′ : List Br
@@ -336,20 +333,19 @@ abstract
         ⌜ ⌜ [] ⦂ List Exp ⌝ ⦂ Exp ⌝
 
       lemma (p ∷ ps) =
-        case ⌜ p List.∷ ps ⌝ branches′                                  ⟶⟨ case (rep⇓rep (p List.∷ ps))
-                                                                                (there (λ ()) (there (λ ()) (there (λ ()) here))) (∷ ∷ []) ⟩
+        case ⌜ p List.∷ ps ⌝ branches′                                      ⟶⟨ case (rep⇓rep (p List.∷ ps))
+                                                                                    (there (λ ()) (there (λ ()) (there (λ ()) here))) (∷ ∷ []) ⟩
         const c-const (⌜ c-cons ⌝ ∷
           const c-cons (apply internal-code ⌜ p ⌝ ∷
-            const c-cons (apply internal-code ⌜ ps ⌝ [ v-x ← ⌜ p ⌝ ] ∷
-              ⌜ [] ⦂ List Exp ⌝ ∷ []) ∷ []) ∷ [])                       ≡⟨ cong (λ e → const _ (_ ∷ const _ (_ ∷ const _ (apply _ e ∷ _) ∷ _) ∷ _))
-                                                                                (subst-rep ps) ⟩⟶
+            const c-cons (apply internal-code ⟨ ⌜ ps ⌝ [ v-x ← ⌜ p ⌝ ] ⟩ ∷
+              ⌜ [] ⦂ List Exp ⌝ ∷ []) ∷ []) ∷ [])                           ≡⟨ ⟨by⟩ (subst-rep ps) ⟩⟶
         const c-const (⌜ c-cons ⌝ ∷
           const c-cons (apply internal-code ⌜ p ⌝ ∷
             const c-cons (apply internal-code ⌜ ps ⌝ ∷
-              ⌜ [] ⦂ List Exp ⌝ ∷ []) ∷ []) ∷ [])                       ⇓⟨ const (rep⇓rep c-cons ∷
-                                                                             const (internal-code-correct p ∷
-                                                                               const (internal-code-correct-⋆ ps ∷
-                                                                                 rep⇓rep ([] ⦂ List Exp) ∷ []) ∷ []) ∷ []) ⟩■
+              ⌜ [] ⦂ List Exp ⌝ ∷ []) ∷ []) ∷ [])                           ⇓⟨ const (rep⇓rep c-cons ∷
+                                                                                 const (internal-code-correct p ∷
+                                                                                   const (internal-code-correct-⋆ ps ∷
+                                                                                     rep⇓rep ([] ⦂ List Exp) ∷ []) ∷ []) ∷ []) ⟩■
         ⌜ ⌜ p List.∷ ps ⌝ ⦂ Exp ⌝
 
     -- The internal coder encodes lists of branches correctly.
@@ -373,18 +369,17 @@ abstract
         ⌜ ⌜ [] ⦂ List Br ⌝ ⦂ Exp ⌝
 
       lemma (b ∷ bs) =
-        case ⌜ b List.∷ bs ⌝ branches′                                  ⟶⟨ case (rep⇓rep (b List.∷ bs))
-                                                                                (there (λ ()) (there (λ ()) (there (λ ()) here))) (∷ ∷ []) ⟩
+        case ⌜ b List.∷ bs ⌝ branches′                                      ⟶⟨ case (rep⇓rep (b List.∷ bs))
+                                                                                    (there (λ ()) (there (λ ()) (there (λ ()) here))) (∷ ∷ []) ⟩
         const c-const (⌜ c-cons ⌝ ∷
           const c-cons (apply internal-code ⌜ b ⌝ ∷
-            const c-cons (apply internal-code ⌜ bs ⌝ [ v-x ← ⌜ b ⌝ ] ∷
-              ⌜ [] ⦂ List Exp ⌝ ∷ []) ∷ []) ∷ [])                       ≡⟨ cong (λ e → const _ (_ ∷ const _ (_ ∷ const _ (apply _ e ∷ _) ∷ _) ∷ _))
-                                                                                (subst-rep bs) ⟩⟶
+            const c-cons (apply internal-code ⟨ ⌜ bs ⌝ [ v-x ← ⌜ b ⌝ ] ⟩ ∷
+              ⌜ [] ⦂ List Exp ⌝ ∷ []) ∷ []) ∷ [])                           ≡⟨ ⟨by⟩ (subst-rep bs) ⟩⟶
         const c-const (⌜ c-cons ⌝ ∷
           const c-cons (apply internal-code ⌜ b ⌝ ∷
             const c-cons (apply internal-code ⌜ bs ⌝ ∷
-              ⌜ [] ⦂ List Exp ⌝ ∷ []) ∷ []) ∷ [])                       ⇓⟨ const (rep⇓rep c-cons ∷
-                                                                             const (internal-code-correct-B b ∷
-                                                                               const (internal-code-correct-B⋆ bs ∷
-                                                                                 rep⇓rep ([] ⦂ List Exp) ∷ []) ∷ []) ∷ []) ⟩■
+              ⌜ [] ⦂ List Exp ⌝ ∷ []) ∷ []) ∷ [])                           ⇓⟨ const (rep⇓rep c-cons ∷
+                                                                                 const (internal-code-correct-B b ∷
+                                                                                   const (internal-code-correct-B⋆ bs ∷
+                                                                                     rep⇓rep ([] ⦂ List Exp) ∷ []) ∷ []) ∷ []) ⟩■
         ⌜ ⌜ b List.∷ bs ⌝ ⦂ Exp ⌝
