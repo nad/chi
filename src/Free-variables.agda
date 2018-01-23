@@ -117,8 +117,9 @@ mutual
   subst-∈FV x (lambda y e)  (lambda x′≢y p)        | yes x≡y = inj₁ (lambda x′≢y p , x′≢y ∘ flip trans x≡y)
   subst-∈FV x (lambda y e)  (lambda x′≢y p)        | no  _   = ⊎-map (Σ-map (lambda x′≢y) id) id (subst-∈FV x e p)
   subst-∈FV x (case e bs)   (case-head p)          = ⊎-map (Σ-map case-head id) id (subst-∈FV x e p)
-  subst-∈FV x (case e bs)   (case-body p ps x′∉xs) = ⊎-map (Σ-map (λ p → let _ , _ , _ , ps , p , ∉ = p in
-                                                                         case-body p ps ∉)
+  subst-∈FV x (case e bs)   (case-body p ps x′∉xs) = ⊎-map (Σ-map (λ (p : ∃ λ _ → ∃ λ _ → ∃ λ _ → _ × _ × _) →
+                                                                     let _ , _ , _ , ps , p , ∉ = p in
+                                                                     case-body p ps ∉)
                                                                   id)
                                                            id
                                                            (subst-∈FV-B⋆ bs p ps x′∉xs)
