@@ -387,11 +387,11 @@ module _
       ⇓-lemma ∃bool e e⇓ = halts⇓-lemma ∃bool e
 
           (λ _ →
-             apply p (⌜ arg e∈ ⌜ e ⌝ ⌝)  ⇓⟨ hyp _ _ (arg-lemma-⇓-true e e⇓) ⟩■
+             apply p (⌜ arg e∈ ⌜ e ⌝ ⌝)  ⇓⟨ hyp (arg e∈ ⌜ e ⌝) true (arg-lemma-⇓-true e e⇓) ⟩■
              ⌜ true ⦂ Bool ⌝)
 
           (λ _ →
-             χ.not (apply p (⌜ arg e∉ ⌜ e ⌝ ⌝))  ⟶⟨ []⇓ (case ∙) (hyp _ _ (arg-lemma-⇓-false e e⇓)) ⟩
+             χ.not (apply p (⌜ arg e∉ ⌜ e ⌝ ⌝))  ⟶⟨ []⇓ (case ∙) (hyp (arg e∉ ⌜ e ⌝) false (arg-lemma-⇓-false e e⇓)) ⟩
              χ.not ⌜ false ⦂ Bool ⌝              ⇓⟨ not-correct false (rep⇓rep (false ⦂ Bool)) ⟩■
              ⌜ true ⦂ Bool ⌝)
 
@@ -403,11 +403,11 @@ module _
       ¬⇓-lemma ∃bool e ¬e⇓ = halts⇓-lemma ∃bool e
 
           (λ ¬P-const-loop →
-             apply p (⌜ arg e∈ ⌜ e ⌝ ⌝)  ⇓⟨ hyp _ _ (arg-lemma-¬⇓ e∈ e ¬e⇓ ¬P-const-loop) ⟩■
+             apply p (⌜ arg e∈ ⌜ e ⌝ ⌝)  ⇓⟨ hyp (arg e∈ ⌜ e ⌝) false (arg-lemma-¬⇓ e∈ e ¬e⇓ ¬P-const-loop) ⟩■
              ⌜ false ⦂ Bool ⌝)
 
           (λ P-const-loop →
-             χ.not (apply p (⌜ arg e∉ ⌜ e ⌝ ⌝))  ⟶⟨ []⇓ (case ∙) (hyp _ _ (arg-lemma-¬⇓ e∉ e ¬e⇓ P-const-loop)) ⟩
+             χ.not (apply p (⌜ arg e∉ ⌜ e ⌝ ⌝))  ⟶⟨ []⇓ (case ∙) (hyp (arg e∉ ⌜ e ⌝) true (arg-lemma-¬⇓ e∉ e ¬e⇓ P-const-loop)) ⟩
              χ.not ⌜ true ⦂ Bool ⌝               ⇓⟨ not-correct true (rep⇓rep (true ⦂ Bool)) ⟩■
              ⌜ false ⦂ Bool ⌝)
 

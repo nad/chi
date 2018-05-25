@@ -216,11 +216,11 @@ intensional-halting-problem-of-self-application (halts , cl , hyp) =
                then loop
                else ⌜ zero ⌝)
 
-  terminv-lemma : ∀ {p} → Closed p →
+  terminv-lemma : ∀ p → Closed p →
                   Terminates (apply terminv ⌜ p ⌝)
                     ⇔
                   ¬ Terminates (self-apply p)
-  terminv-lemma {p} cl-p = record { to = to; from = from }
+  terminv-lemma p cl-p = record { to = to; from = from }
     where
     to : Terminates (apply terminv ⌜ p ⌝) →
          ¬ Terminates (self-apply p)
@@ -271,7 +271,7 @@ intensional-halting-problem-of-self-application (halts , cl , hyp) =
       (Closed→Closed′ $ rep-closed zero)
 
   strange-lemma : Terminates strange ⇔ ¬ Terminates strange
-  strange-lemma = terminv-lemma terminv-closed
+  strange-lemma = terminv-lemma terminv terminv-closed
 
   contradiction : ⊥
   contradiction = ¬[⇔¬] strange-lemma
