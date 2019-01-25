@@ -2,7 +2,7 @@
 -- Definitions of "free in" and "closed", along with some properties
 ------------------------------------------------------------------------
 
-{-# OPTIONS --without-K --safe #-}
+{-# OPTIONS --without-K #-}
 
 open import Atom
 

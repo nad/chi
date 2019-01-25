@@ -76,7 +76,7 @@ import Combinators
 -- Definition of the size of an expression, along with some
 -- properties.
 
-import Size
+import Expression-size
 
 -- A self-interpreter (without correctness proof).
 

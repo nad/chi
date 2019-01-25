@@ -2,7 +2,7 @@
 -- A specification of the language χ
 ------------------------------------------------------------------------
 
-{-# OPTIONS --without-K --safe #-}
+{-# OPTIONS --without-K #-}
 
 open import Atom
 

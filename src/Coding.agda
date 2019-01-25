@@ -2,7 +2,7 @@
 -- Encoders and decoders
 ------------------------------------------------------------------------
 
-{-# OPTIONS --without-K --safe #-}
+{-# OPTIONS --without-K #-}
 
 open import Atom
 
@@ -376,7 +376,7 @@ module _ {a b} {A : Set a} {B : Set b} where
 
   code-× : ⦃ c : Code A Consts ⦄ ⦃ d : Code B Consts ⦄ →
            Code (A × B) Consts
-  code-× ⦃ c ⦄ ⦃ d ⦄ = record
+  code-× = record
     { code        = cd
     ; decode      = dc
     ; decode∘code = dc∘cd
@@ -396,20 +396,20 @@ module _ {a b} {A : Set a} {B : Set b} where
     dc∘cd (x , y) with c-pair C.≟ c-pair
     ... | no p≢p = ⊥-elim (p≢p refl)
     ... | yes _  =
-      (decode ⦃ r = c ⦄ (code x) >>=′ λ x →
-       decode ⦃ r = d ⦄ (code y) >>=′ λ y →
-       just (x , y))                         ≡⟨ by (decode∘code ⦃ r = c ⦄) ⟩
+      (⟨ decode (code x) ⟩ >>=′ λ x →
+       decode (code y) >>=′ λ y →
+       just (x , y))                      ≡⟨ ⟨by⟩ decode∘code ⟩
 
       (return x >>=′ λ x →
-       decode ⦃ r = d ⦄ (code y) >>=′ λ y →
-       just (x , y))                         ≡⟨⟩
+       decode (code y) >>=′ λ y →
+       just (x , y))                      ≡⟨⟩
 
-      (decode ⦃ r = d ⦄ (code y) >>=′ λ y →
-       just (x , y))                         ≡⟨ by (decode∘code ⦃ r = d ⦄) ⟩
+      (⟨ decode (code y) ⟩ >>=′ λ y →
+       just (x , y))                      ≡⟨ ⟨by⟩ decode∘code ⟩
 
-      (return y >>=′ λ y → just (x , y))     ≡⟨ refl ⟩∎
+      (return y >>=′ λ y → just (x , y))  ≡⟨ refl ⟩∎
 
-      return (x , y)                         ∎
+      return (x , y)                      ∎
 
 -- Encoders for lists.
 
@@ -422,7 +422,7 @@ module _ {a} {A : Set a} where
     encode enc (x ∷ xs) = const c-cons (enc x ∷ encode enc xs ∷ [])
 
   rep-List : ⦃ r : Rep A Consts ⦄ → Rep (List A) Consts
-  rep-List ⦃ c ⦄ = record
+  rep-List = record
     { ⌜_⌝           = encode ⌜_⌝
     ; rep-injective = injective
     }
@@ -448,7 +448,7 @@ module _ {a} {A : Set a} where
       lemma refl = refl , refl
 
   code-List : ⦃ c : Code A Consts ⦄ → Code (List A) Consts
-  code-List ⦃ c ⦄ = record
+  code-List = record
     { code        = cd
     ; decode      = dc
     ; decode∘code = dc∘cd
@@ -473,10 +473,10 @@ module _ {a} {A : Set a} where
     ... | yes n≡c | _      = ⊥-elim (C.distinct-codes→distinct-names
                                        (λ ()) n≡c)
     ... | no _    | yes _  =
-      _∷_ ⟨$⟩ decode ⦃ r = c ⦄ (code x) ⊛ dc (cd xs)  ≡⟨ by (decode∘code ⦃ r = c ⦄) ⟩
-      _∷_ ⟨$⟩ return x ⊛ dc (cd xs)                   ≡⟨ by (dc∘cd xs) ⟩
-      _∷_ ⟨$⟩ return x ⊛ return xs                    ≡⟨⟩
-      return (x ∷ xs)                                 ∎
+      _∷_ ⟨$⟩ ⟨ decode (code x) ⟩ ⊛ dc (cd xs)  ≡⟨ ⟨by⟩ decode∘code ⟩
+      _∷_ ⟨$⟩ return x ⊛ ⟨ dc (cd xs) ⟩         ≡⟨ ⟨by⟩ (dc∘cd xs) ⟩
+      _∷_ ⟨$⟩ return x ⊛ return xs              ≡⟨⟩
+      return (x ∷ xs)                           ∎
 
 -- Encoder for lists of variables.
 

@@ -2,6 +2,8 @@
 -- Some χ program combinators
 ------------------------------------------------------------------------
 
+{-# OPTIONS --without-K #-}
+
 module Combinators where
 
 open import Equality.Propositional
@@ -98,9 +100,9 @@ equal-ℕ-correct m n =
 
   apply (apply equal-ℕ′ ⌜ m ⌝) ⌜ n ⌝                ⟶⟨ apply (apply (rec lambda) (rep⇓rep m) lambda) (rep⇓rep n) ⟩
 
-  case (⌜ m ⌝ [ v-n ← ⌜ n ⌝ ])
+  case ⟨ ⌜ m ⌝ [ v-n ← ⌜ n ⌝ ] ⟩
     (branches [ v-equal ← equal-ℕ′ ]B⋆
-              [ v-m ← ⌜ m ⌝ ]B⋆ [ v-n ← ⌜ n ⌝ ]B⋆)  ≡⟨ by (subst-rep m) ⟩⟶
+              [ v-m ← ⌜ m ⌝ ]B⋆ [ v-n ← ⌜ n ⌝ ]B⋆)  ≡⟨ ⟨by⟩ (subst-rep m) ⟩⟶
 
   case ⌜ m ⌝
     (branches [ v-equal ← equal-ℕ′ ]B⋆
@@ -151,15 +153,15 @@ equal-ℕ-correct m n =
       (branches [ v-equal ← equal-ℕ′ ]B⋆
                 [ v-m ← ⌜ suc m ⌝ ]B⋆ [ v-n ← ⌜ suc n ⌝ ]B⋆)    ⟶⟨ case (rep⇓rep (suc m)) (there (λ ()) here) (∷ []) ⟩
 
-    case (⌜ suc n ⌝ [ v-m ← ⌜ m ⌝ ])
+    case ⟨ ⌜ suc n ⌝ [ v-m ← ⌜ m ⌝ ] ⟩
       (suc-branches [ v-equal ← equal-ℕ′ ]B⋆ [ v-m ← ⌜ m ⌝ ]B⋆
-                    [ v-n ← ⌜ suc n ⌝ ]B⋆)                      ≡⟨ by (subst-rep (suc n)) ⟩⟶
+                    [ v-n ← ⌜ suc n ⌝ ]B⋆)                      ≡⟨ ⟨by⟩ (subst-rep (suc n)) ⟩⟶
 
     case ⌜ suc n ⌝
       (suc-branches [ v-equal ← equal-ℕ′ ]B⋆ [ v-m ← ⌜ m ⌝ ]B⋆
                     [ v-n ← ⌜ suc n ⌝ ]B⋆)                      ⟶⟨ case (rep⇓rep (suc n)) (there (λ ()) here) (∷ []) ⟩
 
-    apply (apply equal-ℕ′ (⌜ m ⌝ [ v-n ← ⌜ n ⌝ ])) ⌜ n ⌝        ≡⟨ by (subst-rep m) ⟩⟶
+    apply (apply equal-ℕ′ ⟨ ⌜ m ⌝ [ v-n ← ⌜ n ⌝ ] ⟩) ⌜ n ⌝      ≡⟨ ⟨by⟩ (subst-rep m) ⟩⟶
 
     apply (apply equal-ℕ′ ⌜ m ⌝) ⌜ n ⌝                          ⟶⟨⟩
 
@@ -313,8 +315,8 @@ member-correct m ns =
         (cons-branches [ v-member ← body [ v-x ← ⌜ m ⌝ ] ]B⋆
                        [ v-xs ← ⌜ ns ⌝ ]B⋆)                    ⟶⟨ case hyp (there (λ ()) here) [] ⟩
 
-      apply (body [ v-x ← ⌜ m ⌝ ] [ v-xs ← ⌜ ns ⌝ ]) ⌜ ns ⌝    ≡⟨ by (subst-closed v-x ⌜ ns ⌝
-                                                                        (Closed′-closed-under-subst body-closed (rep-closed m))) ⟩⟶
+      apply ⟨ body [ v-x ← ⌜ m ⌝ ] [ v-xs ← ⌜ ns ⌝ ] ⟩ ⌜ ns ⌝  ≡⟨ ⟨by⟩ (subst-closed v-xs ⌜ ns ⌝
+                                                                          (Closed′-closed-under-subst body-closed (rep-closed m))) ⟩⟶
 
       apply (body [ v-x ← ⌜ m ⌝ ]) ⌜ ns ⌝                      ⟶⟨ apply (rec lambda) (rep⇓rep ns) ⟩
 

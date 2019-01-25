@@ -2,9 +2,9 @@
 -- Definition of the size of an expression, along with some properties
 ------------------------------------------------------------------------
 
-{-# OPTIONS --without-K --safe #-}
+{-# OPTIONS --without-K #-}
 
-module Size where
+module Expression-size where
 
 open import Equality.Propositional
 open import Prelude hiding (const)

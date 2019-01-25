@@ -2,7 +2,7 @@
 -- A self-interpreter (without correctness proof)
 ------------------------------------------------------------------------
 
-{-# OPTIONS --without-K --safe #-}
+{-# OPTIONS --without-K #-}
 
 module Self-interpreter where
 

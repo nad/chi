@@ -28,7 +28,7 @@ open import Monad equality-with-J
 
 open import Chi            atoms
 open import Coding         atoms
-import Coding.Instances    atoms
+import Coding.Instances    atoms as Dummy
 open import Deterministic  atoms
 open import Free-variables atoms
 open import Propositional  atoms
