@@ -672,17 +672,17 @@ private
     ... | yes _  =
       branch ⟨$⟩ Const.decode (code ⦃ code-Const ⦄ c) ⊛
                  Var⋆.decode (code ⦃ code-Var⋆ ⦄ xs) ⊛
-                 decode-E (code-E e)                         ≡⟨ by Const.decode∘code ⟩
+                 decode-E (code-E e)                             ≡⟨ by Const.decode∘code ⟩
 
       branch ⟨$⟩ return c ⊛
                  Var⋆.decode (code ⦃ code-Var⋆ ⦄ xs) ⊛
-                 decode-E (code-E e)                         ≡⟨ by Var⋆.decode∘code ⟩
+                 decode-E (code-E e)                             ≡⟨ by Var⋆.decode∘code ⟩
 
-      branch ⟨$⟩ return c ⊛ return xs ⊛ decode-E (code-E e)  ≡⟨ by (decode∘code-E e) ⟩
+      branch ⟨$⟩ return c ⊛ return xs ⊛ ⟨ decode-E (code-E e) ⟩  ≡⟨ ⟨by⟩ (decode∘code-E e) ⟩
 
-      branch ⟨$⟩ return c ⊛ return xs ⊛ return e             ≡⟨⟩
+      branch ⟨$⟩ return c ⊛ return xs ⊛ return e                 ≡⟨⟩
 
-      return (branch c xs e)                                 ∎
+      return (branch c xs e)                                     ∎
 
     decode∘code-⋆ : ∀ es → decode-⋆ (code-⋆ es) ≡ just es
     decode∘code-⋆ [] with c-nil C.≟ c-nil
