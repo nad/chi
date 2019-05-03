@@ -2,7 +2,7 @@
 -- Encoder and decoder instances for Atom.χ-ℕ-atoms
 ------------------------------------------------------------------------
 
-{-# OPTIONS --without-K #-}
+{-# OPTIONS --cubical --safe #-}
 
 module Coding.Instances.Nat where
 

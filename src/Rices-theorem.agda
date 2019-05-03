@@ -2,7 +2,7 @@
 -- Rice's theorem
 ------------------------------------------------------------------------
 
-{-# OPTIONS --without-K #-}
+{-# OPTIONS --cubical --safe #-}
 
 open import Equality.Propositional
 open import Prelude hiding (const; Decidable)

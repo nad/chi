@@ -2,7 +2,7 @@
 -- Definition of the size of an expression, along with some properties
 ------------------------------------------------------------------------
 
-{-# OPTIONS --without-K #-}
+{-# OPTIONS --cubical --safe #-}
 
 module Expression-size where
 
@@ -155,7 +155,9 @@ closed-non-terminating-size≡2→loop (const c (e ∷ es)) _ _ size≡2 =
 -- form "rec x = x" (for some x).
 
 minimal-closed-non-terminating→loop :
-  let P = λ e → Closed e × ¬ Terminates e in
+  let P : Exp → Set
+      P e = Closed e × ¬ Terminates e
+  in
   ∀ e → P e → (∀ e′ → P e′ → size e ≤ size e′) → Is-loop e
 minimal-closed-non-terminating→loop e (cl , ¬⇓) minimal =
   closed-non-terminating-size≡2→loop e cl ¬⇓ (

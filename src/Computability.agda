@@ -2,15 +2,13 @@
 -- Partial functions, computability
 ------------------------------------------------------------------------
 
-{-# OPTIONS --without-K #-}
+{-# OPTIONS --cubical --safe #-}
 
 open import Atom
 
 module Computability (atoms : χ-atoms) where
 
 open import Equality.Propositional
-open import H-level.Truncation.Propositional as Trunc
-open import Interval using (ext; ⟨ext⟩)
 open import Logical-equivalence using (_⇔_)
 open import Prelude as P hiding (_∘_; Decidable)
 open import Tactic.By
@@ -19,10 +17,13 @@ open import Bool equality-with-J
 open import Bijection equality-with-J using (_↔_)
 open import Double-negation equality-with-J
 open import Equality.Decision-procedures equality-with-J
+open import Equality.Path.Isomorphisms equality-with-J
+  using (ext; ⟨ext⟩)
 import Equivalence equality-with-J as Eq
 open import Function-universe equality-with-J hiding (id; _∘_)
 open import H-level equality-with-J as H-level
 open import H-level.Closure equality-with-J
+open import H-level.Truncation.Propositional equality-with-J as Trunc
 open import Injection equality-with-J using (Injective)
 open import Monad equality-with-J
 

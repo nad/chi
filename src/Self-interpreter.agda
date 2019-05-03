@@ -2,7 +2,7 @@
 -- A self-interpreter (without correctness proof)
 ------------------------------------------------------------------------
 
-{-# OPTIONS --without-K #-}
+{-# OPTIONS --cubical --safe #-}
 
 module Self-interpreter where
 
@@ -28,6 +28,7 @@ internal-subst : Exp
 internal-subst = lambda v-x (lambda v-new body)
   module Internal-subst where
   private
+    rec-or-lambda : _ → _
     rec-or-lambda = λ c →
       branch c (v-y ∷ v-e ∷ []) (
         case (equal-ℕ (var v-x) (var v-y)) (

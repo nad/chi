@@ -2,7 +2,7 @@
 -- A theorem related to pointwise equality
 ------------------------------------------------------------------------
 
-{-# OPTIONS --without-K #-}
+{-# OPTIONS --cubical --safe #-}
 
 -- To simplify the development, let's work with actual natural numbers
 -- as variables and constants (see
@@ -180,6 +180,7 @@ pointwise-equal-Bool =
     where
     ss = (v-f , ⌜ f ⌝) ∷ (v-g , ⌜ g ⌝) ∷ []
 
+    lemma : ∀ _ → _
     lemma = λ e →
       cong₂ (λ e₁ e₂ → decode-Bool (apply e₁ (const _ (e ∷ e₂ ∷ []))))
         (substs-closed eval cl-eval ss)

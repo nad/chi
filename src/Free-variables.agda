@@ -2,7 +2,7 @@
 -- Definitions of "free in" and "closed", along with some properties
 ------------------------------------------------------------------------
 
-{-# OPTIONS --without-K #-}
+{-# OPTIONS --cubical --safe #-}
 
 open import Atom
 
@@ -10,11 +10,11 @@ module Free-variables (atoms : χ-atoms) where
 
 open import Bag-equivalence hiding (trans)
 open import Equality.Propositional
-open import Interval using (ext)
 open import Logical-equivalence using (_⇔_)
 open import Prelude hiding (const)
 
 open import Bijection equality-with-J using (_↔_)
+open import Equality.Path.Isomorphisms equality-with-J using (ext)
 open import Function-universe equality-with-J hiding (id; _∘_)
 open import H-level equality-with-J
 open import H-level.Closure equality-with-J

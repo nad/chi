@@ -2,7 +2,7 @@
 -- Some χ program combinators
 ------------------------------------------------------------------------
 
-{-# OPTIONS --without-K #-}
+{-# OPTIONS --cubical --safe #-}
 
 module Combinators where
 
