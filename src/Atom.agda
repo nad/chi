@@ -13,7 +13,7 @@ open import Prelude
 
 open import Bijection equality-with-J as Bijection using (_↔_)
 open import Equality.Decidable-UIP equality-with-J
-open import Equality.Path.Isomorphisms equality-with-J using (ext)
+open import Equality.Path.Isomorphisms equality-with-J using (ext; univ)
 open import Equivalence equality-with-J as Eq using (_≃_)
 open import Function-universe equality-with-J
 open import H-level equality-with-J
@@ -100,13 +100,10 @@ record χ-atoms : Set₁ where
 χ-atoms.const-atoms χ-ℕ-atoms = ℕ-atoms
 χ-atoms.var-atoms   χ-ℕ-atoms = ℕ-atoms
 
--- The type of atoms is isomorphic to the unit type (assuming
--- univalence).
+-- The type of atoms is isomorphic to the unit type.
 
-Atoms↔⊤ :
-  Univalence (# 0) →
-  Atoms ↔ ⊤
-Atoms↔⊤ univ =
+Atoms↔⊤ : Atoms ↔ ⊤
+Atoms↔⊤ =
   Atoms                          ↝⟨ eq ⟩
   (∃ λ (Name : Set) → Name ↔ ℕ)  ↝⟨ ∃-cong (λ _ → Eq.↔↔≃′ ext ℕ-set) ⟩
   (∃ λ (Name : Set) → Name ≃ ℕ)  ↝⟨ singleton-with-≃-↔-⊤ ext univ ⟩□
@@ -127,15 +124,12 @@ Atoms↔⊤ univ =
     ; left-inverse-of = λ _ → refl
     }
 
--- The χ-atoms type is isomorphic to the unit type (assuming
--- univalence).
+-- The χ-atoms type is isomorphic to the unit type.
 
-χ-atoms↔⊤ :
-  Univalence (# 0) →
-  χ-atoms ↔ ⊤
-χ-atoms↔⊤ univ =
+χ-atoms↔⊤ : χ-atoms ↔ ⊤
+χ-atoms↔⊤ =
   χ-atoms        ↝⟨ eq ⟩
-  Atoms × Atoms  ↝⟨ Atoms↔⊤ univ ×-cong Atoms↔⊤ univ ⟩
+  Atoms × Atoms  ↝⟨ Atoms↔⊤ ×-cong Atoms↔⊤ ⟩
   ⊤ × ⊤          ↝⟨ ×-right-identity ⟩□
   ⊤              □
   where
@@ -155,26 +149,21 @@ Atoms↔⊤ univ =
     }
 
 -- If a property holds for one choice of atoms, then it holds for any
--- other choice of atoms (assuming univalence).
+-- other choice of atoms.
 
 invariant :
-  ∀ {p} →
-  Univalence (# 0) →
-  (P : χ-atoms → Set p) →
+  ∀ {p} (P : χ-atoms → Set p) →
   ∀ a₁ a₂ → P a₁ → P a₂
-invariant univ P a₁ a₂ =
+invariant P a₁ a₂ =
   subst P (_⇔_.to propositional⇔irrelevant
-             (mono₁ 0 $ _⇔_.from contractible⇔↔⊤ $
-                χ-atoms↔⊤ univ)
+             (mono₁ 0 $ _⇔_.from contractible⇔↔⊤ χ-atoms↔⊤)
              a₁ a₂)
 
 -- If a property holds for χ-ℕ-atoms, then it holds for any choice of
--- atoms (assuming univalence).
+-- atoms.
 
 one-can-restrict-attention-to-χ-ℕ-atoms :
-  ∀ {p} →
-  Univalence (# 0) →
-  (P : χ-atoms → Set p) →
+  ∀ {p} (P : χ-atoms → Set p) →
   P χ-ℕ-atoms → ∀ a → P a
-one-can-restrict-attention-to-χ-ℕ-atoms univ P p a =
-  invariant univ P χ-ℕ-atoms a p
+one-can-restrict-attention-to-χ-ℕ-atoms P p a =
+  invariant P χ-ℕ-atoms a p
