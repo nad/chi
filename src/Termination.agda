@@ -12,8 +12,6 @@ open import Equality.Propositional
 open import Logical-equivalence using (_⇔_)
 open import Prelude
 
-open import H-level equality-with-J
-
 open import Chi           atoms
 open import Deterministic atoms
 open import Propositional atoms
@@ -28,8 +26,6 @@ Terminates p = ∃ λ v → p ⇓ v
 Terminates-propositional :
   ∀ {e} →
   Is-proposition (Terminates e)
-Terminates-propositional =
-  _⇔_.from propositional⇔irrelevant
-    λ { (_ , e₁) (_ , e₂) →
-        Σ-≡,≡→≡ (⇓-deterministic e₁ e₂)
-                (_⇔_.to propositional⇔irrelevant ⇓-propositional _ _) }
+Terminates-propositional (_ , e₁) (_ , e₂) =
+  Σ-≡,≡→≡ (⇓-deterministic e₁ e₂)
+          (⇓-propositional _ _)

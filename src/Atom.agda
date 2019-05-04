@@ -155,9 +155,7 @@ invariant :
   ∀ {p} (P : χ-atoms → Set p) →
   ∀ a₁ a₂ → P a₁ → P a₂
 invariant P a₁ a₂ =
-  subst P (_⇔_.to propositional⇔irrelevant
-             (mono₁ 0 $ _⇔_.from contractible⇔↔⊤ χ-atoms↔⊤)
-             a₁ a₂)
+  subst P (mono₁ 0 (_⇔_.from contractible⇔↔⊤ χ-atoms↔⊤) a₁ a₂)
 
 -- If a property holds for χ-ℕ-atoms, then it holds for any choice of
 -- atoms.

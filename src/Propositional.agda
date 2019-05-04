@@ -326,79 +326,75 @@ Lookup′-deterministic p q =
 ⇓′-deterministic p q =
   ⇓-deterministic (_↔_.from ⇓↔⇓′ p) (_↔_.from ⇓↔⇓′ q)
 
--- The alternative semantics is proof-irrelevant.
+-- The alternative semantics is propositional.
 
-Lookup′-proof-irrelevant :
-  ∀ {c bs xs e} → Proof-irrelevant (Lookup′ c bs xs e)
-Lookup′-proof-irrelevant (here p₁ p₂ p₃) (here q₁ q₂ q₃)
-    rewrite _⇔_.to set⇔UIP C.Name-set p₁ q₁
-          | _⇔_.to set⇔UIP (decidable⇒set (List.Dec._≟_ V._≟_)) p₂ q₂
-          | _⇔_.to set⇔UIP Exp-set p₃ q₃
+Lookup′-propositional :
+  ∀ {c bs xs e} → Is-proposition (Lookup′ c bs xs e)
+Lookup′-propositional (here p₁ p₂ p₃) (here q₁ q₂ q₃)
+    rewrite C.Name-set p₁ q₁
+          | decidable⇒set (List.Dec._≟_ V._≟_) p₂ q₂
+          | Exp-set p₃ q₃
     = refl
-Lookup′-proof-irrelevant (there p₁ p₂) (there q₁ q₂)
-  rewrite _⇔_.to propositional⇔irrelevant
-            (¬-propositional ext) p₁ q₁
-        | Lookup′-proof-irrelevant p₂ q₂
+Lookup′-propositional (there p₁ p₂) (there q₁ q₂)
+  rewrite ¬-propositional ext p₁ q₁
+        | Lookup′-propositional p₂ q₂
   = refl
 
-Lookup′-proof-irrelevant (here c≡c′ _ _) (there c≢c′ _) =
+Lookup′-propositional (here c≡c′ _ _) (there c≢c′ _) =
   ⊥-elim (c≢c′ c≡c′)
-Lookup′-proof-irrelevant (there c≢c′ _) (here c≡c′ _ _) =
+Lookup′-propositional (there c≢c′ _) (here c≡c′ _ _) =
   ⊥-elim (c≢c′ c≡c′)
 
-↦′-proof-irrelevant :
-  ∀ {e xs es e′} → Proof-irrelevant (e [ xs ← es ]↦′ e′)
-↦′-proof-irrelevant ([] p) ([] q)
-  rewrite _⇔_.to set⇔UIP Exp-set p q
-  = refl
-↦′-proof-irrelevant (p₁ ∷ p₂) (q₁ ∷ q₂)
+↦′-propositional :
+  ∀ {e xs es e′} → Is-proposition (e [ xs ← es ]↦′ e′)
+↦′-propositional ([] p)    ([] q)    rewrite Exp-set p q = refl
+↦′-propositional (p₁ ∷ p₂) (q₁ ∷ q₂)
   with ↦′-deterministic p₂ q₂
-... | refl rewrite _⇔_.to set⇔UIP Exp-set p₁ q₁
-                 | ↦′-proof-irrelevant p₂ q₂
+... | refl rewrite Exp-set p₁ q₁
+                 | ↦′-propositional p₂ q₂
   = refl
 
 mutual
 
-  ⇓′-proof-irrelevant : ∀ {e v} → Proof-irrelevant (e ⇓′ v)
-  ⇓′-proof-irrelevant (apply p₁ p₂ p₃) (apply q₁ q₂ q₃)
+  ⇓′-propositional : ∀ {e v} → Is-proposition (e ⇓′ v)
+  ⇓′-propositional (apply p₁ p₂ p₃) (apply q₁ q₂ q₃)
     with ⇓′-deterministic p₁ q₁
-  ... | refl rewrite ⇓′-proof-irrelevant p₁ q₁
+  ... | refl rewrite ⇓′-propositional p₁ q₁
                 with ⇓′-deterministic p₂ q₂
-  ... | refl rewrite ⇓′-proof-irrelevant p₂ q₂
-                   | ⇓′-proof-irrelevant p₃ q₃
+  ... | refl rewrite ⇓′-propositional p₂ q₂
+                   | ⇓′-propositional p₃ q₃
              = refl
-  ⇓′-proof-irrelevant (case p₁ p₂ p₃ p₄) (case q₁ q₂ q₃ q₄)
+  ⇓′-propositional (case p₁ p₂ p₃ p₄) (case q₁ q₂ q₃ q₄)
     with ⇓′-deterministic p₁ q₁
-  ... | refl rewrite ⇓′-proof-irrelevant p₁ q₁
+  ... | refl rewrite ⇓′-propositional p₁ q₁
                 with Lookup′-deterministic p₂ q₂
-  ... | refl , refl rewrite Lookup′-proof-irrelevant p₂ q₂
+  ... | refl , refl rewrite Lookup′-propositional p₂ q₂
                        with ↦′-deterministic p₃ q₃
-  ... | refl rewrite ↦′-proof-irrelevant p₃ q₃
-                   | ⇓′-proof-irrelevant p₄ q₄
+  ... | refl rewrite ↦′-propositional p₃ q₃
+                   | ⇓′-propositional p₄ q₄
     = refl
-  ⇓′-proof-irrelevant (rec p) (rec q)
-    rewrite ⇓′-proof-irrelevant p q
+  ⇓′-propositional (rec p) (rec q)
+    rewrite ⇓′-propositional p q
     = refl
-  ⇓′-proof-irrelevant (lambda p₁ p₂) (lambda q₁ q₂)
-    rewrite _⇔_.to set⇔UIP V.Name-set p₁ q₁
-          | _⇔_.to set⇔UIP Exp-set p₂ q₂
+  ⇓′-propositional (lambda p₁ p₂) (lambda q₁ q₂)
+    rewrite V.Name-set p₁ q₁
+          | Exp-set p₂ q₂
           = refl
-  ⇓′-proof-irrelevant (const p ps) (const q qs)
-    rewrite _⇔_.to set⇔UIP C.Name-set p q
-          | ⇓⋆′-proof-irrelevant ps qs
+  ⇓′-propositional (const p ps) (const q qs)
+    rewrite C.Name-set p q
+          | ⇓⋆′-propositional ps qs
     = refl
 
-  ⇓⋆′-proof-irrelevant : ∀ {es vs} → Proof-irrelevant (es ⇓⋆′ vs)
-  ⇓⋆′-proof-irrelevant []       []       = refl
-  ⇓⋆′-proof-irrelevant (p ∷ ps) (q ∷ qs)
-    rewrite ⇓′-proof-irrelevant p q
-          | ⇓⋆′-proof-irrelevant ps qs
+  ⇓⋆′-propositional : ∀ {es vs} → Is-proposition (es ⇓⋆′ vs)
+  ⇓⋆′-propositional []       []       = refl
+  ⇓⋆′-propositional (p ∷ ps) (q ∷ qs)
+    rewrite ⇓′-propositional p q
+          | ⇓⋆′-propositional ps qs
     = refl
 
 -- The semantics is propositional.
 
 ⇓-propositional : ∀ {e v} → Is-proposition (e ⇓ v)
-⇓-propositional {e} {v} =    $⟨ ⇓′-proof-irrelevant ⟩
-  Proof-irrelevant (e ⇓′ v)  ↝⟨ _⇔_.from propositional⇔irrelevant ⟩
-  Is-proposition (e ⇓′ v)    ↝⟨ H-level.respects-surjection (_↔_.surjection $ inverse ⇓↔⇓′) 1 ⟩□
-  Is-proposition (e ⇓ v)     □
+⇓-propositional {e} {v} =  $⟨ ⇓′-propositional ⟩
+  Is-proposition (e ⇓′ v)  ↝⟨ H-level.respects-surjection (_↔_.surjection $ inverse ⇓↔⇓′) 1 ⟩□
+  Is-proposition (e ⇓ v)   □

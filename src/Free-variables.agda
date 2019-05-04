@@ -83,7 +83,7 @@ Closed-exp-set =
 closed-equal-if-expressions-equal :
   {e₁ e₂ : Closed-exp} → proj₁ e₁ ≡ proj₁ e₂ → e₁ ≡ e₂
 closed-equal-if-expressions-equal eq =
-  Σ-≡,≡→≡ eq (_⇔_.to propositional⇔irrelevant Closed-propositional _ _)
+  Σ-≡,≡→≡ eq (Closed-propositional _ _)
 
 -- Constructor applications are closed.
 

@@ -54,11 +54,9 @@ record _⇀_ {a b} (A : Set a) (B : Set b) : Set (lsuc (a ⊔ b)) where
   ∃[]=-propositional :
     ∀ {a} →
     Is-proposition (∃ (_[_]=_ a))
-  ∃[]=-propositional =
-    _⇔_.from propositional⇔irrelevant λ where
-      (b₁ , [a]=b₁) (b₂ , [a]=b₂) →
-        Σ-≡,≡→≡ (deterministic [a]=b₁ [a]=b₂)
-                (_⇔_.to propositional⇔irrelevant propositional _ _)
+  ∃[]=-propositional (b₁ , [a]=b₁) (b₂ , [a]=b₂) =
+    Σ-≡,≡→≡ (deterministic [a]=b₁ [a]=b₂)
+            (propositional _ _)
 
 open _⇀_ public using (_[_]=_)
 
@@ -94,7 +92,7 @@ as-partial {ℓa} B-set f = record
                       b₁   ≡⟨ sym (lower fa≡b₁) ⟩
                       f a  ≡⟨ lower fa≡b₂ ⟩∎
                       b₂   ∎
-  ; propositional = ↑-closure 1 (B-set _ _)
+  ; propositional = ↑-closure 1 (+⇒≡ {n = 1} B-set)
   }
 
 -- Composition of partial functions.
@@ -172,7 +170,7 @@ Implements-propositional f pres =
                H-level.respects-surjection
                  (_↔_.surjection $ inverse Σ-assoc) 1
                  (Σ-closure 1 (_⇀_.∃[]=-propositional f) λ _ →
-                              Exp-set _ _))
+                              Exp-set))
 
 -- Computability. The definition is parametrised by something which
 -- could be a modality.
@@ -354,9 +352,9 @@ as-function-to-Bool₁ P =
              sym (proj₂ f₂ (Bool.true≢false P.∘ sym P.∘ proj₁ f₁))
        ; propositional = ×-closure 1
                            (Π-closure ext 1 λ _ →
-                            Bool-set _ _)
+                            Bool-set)
                            (Π-closure ext 1 λ _ →
-                            Bool-set _ _)
+                            Bool-set)
        })
   , λ a →
       [ (λ p  → true  , (λ _ → refl)  , ⊥-elim P.∘ (_$ p))
@@ -389,8 +387,8 @@ as-function-to-Bool₂ P P-prop =
                     true   ≡⟨ sym b≡true ⟩
                     b      ≡⟨ b≡false ⟩∎
                     false  ∎) })
-             (×-closure 1 P-prop (Bool-set _ _))
-             (×-closure 1 (¬-propositional ext) (Bool-set _ _))
+             (×-closure 1 P-prop Bool-set)
+             (×-closure 1 (¬-propositional ext) Bool-set)
        })
   , λ a →
       [ (λ p  → true  , inj₁ (p , refl))
@@ -481,7 +479,7 @@ as-partial-function-to-Bool₁ P = record
         ⊥-elim $ proj₂ f (Bool.true≢false P.∘ sym P.∘ proj₁ f)
   ; propositional = ×-closure 1
                       (Π-closure ext 1 λ _ →
-                       Bool-set _ _)
+                       Bool-set)
                       (¬-propositional ext)
   }
 
@@ -496,7 +494,7 @@ as-partial-function-to-Bool₂ :
 as-partial-function-to-Bool₂ P P-prop = record
   { _[_]=_        = λ a b → P a × b ≡ true
   ; deterministic = λ { (_ , refl) (_ , refl) → refl }
-  ; propositional = ×-closure 1 P-prop (Bool-set _ _)
+  ; propositional = ×-closure 1 P-prop Bool-set
   }
 
 -- One definition of what it means for a total partial function to the
