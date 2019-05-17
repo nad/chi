@@ -25,10 +25,10 @@ module Pointwise-equality
   (eval-correct₁ : ∀ p v → Closed p → p ⇓ v → apply eval ⌜ p ⌝ ⇓ ⌜ v ⌝)
   where
 
-open import Bag-equivalence
 open import Equality.Propositional
 open import Prelude hiding (const; Decidable)
 
+open import Bag-equivalence equality-with-J
 open import Equality.Decision-procedures equality-with-J
 open import H-level.Closure equality-with-J
 

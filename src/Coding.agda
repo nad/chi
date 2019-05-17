@@ -10,7 +10,7 @@ module Coding (atoms : χ-atoms) where
 
 open import Equality.Propositional
 open import Prelude hiding (const)
-open import Tactic.By
+open import Tactic.By.Propositional
 
 open import Bijection equality-with-J as Bijection using (_↔_)
 open import Equality.Decision-procedures equality-with-J

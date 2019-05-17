@@ -32,7 +32,7 @@ module Rices-theorem
 
 open import H-level.Truncation.Propositional as Trunc hiding (rec)
 open import Logical-equivalence using (_⇔_)
-open import Tactic.By
+open import Tactic.By.Propositional
 
 open import Double-negation equality-with-J
 open import Equality.Decision-procedures equality-with-J

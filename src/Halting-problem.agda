@@ -9,7 +9,7 @@ module Halting-problem where
 open import Equality.Propositional
 open import Logical-equivalence using (_⇔_)
 open import Prelude hiding (const; Decidable)
-open import Tactic.By
+open import Tactic.By.Propositional
 open import Univalence-axiom
 
 open import Equality.Decision-procedures equality-with-J

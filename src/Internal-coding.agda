@@ -8,7 +8,7 @@ module Internal-coding where
 
 open import Equality.Propositional
 open import Prelude hiding (const)
-open import Tactic.By
+open import Tactic.By.Propositional
 
 -- To simplify the development, let's work with actual natural numbers
 -- as variables and constants (see

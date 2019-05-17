@@ -10,7 +10,7 @@ module Deterministic (atoms : χ-atoms) where
 
 open import Equality.Propositional
 open import Prelude hiding (const)
-open import Tactic.By
+open import Tactic.By.Propositional
 
 open import Chi atoms
 

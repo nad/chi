@@ -8,7 +8,7 @@ module Combinators where
 
 open import Equality.Propositional
 open import Prelude hiding (if_then_else_; not; const)
-open import Tactic.By
+open import Tactic.By.Propositional
 
 open import Equality.Decision-procedures equality-with-J
 import Nat equality-with-J as Nat

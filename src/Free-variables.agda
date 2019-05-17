@@ -8,11 +8,11 @@ open import Atom
 
 module Free-variables (atoms : χ-atoms) where
 
-open import Bag-equivalence hiding (trans)
 open import Equality.Propositional
 open import Logical-equivalence using (_⇔_)
 open import Prelude hiding (const)
 
+open import Bag-equivalence equality-with-J hiding (trans)
 open import Bijection equality-with-J using (_↔_)
 open import Equality.Path.Isomorphisms equality-with-J using (ext)
 open import Function-universe equality-with-J hiding (id; _∘_)
