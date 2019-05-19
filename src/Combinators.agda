@@ -249,7 +249,7 @@ member-correct m ns =
   lemma [] =
     case ⌜ [] ⦂ List ℕ ⌝
       (branches [ v-x ← ⌜ m ⌝ ]B⋆
-                [ v-member ← body [ v-x ← ⌜ m ⌝ ] ]B⋆)           ⇓⟨ case (rep⇓rep ([] ⦂ List ℕ)) here [] (const []) ⟩■
+                [ v-member ← body [ v-x ← ⌜ m ⌝ ] ]B⋆)         ⇓⟨ case (rep⇓rep ([] ⦂ List ℕ)) here [] (const []) ⟩■
 
     ⌜ false ⦂ Bool ⌝
 
