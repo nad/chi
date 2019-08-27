@@ -60,7 +60,7 @@ open χ-atoms atoms
     v
 
   ¬e[x←e′]⇓v : ¬ e [ x ← e′ ] ⇓ v
-  ¬e[x←e′]⇓v p with e [ x ← e′ ] | lemma e′
+  ¬e[x←e′]⇓v p with _[_←_] e x e′ | lemma e′
   ¬e[x←e′]⇓v () | ._ | refl
 
 mutual
