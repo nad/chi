@@ -192,6 +192,108 @@ Intensional-halting-problem-of-self-application : Closed-exp →Bool
 Intensional-halting-problem-of-self-application =
   as-function-to-Bool₁ (λ { (e , _) → Terminates (apply e ⌜ e ⌝) })
 
+-- A "termination inversion" function, parametrised by a solution to
+-- the (generalised) intensional halting problem of self application.
+
+terminv : Exp → Exp
+terminv halts =
+  lambda v-x
+    (χ.if apply halts (var v-x)
+     then loop
+     else ⌜ zero ⌝)
+
+-- A generalised variant of the intensional halting problem of
+-- self-application is not decidable. This variant replaces the coding
+-- function for expressions with an arbitrary relation, restricted so
+-- that codes have to be values. Furthermore the statement is changed
+-- to include the assumption that there is a code for a certain
+-- "strange" program.
+
+generalised-intensional-halting-problem-of-self-application :
+  (Code : Exp → ∃ Value → Set) →
+  ¬ ∃ λ halts →
+      Closed halts
+        ×
+      ∃ (Code (terminv halts))
+        ×
+      ∀ p c → Closed p → Code p c →
+        let c′ = proj₁ c in
+        (Terminates (apply p c′) →
+           apply halts c′ ⇓ ⌜ true ⦂ Bool ⌝)
+          ×
+        (¬ Terminates (apply p c′) →
+           apply halts c′ ⇓ ⌜ false ⦂ Bool ⌝)
+generalised-intensional-halting-problem-of-self-application
+  Code (halts , cl , (code-strange , cd) , hyp) =
+  contradiction
+  where
+  terminv-lemma : ∀ p c → Closed p → Code p c →
+                  Terminates (apply (terminv halts) (proj₁ c))
+                    ⇔
+                  ¬ Terminates (apply p (proj₁ c))
+  terminv-lemma p (c , c-vl) cl-p cd-p =
+    record { to = to; from = from }
+    where
+    to : Terminates (apply (terminv halts) c) →
+         ¬ Terminates (apply p c)
+    to (_ , apply lambda _ (case _ here [] loop⇓)) p⇓ =
+      ¬loop⇓ (_ , loop⇓)
+
+    to (_ , apply lambda _ (case _ (there _ (there _ ())) _  _)) p⇓
+
+    to (_ , apply lambda rep-p⇓
+              (case halts⇓false′ (there _ here) [] _)) p⇓ =
+      C.distinct-codes→distinct-names (λ ()) $
+        proj₁ $ cancel-const $
+          ⇓-deterministic
+            (proj₁ (hyp p (c , c-vl) cl-p cd-p) p⇓)
+            halts⇓false
+      where
+      halts⇓false : apply halts c ⇓ ⌜ false ⦂ Bool ⌝
+      halts⇓false
+        rewrite sym $ values-only-compute-to-themselves c-vl rep-p⇓ =
+        subst (λ e → apply e _ ⇓ _)
+              (subst-closed _ _ cl)
+              halts⇓false′
+
+    from : ¬ Terminates (apply p c) →
+           Terminates (apply (terminv halts) c)
+    from ¬p⇓ =
+      _ , apply lambda (values-compute-to-themselves c-vl)
+            (case halts⇓false
+                  (there (C.distinct-codes→distinct-names (λ ())) here)
+                  []
+                  (const []))
+      where
+      halts⇓false : apply (halts [ v-x ← c ]) c ⇓
+                    ⌜ false ⦂ Bool ⌝
+      halts⇓false =
+        subst (λ e → apply e _ ⇓ _)
+              (sym $ subst-closed _ _ cl)
+              (proj₂ (hyp p (c , c-vl) cl-p cd-p) ¬p⇓)
+
+  strange : Exp
+  strange = apply (terminv halts) (proj₁ code-strange)
+
+  terminv-closed : Closed (terminv halts)
+  terminv-closed =
+    Closed′-closed-under-lambda $
+    if-then-else-closed
+      (Closed′-closed-under-apply
+         (Closed→Closed′ cl)
+         (Closed′-closed-under-var (inj₁ refl)))
+      (Closed→Closed′ loop-closed)
+      (Closed→Closed′ $ rep-closed zero)
+
+  strange-lemma : Terminates strange ⇔ ¬ Terminates strange
+  strange-lemma =
+    terminv-lemma
+      (terminv halts) code-strange
+      terminv-closed cd
+
+  contradiction : ⊥
+  contradiction = ¬[⇔¬] strange-lemma
+
 -- The intensional halting problem of self-application is not
 -- decidable.
 
@@ -205,77 +307,22 @@ intensional-halting-problem-of-self-application :
           ×
         (¬ Terminates (apply p ⌜ p ⌝) →
            apply halts ⌜ p ⌝ ⇓ ⌜ false ⦂ Bool ⌝)
-intensional-halting-problem-of-self-application (halts , cl , hyp) =
-  contradiction
+intensional-halting-problem-of-self-application
+  (halts , cl , hyp) =
+  generalised-intensional-halting-problem-of-self-application
+     ⌜⌝-Code
+     ( halts
+     , cl
+     , ( ( ⌜ terminv halts ⌝
+         , const→value (rep-const (terminv halts))
+         )
+       , refl
+       )
+     , λ { p _ cl-p refl → hyp p cl-p }
+     )
   where
-  self-apply : Exp → Exp
-  self-apply p = apply p ⌜ p ⌝
-
-  terminv : Exp
-  terminv = lambda v-x
-              (χ.if apply halts (var v-x)
-               then loop
-               else ⌜ zero ⌝)
-
-  terminv-lemma : ∀ p → Closed p →
-                  Terminates (apply terminv ⌜ p ⌝)
-                    ⇔
-                  ¬ Terminates (self-apply p)
-  terminv-lemma p cl-p = record { to = to; from = from }
-    where
-    to : Terminates (apply terminv ⌜ p ⌝) →
-         ¬ Terminates (self-apply p)
-    to (_ , apply lambda _ (case _ here [] loop⇓)) p⇓ =
-      ¬loop⇓ (_ , loop⇓)
-
-    to (_ , apply lambda _ (case _ (there _ (there _ ())) _  _)) p⇓
-
-    to (_ , apply lambda rep-p⇓
-              (case halts⇓false′ (there _ here) [] _)) p⇓ =
-      C.distinct-codes→distinct-names (λ ()) $
-        proj₁ $ cancel-const $
-          ⇓-deterministic (proj₁ (hyp p cl-p) p⇓) halts⇓false
-      where
-      halts⇓false : apply halts ⌜ p ⌝ ⇓ ⌜ false ⦂ Bool ⌝
-      halts⇓false rewrite rep⇓≡rep p rep-p⇓ =
-        subst (λ e → apply e _ ⇓ _)
-              (subst-closed _ _ cl)
-              halts⇓false′
-
-    from : ¬ Terminates (self-apply p) →
-           Terminates (apply terminv ⌜ p ⌝)
-    from ¬p⇓ =
-      _ , apply lambda (rep⇓rep p)
-            (case halts⇓false
-                  (there (C.distinct-codes→distinct-names (λ ())) here)
-                  []
-                  (const []))
-      where
-      halts⇓false : apply (halts [ v-x ← ⌜ p ⌝ ]) ⌜ p ⌝ ⇓
-                    ⌜ false ⦂ Bool ⌝
-      halts⇓false =
-        subst (λ e → apply e _ ⇓ _)
-              (sym $ subst-closed _ _ cl)
-              (proj₂ (hyp p cl-p) ¬p⇓)
-
-  strange : Exp
-  strange = self-apply terminv
-
-  terminv-closed : Closed terminv
-  terminv-closed =
-    Closed′-closed-under-lambda $
-    if-then-else-closed
-      (Closed′-closed-under-apply
-         (Closed→Closed′ cl)
-         (Closed′-closed-under-var (inj₁ refl)))
-      (Closed→Closed′ loop-closed)
-      (Closed→Closed′ $ rep-closed zero)
-
-  strange-lemma : Terminates strange ⇔ ¬ Terminates strange
-  strange-lemma = terminv-lemma terminv terminv-closed
-
-  contradiction : ⊥
-  contradiction = ¬[⇔¬] strange-lemma
+  ⌜⌝-Code : Exp → ∃ Value → Set
+  ⌜⌝-Code e (c , _) = ⌜ e ⌝ ≡ c
 
 -- The intensional halting problem with one argument is not decidable.
 
