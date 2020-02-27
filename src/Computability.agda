@@ -331,7 +331,7 @@ module _  {a b c d} {A : Set a} {B : Set b} {C : Set c} {D : Set d}
 -- defined using the double-negation modality.
 
 _→Bool : ∀ {ℓ} → Set ℓ → Set (lsuc ℓ)
-A →Bool = ∃ λ (f : A ⇀ Bool) → Total ¬¬_ f
+A →Bool = ∃ λ (f : A ⇀ Bool) → Total (λ A → ¬¬ A) f
 
 -- One way to view a predicate as a total partial function to the
 -- booleans.
@@ -425,8 +425,8 @@ to-Bool₁→to-Bool₂ _ _ (Pa→b≡true , ¬Pa→b≡false) =
 to-Bool₁-computable→to-Bool₂-computable :
   ∀ {a} {A : Set a} ⦃ rA : Rep A Consts ⦄
   (P : A → Set a) (P-prop : ∀ {a} → Is-proposition (P a)) →
-  Computable′ ¬¬_ (proj₁ (as-function-to-Bool₁ P)) →
-  Computable′ ¬¬_ (proj₁ (as-function-to-Bool₂ P P-prop))
+  Computable′ (λ A → ¬¬ A) (proj₁ (as-function-to-Bool₁ P)) →
+  Computable′ (λ A → ¬¬ A) (proj₁ (as-function-to-Bool₂ P P-prop))
 to-Bool₁-computable→to-Bool₂-computable
   P P-prop (p , cl-p , hyp₁ , hyp₂) =
     p
