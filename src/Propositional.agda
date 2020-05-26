@@ -8,14 +8,13 @@ open import Atom
 
 module Propositional (atoms : χ-atoms) where
 
-open import Equality.Propositional
+open import Equality.Propositional.Cubical
 open import Logical-equivalence using (_⇔_)
 open import Prelude hiding (const)
 
 open import Bijection equality-with-J using (_↔_)
 open import Equality.Decidable-UIP equality-with-J
 open import Equality.Decision-procedures equality-with-J
-open import Equality.Path.Isomorphisms equality-with-J using (ext)
 open import Function-universe equality-with-J hiding (_∘_)
 open import H-level equality-with-J as H-level
 open import H-level.Closure equality-with-J

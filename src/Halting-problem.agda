@@ -6,7 +6,7 @@
 
 module Halting-problem where
 
-open import Equality.Propositional
+open import Equality.Propositional.Cubical
 open import Logical-equivalence using (_⇔_)
 open import Prelude hiding (const; Decidable)
 open import Tactic.By.Propositional
@@ -16,8 +16,8 @@ open import Equality.Decision-procedures equality-with-J
 open import Function-universe equality-with-J hiding (id; _∘_)
 open import H-level equality-with-J
 open import H-level.Closure equality-with-J
-open import H-level.Truncation.Propositional equality-with-J as Trunc
-  hiding (rec)
+open import H-level.Truncation.Propositional equality-with-paths
+  as Trunc hiding (rec)
 
 -- To simplify the development, let's work with actual natural numbers
 -- as variables and constants (see

@@ -6,14 +6,13 @@
 
 module Atom where
 
-open import Equality.Propositional
+open import Equality.Propositional.Cubical
 open import Logical-equivalence using (_⇔_)
 open import Prelude
 
 open import Bag-equivalence equality-with-J
 open import Bijection equality-with-J as Bijection using (_↔_)
 open import Equality.Decidable-UIP equality-with-J
-open import Equality.Path.Isomorphisms equality-with-J using (ext; univ)
 open import Equivalence equality-with-J as Eq using (_≃_)
 open import Function-universe equality-with-J
 open import H-level equality-with-J
