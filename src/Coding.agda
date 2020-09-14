@@ -330,9 +330,9 @@ code-ℕ = record
   ... | yes z≡s | _      = ⊥-elim (C.distinct-codes→distinct-names
                                      (λ ()) z≡s)
   ... | no _    | yes _  =
-    map suc (dc (cd n))  ≡⟨ by (dc∘cd n) ⟩
-    map suc (return n)   ≡⟨ refl ⟩∎
-    return (suc n)       ∎
+    map suc ⟨ dc (cd n) ⟩  ≡⟨ ⟨by⟩ (dc∘cd n) ⟩
+    map suc (return n)     ≡⟨ refl ⟩∎
+    return (suc n)         ∎
 
 -- Encoder for variables.
 
