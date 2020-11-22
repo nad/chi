@@ -44,6 +44,9 @@ import Coding.Instances.Nat
 open import Combinators as χ hiding (if_then_else_)
 open import Internal-coding
 
+------------------------------------------------------------------------
+-- The extensional halting problem
+
 -- The extensional halting problem is undecidable.
 
 extensional-halting-problem :
@@ -185,12 +188,8 @@ extensional-halting-problem″ (halts , cl , hyp) =
       (true  , _           , p⇓) → ⊥-elim (¬p⇓ p⇓)
       (false , halts⇓false , _)  → halts⇓false
 
--- The intensional halting problem of self-application. (This
--- definition is not used below.)
-
-Intensional-halting-problem-of-self-application : Closed-exp →Bool
-Intensional-halting-problem-of-self-application =
-  as-function-to-Bool₁ (λ { (e , _) → Terminates (apply e ⌜ e ⌝) })
+------------------------------------------------------------------------
+-- The intensional halting problem with arbitrary coding relations
 
 -- A "termination inversion" function, parametrised by a solution to
 -- the (generalised) intensional halting problem of self application.
@@ -293,6 +292,16 @@ generalised-intensional-halting-problem-of-self-application
 
   contradiction : ⊥
   contradiction = ¬[⇔¬] strange-lemma
+
+------------------------------------------------------------------------
+-- The intensional halting problem
+
+-- The intensional halting problem of self-application. (This
+-- definition is not used below.)
+
+Intensional-halting-problem-of-self-application : Closed-exp →Bool
+Intensional-halting-problem-of-self-application =
+  as-function-to-Bool₁ (λ { (e , _) → Terminates (apply e ⌜ e ⌝) })
 
 -- The intensional halting problem of self-application is not
 -- decidable.
@@ -512,6 +521,9 @@ Intensional-halting-problem₀₁→Intensional-halting-problem₀₂ em =
       (inj₁ p)  → p
       (inj₂ ¬p) → ⊥-elim (¬¬p ¬p)
 
+------------------------------------------------------------------------
+-- "Half of the halting problem"
+
 -- If a (correct) self-interpreter can be implemented, then "half of
 -- the halting problem" is computable.
 
@@ -623,6 +635,9 @@ half-of-the-halting-problem₂ eval cl eval₁ eval₂ =
        Terminates (apply eval ⌜ p ⌝)     ↝⟨ eval-inversion p cl-p ⟩□
        Terminates p                      □)
     , refl
+
+------------------------------------------------------------------------
+-- Halting with zero
 
 -- If the expression terminates with ⌜ zero ⌝ as the result, then this
 -- (total partial) function returns true. If the expression does not
