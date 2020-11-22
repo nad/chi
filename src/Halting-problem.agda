@@ -189,7 +189,8 @@ extensional-halting-problem″ (halts , cl , hyp) =
       (false , halts⇓false , _)  → halts⇓false
 
 ------------------------------------------------------------------------
--- The intensional halting problem with arbitrary coding relations
+-- The intensional halting problem with arbitrary or non-standard
+-- coding relations
 
 -- A "termination inversion" function, parametrised by a solution to
 -- the (generalised) intensional halting problem of self application.
@@ -292,6 +293,60 @@ generalised-intensional-halting-problem-of-self-application
 
   contradiction : ⊥
   contradiction = ¬[⇔¬] strange-lemma
+
+-- A coding relation: An expression e that terminates is encoded by
+-- the representation of true, and an expression e that does not
+-- terminate is encoded by the representation of false.
+
+⇓-coding : Exp → ∃ Value → Type
+⇓-coding e (c , _) =
+  Terminates e × c ≡ ⌜ true ⦂ Bool ⌝
+    ⊎
+  ¬ Terminates e × c ≡ ⌜ false ⦂ Bool ⌝
+
+-- When this coding relation is used the intensional halting problem
+-- with zero arguments is decidable.
+
+intensional-halting-problem₀-with-⇓-coding :
+  ∃ λ halts →
+    Closed halts
+      ×
+    ∀ p (c@(c′ , _) : ∃ Value) → Closed p → ⇓-coding p c →
+      (Terminates p → apply halts c′ ⇓ ⌜ true ⦂ Bool ⌝)
+        ×
+      (¬ Terminates p → apply halts c′ ⇓ ⌜ false ⦂ Bool ⌝)
+intensional-halting-problem₀-with-⇓-coding =
+    halts
+  , halts-closed
+  , halts-correct
+  where
+  halts : Exp
+  halts =
+    lambda v-p
+      (case (var v-p)
+         (branch c-true  [] ⌜ true  ⦂ Bool ⌝ ∷
+          branch c-false [] ⌜ false ⦂ Bool ⌝ ∷
+          []))
+
+  halts-closed : Closed halts
+  halts-closed = from-⊎ (closed? halts)
+
+  halts-correct :
+    ∀ p (c@(c′ , _) : ∃ Value) → Closed p → ⇓-coding p c →
+    (Terminates p → apply halts c′ ⇓ ⌜ true ⦂ Bool ⌝)
+      ×
+    (¬ Terminates p → apply halts c′ ⇓ ⌜ false ⦂ Bool ⌝)
+  halts-correct _ (.(⌜ true ⌝) , _) _ (inj₁ (p⇓ , refl)) =
+      (λ _   → apply lambda (rep⇓rep (true ⦂ Bool))
+                 (case (rep⇓rep (true ⦂ Bool)) here []
+                    (rep⇓rep (true ⦂ Bool))))
+    , (λ ¬p⇓ → ⊥-elim (¬p⇓ p⇓))
+
+  halts-correct _ (.(⌜ false ⌝) , _) _ (inj₂ (¬p⇓ , refl)) =
+      (λ p⇓ → ⊥-elim (¬p⇓ p⇓))
+    , (λ _   → apply lambda (rep⇓rep (false ⦂ Bool))
+                 (case (rep⇓rep (false ⦂ Bool)) (there (λ ()) here) []
+                    (rep⇓rep (false ⦂ Bool))))
 
 ------------------------------------------------------------------------
 -- The intensional halting problem
