@@ -382,10 +382,10 @@ not-closed cl-e =
     (Closed→Closed′ (from-⊎ (closed? ⌜ false ⦂ Bool ⌝)))
     (Closed→Closed′ (from-⊎ (closed? ⌜ true  ⦂ Bool ⌝)))
 
-not-correct : ∀ {e} b → e ⇓ ⌜ b ⌝ → not e ⇓ ⌜ Prelude.not b ⌝
-not-correct b e⇓ =
-  if-then-else-correct b false true
-    e⇓ (rep⇓rep (false ⦂ Bool)) (rep⇓rep (true ⦂ Bool))
+not-correct : ∀ {e} (b : Bool) → e ⇓ ⌜ b ⌝ → not e ⇓ ⌜ Prelude.not b ⌝
+not-correct true  e⇓ = case e⇓ here [] (rep⇓rep (false ⦂ Bool))
+not-correct false e⇓ =
+  case e⇓ (there (λ ()) here) [] (rep⇓rep (true ⦂ Bool))
 
 -- Conjunction.
 
