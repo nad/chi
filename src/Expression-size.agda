@@ -102,7 +102,7 @@ closed→2≤size (const c es) cl =
 -- Closed, non-terminating expressions of size two must have the form
 -- "rec x = x" (for some x).
 
-data Is-loop : Exp → Set where
+data Is-loop : Exp → Type where
   rec : ∀ {x y} → x ≡ y → Is-loop (rec x (var y))
 
 closed-non-terminating-size≡2→loop :
@@ -155,7 +155,7 @@ closed-non-terminating-size≡2→loop (const c (e ∷ es)) _ _ size≡2 =
 -- form "rec x = x" (for some x).
 
 minimal-closed-non-terminating→loop :
-  let P : Exp → Set
+  let P : Exp → Type
       P e = Closed e × ¬ Terminates e
   in
   ∀ e → P e → (∀ e′ → P e′ → size e ≤ size e′) → Is-loop e

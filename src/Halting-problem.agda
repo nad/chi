@@ -210,7 +210,7 @@ terminv halts =
 -- "strange" program.
 
 generalised-intensional-halting-problem-of-self-application :
-  (Code : Exp → ∃ Value → Set) →
+  (Code : Exp → ∃ Value → Type) →
   ¬ ∃ λ halts →
       Closed halts
         ×
@@ -321,7 +321,7 @@ intensional-halting-problem-of-self-application
      , λ { p _ cl-p refl → hyp p cl-p }
      )
   where
-  ⌜⌝-Code : Exp → ∃ Value → Set
+  ⌜⌝-Code : Exp → ∃ Value → Type
   ⌜⌝-Code e (c , _) = ⌜ e ⌝ ≡ c
 
 -- The intensional halting problem with one argument is not decidable.
@@ -488,7 +488,7 @@ Intensional-halting-problem₀₂→Intensional-halting-problem₀₁
   (inj₂ (¬e⇓ , refl)) = (⊥-elim ∘ ¬e⇓) , λ _ → refl
 
 Intensional-halting-problem₀₁→Intensional-halting-problem₀₂ :
-  (excluded-middle : (P : Set) → Is-proposition P → Dec P) →
+  (excluded-middle : (P : Type) → Is-proposition P → Dec P) →
   ∀ {e} b →
   proj₁ Intensional-halting-problem₀₁ [ e ]= b →
   proj₁ Intensional-halting-problem₀₂ [ e ]= b
@@ -506,7 +506,7 @@ Intensional-halting-problem₀₁→Intensional-halting-problem₀₂ em =
            )
   where
   double-negation-elimination :
-    {P : Set} → Is-proposition P → ¬ ¬ P → P
+    {P : Type} → Is-proposition P → ¬ ¬ P → P
   double-negation-elimination P-prop ¬¬p =
     case em _ P-prop of λ where
       (inj₁ p)  → p

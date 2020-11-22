@@ -19,7 +19,7 @@ open χ-atoms atoms
 
 mutual
 
-  data Exp : Set where
+  data Exp : Type where
     apply  : Exp → Exp → Exp
     lambda : Var → Exp → Exp
     case   : Exp → List Br → Exp
@@ -27,7 +27,7 @@ mutual
     var    : Var → Exp
     const  : Const → List Exp → Exp
 
-  data Br : Set where
+  data Br : Type where
     branch : Const → List Var → Exp → Br
 
 -- Substitution.
@@ -65,14 +65,14 @@ mutual
 infix 5 ∷_
 infix 4 _[_←_]↦_
 
-data _[_←_]↦_ (e : Exp) : List Var → List Exp → Exp → Set where
+data _[_←_]↦_ (e : Exp) : List Var → List Exp → Exp → Type where
   [] : e [ [] ← [] ]↦ e
   ∷_ : ∀ {x xs e′ es′ e″} →
        e [ xs ← es′ ]↦ e″ → e [ x ∷ xs ← e′ ∷ es′ ]↦ e″ [ x ← e′ ]
 
 -- Operational semantics.
 
-data Lookup (c : Const) : List Br → List Var → Exp → Set where
+data Lookup (c : Const) : List Br → List Var → Exp → Type where
   here  : ∀ {xs e bs} → Lookup c (branch c xs e ∷ bs) xs e
   there : ∀ {c′ xs′ e′ bs xs e} →
           c ≢ c′ → Lookup c bs xs e →
@@ -83,7 +83,7 @@ infix 4 _⇓_ _⇓⋆_
 
 mutual
 
-  data _⇓_ : Exp → Exp → Set where
+  data _⇓_ : Exp → Exp → Type where
     apply  : ∀ {e₁ e₂ x e v₂ v} →
              e₁ ⇓ lambda x e → e₂ ⇓ v₂ → e [ x ← v₂ ] ⇓ v →
              apply e₁ e₂ ⇓ v
@@ -95,6 +95,6 @@ mutual
     lambda : ∀ {x e} → lambda x e ⇓ lambda x e
     const  : ∀ {c es vs} → es ⇓⋆ vs → const c es ⇓ const c vs
 
-  data _⇓⋆_ : List Exp → List Exp → Set where
+  data _⇓⋆_ : List Exp → List Exp → Type where
     []  : [] ⇓⋆ []
     _∷_ : ∀ {e es v vs} → e ⇓ v → es ⇓⋆ vs → e ∷ es ⇓⋆ v ∷ vs

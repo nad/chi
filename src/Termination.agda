@@ -18,7 +18,7 @@ open import Propositional atoms
 
 -- Terminates e means that e terminates with a value.
 
-Terminates : Exp → Set
+Terminates : Exp → Type
 Terminates p = ∃ λ v → p ⇓ v
 
 -- This relation is propositional.

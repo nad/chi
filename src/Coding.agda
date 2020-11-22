@@ -32,7 +32,7 @@ open χ-atoms atoms
 
 -- Representation functions.
 
-record Rep {a b} (A : Set a) (B : Set b) : Set (a ⊔ b) where
+record Rep {a b} (A : Type a) (B : Type b) : Type (a ⊔ b) where
   field
     -- Representation function.
     ⌜_⌝ : A → B
@@ -44,7 +44,7 @@ open Rep ⦃ … ⦄ public
 
 -- An identity encoder.
 
-id-rep : ∀ {a} {A : Set a} → Rep A A
+id-rep : ∀ {a} {A : Type a} → Rep A A
 id-rep = record
   { ⌜_⌝           = id
   ; rep-injective = id
@@ -54,7 +54,7 @@ id-rep = record
 
 infixr 9 _∘-rep_
 
-_∘-rep_ : ∀ {a b c} {A : Set a} {B : Set b} {C : Set c} →
+_∘-rep_ : ∀ {a b c} {A : Type a} {B : Type b} {C : Type c} →
           Rep B C → Rep A B → Rep A C
 r₁ ∘-rep r₂ = record
   { ⌜_⌝           = R₁.⌜_⌝ ∘ R₂.⌜_⌝
@@ -69,7 +69,7 @@ r₁ ∘-rep r₂ = record
 
 -- Encoder/decoder pairs.
 
-record Code {a b} (A : Set a) (B : Set b) : Set (a ⊔ b) where
+record Code {a b} (A : Type a) (B : Type b) : Type (a ⊔ b) where
   field
     -- Encoder.
     code : A → B
@@ -102,7 +102,7 @@ open Code ⦃ … ⦄ public
 
 -- Converts bijections to encoders.
 
-↔→Code : ∀ {a b} {A : Set a} {B : Set b} → A ↔ B → Code A B
+↔→Code : ∀ {a b} {A : Type a} {B : Type b} → A ↔ B → Code A B
 ↔→Code A↔B = record
   { code        = to
   ; decode      = λ b → just (from b)
@@ -115,14 +115,14 @@ open Code ⦃ … ⦄ public
 
 -- An identity encoder.
 
-id-code : ∀ {a} {A : Set a} → Code A A
+id-code : ∀ {a} {A : Type a} → Code A A
 id-code = ↔→Code Bijection.id
 
 -- Composition of encoders.
 
 infixr 9 _∘-code_
 
-_∘-code_ : ∀ {a b c} {A : Set a} {B : Set b} {C : Set c} →
+_∘-code_ : ∀ {a b c} {A : Type a} {B : Type b} {C : Type c} →
            Code B C → Code A B → Code A C
 c₁ ∘-code c₂ = record
   { code        = C₁.code ∘ C₂.code
@@ -197,26 +197,26 @@ code-Consts = record
 
 -- Converts instances of the form Rep A Consts to Rep A Exp.
 
-rep-Consts-Exp : ∀ {a} {A : Set a} ⦃ r : Rep A Consts ⦄ →
+rep-Consts-Exp : ∀ {a} {A : Type a} ⦃ r : Rep A Consts ⦄ →
                  Rep A Exp
 rep-Consts-Exp ⦃ r ⦄ = rep ⦃ proj₁ code-Consts ⦄ ∘-rep r
 
 -- Represents something as an expression.
 
-rep-as-Exp : ∀ {a} {A : Set a} ⦃ r : Rep A Consts ⦄ → A → Exp
+rep-as-Exp : ∀ {a} {A : Type a} ⦃ r : Rep A Consts ⦄ → A → Exp
 rep-as-Exp = ⌜_⌝ ⦃ rep-Consts-Exp ⦄
 
 -- rep-as-Exp returns constructor applications.
 
 rep-const :
-  ∀ {a} {A : Set a} ⦃ r : Rep A Consts ⦄
+  ∀ {a} {A : Type a} ⦃ r : Rep A Consts ⦄
   (x : A) → Constructor-application (rep-as-Exp x)
 rep-const = proj₂ code-Consts ∘ ⌜_⌝
 
 -- rep-as-Exp returns closed expressions.
 
 rep-closed :
-  ∀ {a} {A : Set a} ⦃ r : Rep A Consts ⦄
+  ∀ {a} {A : Type a} ⦃ r : Rep A Consts ⦄
   (x : A) → Closed (rep-as-Exp x)
 rep-closed = const→closed ∘ rep-const
 
@@ -236,36 +236,36 @@ Code.decode∘code code-Consts-Closed c =
 -- Converts instances of the form Rep A Consts to Rep A Closed-exp.
 
 rep-Consts-Closed-exp :
-  ∀ {a} {A : Set a} ⦃ r : Rep A Consts ⦄ → Rep A Closed-exp
+  ∀ {a} {A : Type a} ⦃ r : Rep A Consts ⦄ → Rep A Closed-exp
 rep-Consts-Closed-exp ⦃ r ⦄ = rep ⦃ r = code-Consts-Closed ⦄ ∘-rep r
 
 -- rep-as-Exp returns values.
 
 rep-value :
-  ∀ {a} {A : Set a} ⦃ r : Rep A Consts ⦄
+  ∀ {a} {A : Type a} ⦃ r : Rep A Consts ⦄
   (x : A) → Value (rep-as-Exp x)
 rep-value = const→value ∘ rep-const
 
 -- Some derived lemmas.
 
 subst-rep :
-  ∀ {a} {A : Set a} ⦃ r : Rep A Consts ⦄ (x : A) {y e} →
+  ∀ {a} {A : Type a} ⦃ r : Rep A Consts ⦄ (x : A) {y e} →
   rep-as-Exp x [ y ← e ] ≡ rep-as-Exp x
 subst-rep x = subst-closed _ _ (rep-closed x)
 
 substs-rep :
-  ∀ {a} {A : Set a} ⦃ r : Rep A Consts ⦄ (x : A) ps →
+  ∀ {a} {A : Type a} ⦃ r : Rep A Consts ⦄ (x : A) ps →
   foldr (λ ye → _[ proj₁ ye ← proj₂ ye ]) (rep-as-Exp x) ps ≡
   rep-as-Exp x
 substs-rep x = substs-closed (rep-as-Exp x) (rep-closed x)
 
 rep⇓rep :
-  ∀ {a} {A : Set a} ⦃ r : Rep A Consts ⦄
+  ∀ {a} {A : Type a} ⦃ r : Rep A Consts ⦄
   (x : A) → rep-as-Exp x ⇓ rep-as-Exp x
 rep⇓rep x = values-compute-to-themselves (rep-value x)
 
 rep⇓≡rep :
-  ∀ {a} {A : Set a} ⦃ r : Rep A Consts ⦄ {v}
+  ∀ {a} {A : Type a} ⦃ r : Rep A Consts ⦄ {v}
   (x : A) → rep-as-Exp x ⇓ v → rep-as-Exp x ≡ v
 rep⇓≡rep x = values-only-compute-to-themselves (rep-value x)
 
@@ -346,7 +346,7 @@ code-Const = code-ℕ ∘-code ↔→Code C.countably-infinite
 
 -- Encoders for products.
 
-module _ {a b} {A : Set a} {B : Set b} where
+module _ {a b} {A : Type a} {B : Type b} where
 
   private
 
@@ -413,7 +413,7 @@ module _ {a b} {A : Set a} {B : Set b} where
 
 -- Encoders for lists.
 
-module _ {a} {A : Set a} where
+module _ {a} {A : Type a} where
 
   private
 

@@ -38,11 +38,11 @@ open import Values         atoms
 -- Partial functions for which the relation defining the partial
 -- function must be propositional.
 
-record _⇀_ {a b} (A : Set a) (B : Set b) : Set (lsuc (a ⊔ b)) where
+record _⇀_ {a b} (A : Type a) (B : Type b) : Type (lsuc (a ⊔ b)) where
   infix 4 _[_]=_
   field
     -- The relation defining the partial function.
-    _[_]=_ : A → B → Set (a ⊔ b)
+    _[_]=_ : A → B → Type (a ⊔ b)
 
     -- The relation must be deterministic and propositional.
     deterministic : ∀ {a b₁ b₂} → _[_]=_ a b₁ → _[_]=_ a b₂ → b₁ ≡ b₂
@@ -62,16 +62,16 @@ open _⇀_ public using (_[_]=_)
 -- Totality. The definition is parametrised by something which could
 -- be a modality.
 
-Total : ∀ {a b} {A : Set a} {B : Set b} →
-        (Set (a ⊔ b) → Set (a ⊔ b)) →
-        A ⇀ B → Set (a ⊔ b)
+Total : ∀ {a b} {A : Type a} {B : Type b} →
+        (Type (a ⊔ b) → Type (a ⊔ b)) →
+        A ⇀ B → Type (a ⊔ b)
 Total P f = ∀ a → P (∃ λ b → f [ a ]= b)
 
 -- Totality with ∥_∥ as the modality implies totality with the
 -- identity function as the modality.
 
 total-with-∥∥→total :
-  ∀ {a b} {A : Set a} {B : Set b} (f : A ⇀ B) →
+  ∀ {a b} {A : Type a} {B : Type b} (f : A ⇀ B) →
   Total ∥_∥ f →
   Total id f
 total-with-∥∥→total f total a =
@@ -83,7 +83,7 @@ total-with-∥∥→total f total a =
 -- If the codomain of a function is a set, then the function can be
 -- turned into a partial function.
 
-as-partial : ∀ {a b} {A : Set a} {B : Set b} →
+as-partial : ∀ {a b} {A : Type a} {B : Type b} →
              Is-set B → (A → B) → A ⇀ B
 as-partial {ℓa} B-set f = record
   { _[_]=_        = λ a b → ↑ ℓa (f a ≡ b)
@@ -98,7 +98,7 @@ as-partial {ℓa} B-set f = record
 
 infixr 9 _∘_
 
-_∘_ : ∀ {ℓ c} {A B : Set ℓ} {C : Set c} →
+_∘_ : ∀ {ℓ c} {A B : Type ℓ} {C : Type c} →
       B ⇀ C → A ⇀ B → A ⇀ C
 f ∘ g = record
   { _[_]=_        = λ a c → ∃ λ b → g [ a ]= b × f [ b ]= c
@@ -115,7 +115,7 @@ f ∘ g = record
 -- If f is a partial function, g a function whose domain is a set, and
 -- f (g a) = c, then (f ∘ g) a = c.
 
-pre-apply : ∀ {ℓ c} {A B : Set ℓ} {C : Set c}
+pre-apply : ∀ {ℓ c} {A B : Type ℓ} {C : Type c}
             (f : B ⇀ C) {g : A → B} {a c}
             (B-set : Is-set B) →
             f [ g a ]= c → f ∘ as-partial B-set g [ a ]= c
@@ -124,7 +124,7 @@ pre-apply _ _ f[ga]=b = _ , lift refl , f[ga]=b
 -- If f is a function whose domain is a set, g a partial function, and
 -- g a = b, then (f ∘ g) a = f b.
 
-post-apply : ∀ {ℓ c} {A B : Set ℓ} {C : Set c}
+post-apply : ∀ {ℓ c} {A B : Type ℓ} {C : Type c}
                {f : B → C} (g : A ⇀ B) {a b}
              (C-set : Is-set C) →
              g [ a ]= b → as-partial C-set f ∘ g [ a ]= f b
@@ -134,10 +134,10 @@ post-apply _ _ g[a]=b = _ , g[a]=b , lift refl
 -- definition is parametrised by P, which could be a modality.
 
 Implements :
-  ∀ {a b} {A : Set a} {B : Set b}
+  ∀ {a b} {A : Type a} {B : Type b}
     ⦃ rA : Rep A Consts ⦄ ⦃ rB : Rep B Consts ⦄ →
-  (Set (a ⊔ b) → Set (a ⊔ b)) →
-  Exp → A ⇀ B → Set (a ⊔ b)
+  (Type (a ⊔ b) → Type (a ⊔ b)) →
+  Exp → A ⇀ B → Type (a ⊔ b)
 Implements P p f =
   Closed p
     ×
@@ -150,9 +150,9 @@ Implements P p f =
 -- proposition.
 
 Implements-propositional :
-  ∀ {a b} {A : Set a} {B : Set b}
+  ∀ {a b} {A : Type a} {B : Type b}
     ⦃ rA : Rep A Consts ⦄ ⦃ rB : Rep B Consts ⦄ →
-    {P : Set (a ⊔ b) → Set (a ⊔ b)} {p : Exp}
+    {P : Type (a ⊔ b) → Type (a ⊔ b)} {p : Exp}
   (f : A ⇀ B) →
   (∀ {A} → Is-proposition A → Is-proposition (P A)) →
   Is-proposition (Implements P p f)
@@ -175,27 +175,27 @@ Implements-propositional f pres =
 -- could be a modality.
 
 Computable′ :
-  ∀ {a b} {A : Set a} {B : Set b}
+  ∀ {a b} {A : Type a} {B : Type b}
     ⦃ rA : Rep A Consts ⦄ ⦃ rB : Rep B Consts ⦄ →
-  (Set (a ⊔ b) → Set (a ⊔ b)) →
-  A ⇀ B → Set (a ⊔ b)
+  (Type (a ⊔ b) → Type (a ⊔ b)) →
+  A ⇀ B → Type (a ⊔ b)
 Computable′ P f = ∃ λ p → Implements P p f
 
 -- Computability.
 
 Computable :
-  ∀ {a b} {A : Set a} {B : Set b}
+  ∀ {a b} {A : Type a} {B : Type b}
     ⦃ rA : Rep A Consts ⦄ ⦃ rB : Rep B Consts ⦄ →
-  A ⇀ B → Set (a ⊔ b)
+  A ⇀ B → Type (a ⊔ b)
 Computable = Computable′ id
 
 -- If the partial function is total, then one part of the proof of
 -- computability can be omitted.
 
 total→almost-computable→computable :
-  ∀ {a b} {A : Set a} {B : Set b}
+  ∀ {a b} {A : Type a} {B : Type b}
     ⦃ rA : Rep A Consts ⦄ ⦃ rB : Rep B Consts ⦄
-  (P : Set (a ⊔ b) → Set (a ⊔ b)) →
+  (P : Type (a ⊔ b) → Type (a ⊔ b)) →
   (∀ {X Y} → (X → Y) → P X → P Y) →
   (f : A ⇀ B) →
   Total P f →
@@ -226,9 +226,9 @@ semantics = record
 -- Another definition of computability.
 
 Computable″ :
-  ∀ {ℓ} {A B : Set ℓ}
+  ∀ {ℓ} {A B : Type ℓ}
     ⦃ rA : Rep A Consts ⦄ ⦃ rB : Rep B Consts ⦄ →
-  A ⇀ B → Set ℓ
+  A ⇀ B → Type ℓ
 Computable″ f =
   ∃ λ (p : Closed-exp) → ∀ a →
     ∀ q → semantics [ apply-cl p ⌜ a ⌝ ]= q
@@ -238,7 +238,7 @@ Computable″ f =
 -- The two definitions of computability are logically equivalent.
 
 Computable⇔Computable″ :
-  ∀ {ℓ} {A B : Set ℓ} ⦃ rA : Rep A Consts ⦄ ⦃ rB : Rep B Consts ⦄ →
+  ∀ {ℓ} {A B : Type ℓ} ⦃ rA : Rep A Consts ⦄ ⦃ rB : Rep B Consts ⦄ →
   (f : A ⇀ B) →
   Computable f ⇔ Computable″ f
 Computable⇔Computable″ f = record { to = to; from = from }
@@ -276,9 +276,9 @@ Computable⇔Computable″ f = record { to = to; from = from }
 -- Yet another definition of computability.
 
 Computable‴ :
-  ∀ {a b} {A : Set a} {B : Set b}
+  ∀ {a b} {A : Type a} {B : Type b}
     ⦃ rA : Rep A Consts ⦄ ⦃ rB : Rep B Consts ⦄ →
-  A ⇀ B → Set (a ⊔ b)
+  A ⇀ B → Type (a ⊔ b)
 Computable‴ f =
   ∃ λ (p : Closed-exp) →
     ∀ a →
@@ -291,7 +291,7 @@ Computable‴ f =
 -- computability above, then it is also computable by the first one.
 
 Computable‴→Computable :
-  ∀ {a b} {A : Set a} {B : Set b}
+  ∀ {a b} {A : Type a} {B : Type b}
     ⦃ rA : Rep A Consts ⦄ ⦃ rB : Rep B Consts ⦄ →
   (f : A ⇀ B) →
   Computable‴ f → Computable f
@@ -309,13 +309,13 @@ Computable‴→Computable f ((p , cl-p) , hyp) =
          , f[a]=b
          , ⇓-deterministic p⌜a⌝⇓v p⌜a⌝⇓⌜b⌝)
 
-module _  {a b c d} {A : Set a} {B : Set b} {C : Set c} {D : Set d}
+module _  {a b c d} {A : Type a} {B : Type b} {C : Type c} {D : Type d}
           ⦃ rA : Rep A Consts ⦄ ⦃ rB : Rep B Consts ⦄
           ⦃ rC : Rep C Consts ⦄ ⦃ rD : Rep D Consts ⦄ where
 
   -- Reductions.
 
-  Reduction : A ⇀ B → C ⇀ D → Set (a ⊔ b ⊔ c ⊔ d)
+  Reduction : A ⇀ B → C ⇀ D → Type (a ⊔ b ⊔ c ⊔ d)
   Reduction f g = Computable g → Computable f
 
   -- If f can be reduced to g, and f is not computable, then g is not
@@ -329,13 +329,13 @@ module _  {a b c d} {A : Set a} {B : Set b} {C : Set c} {D : Set d}
 -- Total partial functions to the booleans. Note that totality is
 -- defined using the double-negation modality.
 
-_→Bool : ∀ {ℓ} → Set ℓ → Set (lsuc ℓ)
+_→Bool : ∀ {ℓ} → Type ℓ → Type (lsuc ℓ)
 A →Bool = ∃ λ (f : A ⇀ Bool) → Total (λ A → ¬¬ A) f
 
 -- One way to view a predicate as a total partial function to the
 -- booleans.
 
-as-function-to-Bool₁ : ∀ {a} {A : Set a} → (A → Set a) → A →Bool
+as-function-to-Bool₁ : ∀ {a} {A : Type a} → (A → Type a) → A →Bool
 as-function-to-Bool₁ P =
     (record
        { _[_]=_        = λ a b →
@@ -364,8 +364,8 @@ as-function-to-Bool₁ P =
 -- booleans.
 
 as-function-to-Bool₂ :
-  ∀ {a} {A : Set a} →
-  (P : A → Set a) →
+  ∀ {a} {A : Type a} →
+  (P : A → Type a) →
   (∀ {a} → Is-proposition (P a)) →
   A →Bool
 as-function-to-Bool₂ P P-prop =
@@ -398,8 +398,8 @@ as-function-to-Bool₂ P P-prop =
 -- also mapped to b by as-function-to-Bool₁ P.
 
 to-Bool₂→to-Bool₁ :
-  ∀ {a} {A : Set a} ⦃ rA : Rep A Consts ⦄
-  (P : A → Set a) (P-prop : ∀ {a} → Is-proposition (P a)) {a b} →
+  ∀ {a} {A : Type a} ⦃ rA : Rep A Consts ⦄
+  (P : A → Type a) (P-prop : ∀ {a} → Is-proposition (P a)) {a b} →
   proj₁ (as-function-to-Bool₂ P P-prop) [ a ]= b →
   proj₁ (as-function-to-Bool₁ P) [ a ]= b
 to-Bool₂→to-Bool₁ _ _ = λ where
@@ -410,8 +410,8 @@ to-Bool₂→to-Bool₁ _ _ = λ where
 -- mapped to b by as-function-to-Bool₂ P P-prop.
 
 to-Bool₁→to-Bool₂ :
-  ∀ {a} {A : Set a} ⦃ rA : Rep A Consts ⦄
-  (P : A → Set a) (P-prop : ∀ {a} → Is-proposition (P a)) {a b} →
+  ∀ {a} {A : Type a} ⦃ rA : Rep A Consts ⦄
+  (P : A → Type a) (P-prop : ∀ {a} → Is-proposition (P a)) {a b} →
   proj₁ (as-function-to-Bool₁ P) [ a ]= b →
   ¬¬ proj₁ (as-function-to-Bool₂ P P-prop) [ a ]= b
 to-Bool₁→to-Bool₂ _ _ (Pa→b≡true , ¬Pa→b≡false) =
@@ -422,8 +422,8 @@ to-Bool₁→to-Bool₂ _ _ (Pa→b≡true , ¬Pa→b≡false) =
 -- as-function-to-Bool₂ P P-prop is also ¬¬-computable.
 
 to-Bool₁-computable→to-Bool₂-computable :
-  ∀ {a} {A : Set a} ⦃ rA : Rep A Consts ⦄
-  (P : A → Set a) (P-prop : ∀ {a} → Is-proposition (P a)) →
+  ∀ {a} {A : Type a} ⦃ rA : Rep A Consts ⦄
+  (P : A → Type a) (P-prop : ∀ {a} → Is-proposition (P a)) →
   Computable′ (λ A → ¬¬ A) (proj₁ (as-function-to-Bool₁ P)) →
   Computable′ (λ A → ¬¬ A) (proj₁ (as-function-to-Bool₂ P P-prop))
 to-Bool₁-computable→to-Bool₂-computable
@@ -447,7 +447,7 @@ to-Bool₁-computable→to-Bool₂-computable
 -- A lemma related to as-function-to-Bool₂.
 
 ×≡true⊎¬×≡false⇔⇔T :
-  ∀ {a} {A : Set a} (P : A → Set a) →
+  ∀ {a} {A : Type a} (P : A → Type a) →
   ∀ {a b} → P a × b ≡ true ⊎ ¬ P a × b ≡ false ⇔ (P a ⇔ T b)
 ×≡true⊎¬×≡false⇔⇔T P {a} {b} = record
   { to = λ where
@@ -463,7 +463,7 @@ to-Bool₁-computable→to-Bool₂-computable
 -- One way to view a predicate as a partial function to the booleans.
 
 as-partial-function-to-Bool₁ :
-  ∀ {a} {A : Set a} → (A → Set a) → A ⇀ Bool
+  ∀ {a} {A : Type a} → (A → Type a) → A ⇀ Bool
 as-partial-function-to-Bool₁ P = record
   { _[_]=_        = λ a b →
                       (P a → b ≡ true)
@@ -486,8 +486,8 @@ as-partial-function-to-Bool₁ P = record
 -- booleans.
 
 as-partial-function-to-Bool₂ :
-  ∀ {a} {A : Set a} →
-  (P : A → Set a) →
+  ∀ {a} {A : Type a} →
+  (P : A → Type a) →
   (∀ {a} → Is-proposition (P a)) →
   A ⇀ Bool
 as-partial-function-to-Bool₂ P P-prop = record
@@ -500,23 +500,24 @@ as-partial-function-to-Bool₂ P P-prop = record
 -- booleans to be decidable.
 
 Decidable :
-  ∀ {a} {A : Set a} ⦃ rA : Rep A Consts ⦄ →
-  A →Bool → Set a
+  ∀ {a} {A : Type a} ⦃ rA : Rep A Consts ⦄ →
+  A →Bool → Type a
 Decidable = Computable P.∘ proj₁
 
 -- Another definition of what it means for a total partial function to
 -- the booleans to be decidable.
 
 Decidable′ :
-  ∀ {a} {A : Set a} ⦃ rA : Rep A Consts ⦄ →
-  A →Bool → Set a
+  ∀ {a} {A : Type a} ⦃ rA : Rep A Consts ⦄ →
+  A →Bool → Type a
 Decidable′ = Computable‴ P.∘ proj₁
 
 -- Computable functions from a type to a set.
 
 record Computable-function
-         {a b} (A : Set a) (B : Set b) (B-set : Is-set B)
-         ⦃ rA : Rep A Consts ⦄ ⦃ rB : Rep B Consts ⦄ : Set (a ⊔ b) where
+         {a b} (A : Type a) (B : Type b) (B-set : Is-set B)
+         ⦃ rA : Rep A Consts ⦄ ⦃ rB : Rep B Consts ⦄ :
+         Type (a ⊔ b) where
   field
     function   : A → B
     computable : Computable (as-partial B-set function)
@@ -526,7 +527,7 @@ open Computable-function
 -- An unfolding lemma for Computable-function.
 
 Computable-function↔ :
-  ∀ {a b} {A : Set a} {B : Set b} {B-set : Is-set B}
+  ∀ {a b} {A : Type a} {B : Type b} {B-set : Is-set B}
     ⦃ rA : Rep A Consts ⦄ ⦃ rB : Rep B Consts ⦄ →
   Computable-function A B B-set ↔
   ∃ λ (f : A → B) → Computable (as-partial B-set f)
@@ -544,7 +545,7 @@ Computable-function↔ = record
 -- are equal.
 
 equal-implementations→equal :
-  ∀ {a b} {A : Set a} {B : Set b} {B-set : Is-set B}
+  ∀ {a b} {A : Type a} {B : Type b} {B-set : Is-set B}
     ⦃ rA : Rep A Consts ⦄ ⦃ rB : Rep B Consts ⦄
   (f g : Computable-function A B B-set) →
   proj₁ (computable f) ≡ proj₁ (computable g) →
@@ -566,7 +567,7 @@ instance
   -- Representation functions for computable functions.
 
   rep-Computable-function :
-    ∀ {a b} {A : Set a} {B : Set b} {B-set : Is-set B}
+    ∀ {a b} {A : Type a} {B : Type b} {B-set : Is-set B}
       ⦃ rA : Rep A Consts ⦄ ⦃ rB : Rep B Consts ⦄ →
     Rep (Computable-function A B B-set) Consts
   rep-Computable-function {B-set = B-set} = record

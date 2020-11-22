@@ -23,11 +23,11 @@ open import Univalence-axiom equality-with-J
 
 -- Atoms.
 
-record Atoms : Set₁ where
+record Atoms : Type₁ where
   field
     -- The type of atoms.
 
-    Name : Set
+    Name : Type
 
     -- The type must be countably infinite.
 
@@ -83,7 +83,7 @@ Atoms.countably-infinite ℕ-atoms = Bijection.id
 
 -- Two sets of atoms, one for constants and one for variables.
 
-record χ-atoms : Set₁ where
+record χ-atoms : Type₁ where
   field
     const-atoms var-atoms : Atoms
 
@@ -103,14 +103,14 @@ record χ-atoms : Set₁ where
 
 Atoms↔⊤ : Atoms ↔ ⊤
 Atoms↔⊤ =
-  Atoms                          ↝⟨ eq ⟩
-  (∃ λ (Name : Set) → Name ↔ ℕ)  ↝⟨ ∃-cong (λ _ → Eq.↔↔≃′ ext ℕ-set) ⟩
-  (∃ λ (Name : Set) → Name ≃ ℕ)  ↝⟨ singleton-with-≃-↔-⊤ ext univ ⟩□
-  ⊤                              □
+  Atoms                           ↝⟨ eq ⟩
+  (∃ λ (Name : Type) → Name ↔ ℕ)  ↝⟨ ∃-cong (λ _ → Eq.↔↔≃′ ext ℕ-set) ⟩
+  (∃ λ (Name : Type) → Name ≃ ℕ)  ↝⟨ singleton-with-≃-↔-⊤ ext univ ⟩□
+  ⊤                               □
   where
   open Atoms
 
-  eq : Atoms ↔ ∃ λ (Name : Set) → Name ↔ ℕ
+  eq : Atoms ↔ ∃ λ (Name : Type) → Name ↔ ℕ
   eq = record
     { surjection = record
       { logical-equivalence = record
@@ -151,7 +151,7 @@ Atoms↔⊤ =
 -- other choice of atoms.
 
 invariant :
-  ∀ {p} (P : χ-atoms → Set p) →
+  ∀ {p} (P : χ-atoms → Type p) →
   ∀ a₁ a₂ → P a₁ → P a₂
 invariant P a₁ a₂ =
   subst P (mono₁ 0 (_⇔_.from contractible⇔↔⊤ χ-atoms↔⊤) a₁ a₂)
@@ -160,7 +160,7 @@ invariant P a₁ a₂ =
 -- atoms.
 
 one-can-restrict-attention-to-χ-ℕ-atoms :
-  ∀ {p} (P : χ-atoms → Set p) →
+  ∀ {p} (P : χ-atoms → Type p) →
   P χ-ℕ-atoms → ∀ a → P a
 one-can-restrict-attention-to-χ-ℕ-atoms P p a =
   invariant P χ-ℕ-atoms a p

@@ -362,7 +362,7 @@ if-then-else-closed c-cl t-cl f-cl =
       (inj₂ (inj₂ ()))
 
 if-then-else-correct :
-  ∀ {A : Set} ⦃ cA : Rep A Consts ⦄ {e₁ e₂ e₃}
+  ∀ {A : Type} ⦃ cA : Rep A Consts ⦄ {e₁ e₂ e₃}
   (b₁ : Bool) (v₂ v₃ : A) →
   e₁ ⇓ ⌜ b₁ ⌝ → e₂ ⇓ ⌜ v₂ ⌝ → e₃ ⇓ ⌜ v₃ ⌝ →
   if e₁ then e₂ else e₃ ⇓ ⌜ Prelude.if b₁ then v₂ else v₃ ⌝

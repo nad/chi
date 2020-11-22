@@ -1,3 +1,4 @@
 name: chi
 depend: equality
 include: src
+flags: --no-import-sorts

@@ -32,7 +32,7 @@ open χ-atoms atoms
 
 infix 4 _∈FV_
 
-data _∈FV_ (x : Var) : Exp → Set where
+data _∈FV_ (x : Var) : Exp → Type where
   apply-left  : ∀ {e₁ e₂} → x ∈FV e₁ → x ∈FV apply e₁ e₂
   apply-right : ∀ {e₁ e₂} → x ∈FV e₂ → x ∈FV apply e₁ e₂
   lambda      : ∀ {y e} → x ≢ y → x ∈FV e → x ∈FV lambda y e
@@ -46,17 +46,17 @@ data _∈FV_ (x : Var) : Exp → Set where
 
 -- Closed, expect that the given variables may occur.
 
-Closed′ : List Var → Exp → Set
+Closed′ : List Var → Exp → Type
 Closed′ xs e = ∀ x → ¬ x ∈ xs → ¬ x ∈FV e
 
 -- The property of being closed.
 
-Closed : Exp → Set
+Closed : Exp → Type
 Closed = Closed′ []
 
 -- Closed expressions.
 
-Closed-exp : Set
+Closed-exp : Type
 Closed-exp = ∃ Closed
 
 ------------------------------------------------------------------------

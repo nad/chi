@@ -67,14 +67,14 @@ mutual
 
   -- Contexts.
 
-  data Context : Set where
+  data Context : Type where
     ∙       : Context
     apply←_ : Context → {e : Exp} → Context
     apply→_ : {e : Exp} → Context → Context
     const   : {c : Const} → Context⋆ → Context
     case    : Context → {bs : List Br} → Context
 
-  data Context⋆ : Set where
+  data Context⋆ : Type where
     here  : Context → {es : List Exp} → Context⋆
     there : {e : Exp} → Context⋆ → Context⋆
 

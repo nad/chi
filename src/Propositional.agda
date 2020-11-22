@@ -133,7 +133,7 @@ Exp-set = decidable⇒set _≟_
 
 -- An alternative definition of the semantics.
 
-data Lookup′ (c : Const) : List Br → List Var → Exp → Set where
+data Lookup′ (c : Const) : List Br → List Var → Exp → Type where
   here  : ∀ {c′ xs xs′ e e′ bs} →
           c ≡ c′ → xs ≡ xs′ → e ≡ e′ →
           Lookup′ c (branch c′ xs′ e′ ∷ bs) xs e
@@ -144,7 +144,7 @@ data Lookup′ (c : Const) : List Br → List Var → Exp → Set where
 infixr 5 _∷_
 infix  4 _[_←_]↦′_
 
-data _[_←_]↦′_ (e : Exp) : List Var → List Exp → Exp → Set where
+data _[_←_]↦′_ (e : Exp) : List Var → List Exp → Exp → Type where
   []  : ∀ {e′} → e ≡ e′ → e [ [] ← [] ]↦′ e′
   _∷_ : ∀ {x xs e′ es′ e″ e‴} →
         e‴ ≡ e″ [ x ← e′ ] → e [ xs ← es′ ]↦′ e″ →
@@ -154,7 +154,7 @@ infix 4 _⇓′_ _⇓⋆′_
 
 mutual
 
-  data _⇓′_ : Exp → Exp → Set where
+  data _⇓′_ : Exp → Exp → Type where
     apply  : ∀ {e₁ e₂ x e v₂ v} →
              e₁ ⇓′ lambda x e → e₂ ⇓′ v₂ → e [ x ← v₂ ] ⇓′ v →
              apply e₁ e₂ ⇓′ v
@@ -168,7 +168,7 @@ mutual
     const  : ∀ {c c′ es vs} →
              c ≡ c′ → es ⇓⋆′ vs → const c es ⇓′ const c′ vs
 
-  data _⇓⋆′_ : List Exp → List Exp → Set where
+  data _⇓⋆′_ : List Exp → List Exp → Type where
     []  : [] ⇓⋆′ []
     _∷_ : ∀ {e es v vs} → e ⇓′ v → es ⇓⋆′ vs → e ∷ es ⇓⋆′ v ∷ vs
 

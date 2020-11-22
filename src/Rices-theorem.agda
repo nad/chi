@@ -62,7 +62,7 @@ open import Internal-coding
 
 -- Definition of "pointwise semantically equivalent".
 
-Pointwise-semantically-equivalent : Closed-exp → Closed-exp → Set
+Pointwise-semantically-equivalent : Closed-exp → Closed-exp → Type
 Pointwise-semantically-equivalent e₁ e₂ =
   ∀ e v → semantics [ apply-cl e₁ e ]= v ⇔
           semantics [ apply-cl e₂ e ]= v
@@ -321,7 +321,7 @@ module _
         P′ [ const-loop ]= b    ↝⟨ resp _ _ (symmetric (arg e₀ ⌜ e ⌝) const-loop (arg-lemma-¬⇓′ e₀ e ¬e⇓)) ⟩□
         P′ [ arg e₀ ⌜ e ⌝ ]= b  □
 
-      ∃Bool : Set
+      ∃Bool : Type
       ∃Bool = ∃ λ (b : Bool) →
                 apply p (proj₁ ⌜const-loop⌝) ⇓ ⌜ b ⌝
                   ×
@@ -426,7 +426,7 @@ module _
 -- A variant of the theorem.
 
 rice's-theorem′ :
-  (P : Closed-exp → Set)
+  (P : Closed-exp → Type)
   (e∈ : Closed-exp) →
   P e∈ →
   (e∉ : Closed-exp) →

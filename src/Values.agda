@@ -22,27 +22,27 @@ mutual
 
   infixr 5 _∷_
 
-  data Value : Exp → Set where
+  data Value : Exp → Type where
     lambda : ∀ x e → Value (lambda x e)
     const  : ∀ c {es} → Values es → Value (const c es)
 
-  data Values : List Exp → Set where
+  data Values : List Exp → Type where
     []  : Values []
     _∷_ : ∀ {e es} → Value e → Values es → Values (e ∷ es)
 
 -- Constructor applications.
 
-data Consts : Set where
+data Consts : Type where
   const : Const → List Consts → Consts
 
 mutual
 
-  data Constructor-application : Exp → Set where
+  data Constructor-application : Exp → Type where
     const : ∀ c {es} →
             Constructor-applications es →
             Constructor-application (const c es)
 
-  data Constructor-applications : List Exp → Set where
+  data Constructor-applications : List Exp → Type where
     []  : Constructor-applications []
     _∷_ : ∀ {e es} →
           Constructor-application e → Constructor-applications es →

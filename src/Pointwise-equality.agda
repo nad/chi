@@ -45,7 +45,7 @@ open import Combinators hiding (if_then_else_)
 -- Pointwise equality of computable functions to Bool.
 
 Pointwise-equal :
-  ∀ {a} (A : Set a) ⦃ rA : Rep A Consts ⦄ →
+  ∀ {a} (A : Type a) ⦃ rA : Rep A Consts ⦄ →
   let F = Computable-function A Bool Bool-set in
   (F × F) →Bool
 Pointwise-equal _ =

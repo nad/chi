@@ -20,12 +20,12 @@ open import Coding atoms as Coding using (Rep; module Code)
 
 instance
 
-  rep-Consts-Exp : ∀ {a} {A : Set a} ⦃ r : Rep A Consts ⦄ →
+  rep-Consts-Exp : ∀ {a} {A : Type a} ⦃ r : Rep A Consts ⦄ →
                    Rep A Exp
   rep-Consts-Exp = Coding.rep-Consts-Exp
 
   rep-Consts-Closed-exp :
-    ∀ {a} {A : Set a} ⦃ r : Rep A Consts ⦄ → Rep A Closed-exp
+    ∀ {a} {A : Type a} ⦃ r : Rep A Consts ⦄ → Rep A Closed-exp
   rep-Consts-Closed-exp = Coding.rep-Consts-Closed-exp
 
   rep-Bool : Rep Bool Consts
@@ -40,7 +40,7 @@ instance
   rep-Const : Rep Const Consts
   rep-Const = Code.rep Coding.code-Const
 
-  rep-× : ∀ {a b} {A : Set a} {B : Set b}
+  rep-× : ∀ {a b} {A : Type a} {B : Type b}
             ⦃ c : Rep A Consts ⦄ ⦃ d : Rep B Consts ⦄ →
           Rep (A × B) Consts
   rep-× = Coding.rep-×
