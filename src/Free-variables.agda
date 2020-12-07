@@ -8,16 +8,21 @@ open import Atom
 
 module Free-variables (atoms : χ-atoms) where
 
+open import Dec
 open import Equality.Propositional.Cubical
 open import Logical-equivalence using (_⇔_)
 open import Prelude hiding (const)
 
 open import Bag-equivalence equality-with-J hiding (trans)
 open import Bijection equality-with-J using (_↔_)
+import Erased.Cubical equality-with-paths as E
 open import Equivalence equality-with-J as Eq using (_≃_)
-open import Function-universe equality-with-J hiding (id; _∘_)
+open import Finite-subset.Listed equality-with-paths as S
+  using (Finite-subset-of)
+open import Function-universe equality-with-J as F hiding (id; _∘_)
 open import H-level equality-with-J
 open import H-level.Closure equality-with-J
+import H-level.Truncation.Propositional equality-with-paths as T
 open import List equality-with-J using (_++_; foldr)
 
 open import Chi           atoms
@@ -28,11 +33,12 @@ open χ-atoms atoms
 
 private
   variable
-    bs      : List Br
-    c       : Const
-    e e₁ e₂ : Exp
-    es      : List Exp
-    x y     : Var
+    bs         : List Br
+    c c′       : Const
+    e e₁ e₂ e′ : Exp
+    es         : List Exp
+    x y        : Var
+    xs′        : List Var
 
 ------------------------------------------------------------------------
 -- Definitions
@@ -273,7 +279,251 @@ Closed′-closed-under-subst cl-e cl-e′ y y∉xs =
   ] ∘ subst-∈FV _ _
 
 ------------------------------------------------------------------------
+-- Computing the free variables
+
+private
+
+  -- Two variants of V._≟_.
+
+  _≟V₁_ : (x y : Var) → Dec T.∥ x ≡ y ∥
+  _≟V₁_ = T.decidable→decidable-∥∥ V._≟_
+
+  _≟V₂_ : (x y : Var) → E.Dec-Erased T.∥ x ≡ y ∥
+  x ≟V₂ y = E.Dec→Dec-Erased (x ≟V₁ y)
+
+-- One can construct a finite set containing exactly the free
+-- variables in a term.
+
+mutual
+
+  free :
+    (e : Exp) →
+    ∃ λ (fs : Finite-subset-of Var) → ∀ x → (x S.∈ fs) ⇔ (x ∈FV e)
+  free (apply e₁ e₂) =
+    Σ-zip S._∪_
+      (λ {fs₁ fs₂} hyp₁ hyp₂ x →
+         x S.∈ fs₁ S.∪ fs₂          ↔⟨ S.∈∪≃ ⟩
+         x S.∈ fs₁ T.∥⊎∥ x S.∈ fs₂  ↝⟨ T.Dec→∥∥⇔ (Dec-⊎ (S.member? _≟V₁_ _ _)
+                                                        (S.member? _≟V₁_ _ _)) ⟩
+         x S.∈ fs₁ ⊎ x S.∈ fs₂      ↝⟨ hyp₁ x ⊎-cong hyp₂ x ⟩
+         x ∈FV e₁ ⊎ x ∈FV e₂        ↔⟨ inverse ∈apply ⟩□
+         x ∈FV apply e₁ e₂          □)
+      (free e₁) (free e₂)
+  free (lambda x e) =
+    Σ-map (S.delete _≟V₂_ x)
+      (λ {fs} hyp y →
+         y S.∈ S.delete _≟V₂_ x fs  ↔⟨ S.∈delete≃ _≟V₂_ ⟩
+         y ≢ x × y S.∈ fs           ↝⟨ (∃-cong λ _ → hyp y) ⟩
+         y ≢ x × y ∈FV e            ↔⟨ inverse ∈lambda ⟩□
+         y ∈FV lambda x e           □)
+      (free e)
+  free (case e bs) =
+    Σ-zip S._∪_
+      (λ {fs₁ fs₂} hyp₁ hyp₂ x →
+         x S.∈ fs₁ S.∪ fs₂                              ↔⟨ S.∈∪≃ ⟩
+
+         x S.∈ fs₁ T.∥⊎∥ x S.∈ fs₂                      ↝⟨ T.Dec→∥∥⇔ (Dec-⊎ (S.member? _≟V₁_ _ _)
+                                                                            (S.member? _≟V₁_ _ _)) ⟩
+
+         x S.∈ fs₁ ⊎ x S.∈ fs₂                          ↝⟨ hyp₁ x ⊎-cong hyp₂ x ⟩
+
+         (x ∈FV e ⊎
+          ∃ λ c → ∃ λ xs → ∃ λ e′ →
+            x ∈FV e′ × branch c xs e′ ∈ bs × ¬ x ∈ xs)  ↔⟨ inverse ∈case ⟩□
+
+         x ∈FV case e bs                                □)
+      (free e) (free-B⋆ bs)
+  free (rec x e) =
+    Σ-map (S.delete _≟V₂_ x)
+      (λ {fs} hyp y →
+         y S.∈ S.delete _≟V₂_ x fs  ↔⟨ S.∈delete≃ _≟V₂_ ⟩
+         y ≢ x × y S.∈ fs           ↝⟨ (∃-cong λ _ → hyp y) ⟩
+         y ≢ x × y ∈FV e            ↔⟨ inverse ∈rec ⟩□
+         y ∈FV rec x e              □)
+      (free e)
+  free (var x) =
+      S.singleton x
+    , λ y →
+        y S.∈ S.singleton x  ↔⟨ S.∈singleton≃ ⟩
+        T.∥ y ≡ x ∥          ↔⟨ T.∥∥↔ V.Name-set ⟩
+        y ≡ x                ↔⟨ inverse ∈var ⟩□
+        y ∈FV var x          □
+  free (const c es) =
+    Σ-map id
+      (λ {fs} hyp x →
+         x S.∈ fs                    ↝⟨ hyp x ⟩
+         (∃ λ e → x ∈FV e × e ∈ es)  ↔⟨ inverse ∈const ⟩□
+         x ∈FV const c es            □)
+      (free-⋆ es)
+
+  free-⋆ :
+    (es : List Exp) →
+    ∃ λ (fs : Finite-subset-of Var) →
+      ∀ x → (x S.∈ fs) ⇔ (∃ λ e → x ∈FV e × e ∈ es)
+  free-⋆ [] =
+      S.[]
+    , λ x →
+        x S.∈ S.[]                  ↔⟨ S.∈[]≃ ⟩
+        ⊥                           ↔⟨ inverse ×-right-zero ⟩
+        Exp × ⊥₀                    ↔⟨ (∃-cong λ _ → inverse ×-right-zero) ⟩
+        (∃ λ e → x ∈FV e × ⊥)       ↔⟨⟩
+        (∃ λ e → x ∈FV e × e ∈ [])  □
+  free-⋆ (e ∷ es) =
+    Σ-zip S._∪_
+      (λ {fs₁ fs₂} hyp₁ hyp₂ x →
+         x S.∈ fs₁ S.∪ fs₂                                            ↔⟨ S.∈∪≃ ⟩
+         x S.∈ fs₁ T.∥⊎∥ x S.∈ fs₂                                    ↝⟨ T.Dec→∥∥⇔ (Dec-⊎ (S.member? _≟V₁_ _ _)
+                                                                                          (S.member? _≟V₁_ _ _)) ⟩
+         x S.∈ fs₁ ⊎ x S.∈ fs₂                                        ↝⟨ hyp₁ x ⊎-cong hyp₂ x ⟩
+         x ∈FV e ⊎ (∃ λ e′ → x ∈FV e′ × e′ ∈ es)                      ↔⟨ inverse $
+                                                                         (drop-⊤-right λ _ → _⇔_.to contractible⇔↔⊤ $
+                                                                          singleton-contractible _)
+                                                                           ⊎-cong
+                                                                         F.id ⟩
+         x ∈FV e × (∃ λ e′ → e′ ≡ e) ⊎ (∃ λ e′ → x ∈FV e′ × e′ ∈ es)  ↔⟨ ∃-comm ⊎-cong F.id ⟩
+         (∃ λ e′ → x ∈FV e × e′ ≡ e) ⊎ (∃ λ e′ → x ∈FV e′ × e′ ∈ es)  ↔⟨ inverse ∃-⊎-distrib-left ⟩
+         (∃ λ e′ → (x ∈FV e × e′ ≡ e) ⊎ (x ∈FV e′ × e′ ∈ es))         ↔⟨ (∃-cong λ _ →
+                                                                          (×-cong₁ λ e′≡e → ≡⇒↝ equivalence $ cong (_ ∈FV_) $ sym
+                                                                           e′≡e)
+                                                                            ⊎-cong
+                                                                          F.id) ⟩
+         (∃ λ e′ → (x ∈FV e′ × e′ ≡ e) ⊎ (x ∈FV e′ × e′ ∈ es))        ↔⟨ (∃-cong λ _ → inverse ×-⊎-distrib-left) ⟩
+         (∃ λ e′ → x ∈FV e′ × (e′ ≡ e ⊎ e′ ∈ es))                     ↔⟨⟩
+         (∃ λ e′ → x ∈FV e′ × e′ ∈ e ∷ es)                            □)
+      (free e) (free-⋆ es)
+
+  free-B :
+    (b : Br) →
+    ∃ λ (fs : Finite-subset-of Var) →
+      ∀ x →
+      (x S.∈ fs) ⇔
+      (∃ λ c → ∃ λ xs → ∃ λ e →
+         x ∈FV e × branch c xs e ≡ b × ¬ x ∈ xs)
+  free-B (branch c xs e) =
+    Σ-map (λ fs → S.minus _≟V₂_ fs (S.from-List xs))
+      (λ {fs} hyp x →
+         x S.∈ S.minus _≟V₂_ fs (S.from-List xs)                       ↔⟨ S.∈minus≃ ⟩
+
+         x S.∈ fs × x S.∉ S.from-List xs                               ↔⟨ (∃-cong λ _ → ¬-cong ext $ inverse
+                                                                           S.∥∈∥≃∈-from-List) ⟩
+
+         x S.∈ fs × ¬ T.∥ x ∈ xs ∥                                     ↔⟨ (∃-cong λ _ → T.¬∥∥↔¬) ⟩
+
+         x S.∈ fs × ¬ x ∈ xs                                           ↝⟨ hyp x ×-cong F.id ⟩
+
+         x ∈FV e × ¬ x ∈ xs                                            ↔⟨ (inverse $ drop-⊤-right λ _ →
+                                                                           ×-left-identity F.∘ ×-left-identity) ⟩
+
+         (x ∈FV e × ¬ x ∈ xs) × ⊤ × ⊤ × ⊤                              ↔⟨ (∃-cong λ _ → inverse $
+                                                                           (_⇔_.to contractible⇔↔⊤ $ singleton-contractible _)
+                                                                             ×-cong
+                                                                           (_⇔_.to contractible⇔↔⊤ $ singleton-contractible _)
+                                                                             ×-cong
+                                                                           (_⇔_.to contractible⇔↔⊤ $ singleton-contractible _)) ⟩
+         (x ∈FV e × ¬ x ∈ xs) ×
+         (∃ λ c′ → c′ ≡ c) × (∃ λ xs′ → xs′ ≡ xs) × (∃ λ e′ → e′ ≡ e)  ↔⟨ (∃-cong λ _ →
+                                                                           (∃-cong λ _ →
+                                                                            (∃-cong λ _ →
+                                                                             ∃-comm F.∘
+                                                                             (∃-cong λ _ → ∃-comm)) F.∘
+                                                                            ∃-comm F.∘
+                                                                            (∃-cong λ _ → inverse Σ-assoc)) F.∘
+                                                                           inverse Σ-assoc) ⟩
+         (x ∈FV e × ¬ x ∈ xs) ×
+         (∃ λ c′ → ∃ λ xs′ → ∃ λ e′ → c′ ≡ c × xs′ ≡ xs × e′ ≡ e)      ↔⟨ (∃-cong λ _ → ∃-cong λ _ → ∃-comm) F.∘
+                                                                          (∃-cong λ _ → ∃-comm) F.∘
+                                                                          ∃-comm ⟩
+         (∃ λ c′ → ∃ λ xs′ → ∃ λ e′ →
+            (x ∈FV e × ¬ x ∈ xs) × (c′ ≡ c × xs′ ≡ xs × e′ ≡ e))       ↔⟨ (∃-cong λ _ → ∃-cong λ _ → ∃-cong λ _ →
+                                                                           (∃-cong λ _ → ×-comm) F.∘
+                                                                           inverse Σ-assoc) ⟩
+         (∃ λ c′ → ∃ λ xs′ → ∃ λ e′ →
+            x ∈FV e × (c′ ≡ c × xs′ ≡ xs × e′ ≡ e) × ¬ x ∈ xs)         ↝⟨ (∃-cong λ _ → ∃-cong λ _ → ∃-cong λ _ → ∃-cong λ _ →
+                                                                           ∃-cong λ (_ , xs′≡xs , _) → ≡⇒↝ _ $ cong (¬_ ∘ (_ ∈_)) $ sym
+                                                                           xs′≡xs) ⟩
+         (∃ λ c′ → ∃ λ xs′ → ∃ λ e′ →
+            x ∈FV e × (c′ ≡ c × xs′ ≡ xs × e′ ≡ e) × ¬ x ∈ xs′)        ↝⟨ (∃-cong λ _ → ∃-cong λ _ → ∃-cong λ _ →
+                                                                           ×-cong₁ λ ((_ , _ , e′≡e) , _) → ≡⇒↝ _ $ cong (_ ∈FV_) $ sym
+                                                                           e′≡e) ⟩
+         (∃ λ c′ → ∃ λ xs′ → ∃ λ e′ →
+            x ∈FV e′ × (c′ ≡ c × xs′ ≡ xs × e′ ≡ e) × ¬ x ∈ xs′)       ↝⟨ (∃-cong λ _ → ∃-cong λ _ → ∃-cong λ _ → ∃-cong λ _ → ×-cong₁ λ _ →
+                                                                           lemma) ⟩□
+         (∃ λ c′ → ∃ λ xs′ → ∃ λ e′ →
+            x ∈FV e′ × branch c′ xs′ e′ ≡ branch c xs e × ¬ x ∈ xs′)   □)
+      (free e)
+    where
+    lemma :
+      c′ ≡ c × xs′ ≡ xs × e′ ≡ e ⇔ branch c′ xs′ e′ ≡ branch c xs e
+    lemma ._⇔_.to (c′≡c , xs′≡xs , e′≡e) =
+      cong₂ (uncurry branch) (cong₂ _,_ c′≡c xs′≡xs) e′≡e
+    lemma ._⇔_.from eq =
+        cong (λ { (branch c _ _)  → c  }) eq
+      , cong (λ { (branch _ xs _) → xs }) eq
+      , cong (λ { (branch _ _ e)  → e  }) eq
+
+  free-B⋆ :
+    (bs : List Br) →
+    ∃ λ (fs : Finite-subset-of Var) →
+      ∀ x →
+      (x S.∈ fs) ⇔
+      (∃ λ c → ∃ λ xs → ∃ λ e →
+         x ∈FV e × branch c xs e ∈ bs × ¬ x ∈ xs)
+  free-B⋆ [] =
+      S.[]
+    , λ x →
+        x S.∈ S.[]                                         ↔⟨ S.∈[]≃ ⟩
+
+        ⊥                                                  ↔⟨ (inverse $
+                                                               ×-right-zero {ℓ₁ = lzero} F.∘
+                                                               ∃-cong λ _ →
+                                                               ×-right-zero {ℓ₁ = lzero} F.∘
+                                                               ∃-cong λ _ →
+                                                               ×-right-zero {ℓ₁ = lzero} F.∘
+                                                               ∃-cong λ _ →
+                                                               ×-right-zero {ℓ₁ = lzero} F.∘
+                                                               ∃-cong λ _ →
+                                                               ×-left-zero) ⟩
+        Const × (∃ λ xs → ∃ λ e → x ∈FV e × ⊥ × ¬ x ∈ xs)  ↔⟨⟩
+
+        (∃ λ c → ∃ λ xs → ∃ λ e →
+           x ∈FV e × branch c xs e ∈ [] × ¬ x ∈ xs)        □
+  free-B⋆ (b ∷ bs) =
+    Σ-zip S._∪_
+      (λ {fs₁ fs₂} hyp₁ hyp₂ x →
+         x S.∈ fs₁ S.∪ fs₂                                ↔⟨ S.∈∪≃ ⟩
+
+         x S.∈ fs₁ T.∥⊎∥ x S.∈ fs₂                        ↝⟨ T.Dec→∥∥⇔ (Dec-⊎ (S.member? _≟V₁_ _ _)
+                                                                              (S.member? _≟V₁_ _ _)) ⟩
+
+         x S.∈ fs₁ ⊎ x S.∈ fs₂                            ↝⟨ hyp₁ x ⊎-cong hyp₂ x ⟩
+
+         (∃ λ c → ∃ λ xs → ∃ λ e →
+            x ∈FV e × branch c xs e ≡ b × ¬ x ∈ xs) ⊎
+         (∃ λ c → ∃ λ xs → ∃ λ e →
+            x ∈FV e × branch c xs e ∈ bs × ¬ x ∈ xs)      ↔⟨ (inverse $
+                                                              ∃-⊎-distrib-left F.∘
+                                                              ∃-cong λ _ →
+                                                              ∃-⊎-distrib-left F.∘
+                                                              ∃-cong λ _ →
+                                                              ∃-⊎-distrib-left F.∘
+                                                              ∃-cong λ _ →
+                                                              ∃-⊎-distrib-left F.∘
+                                                              ∃-cong λ _ →
+                                                              ∃-⊎-distrib-right) ⟩
+         (∃ λ c → ∃ λ xs → ∃ λ e →
+            x ∈FV e ×
+            (branch c xs e ≡ b ⊎ branch c xs e ∈ bs) ×
+            ¬ x ∈ xs)                                     ↔⟨⟩
+
+         (∃ λ c → ∃ λ xs → ∃ λ e →
+            x ∈FV e × branch c xs e ∈ b ∷ bs × ¬ x ∈ xs)  □)
+      (free-B b) (free-B⋆ bs)
+
+------------------------------------------------------------------------
 -- Decision procedures
+
+-- These decision procedures could presumably be implemented using
+-- free.
 
 -- The free variable relation, _∈FV_, is decidable.
 
