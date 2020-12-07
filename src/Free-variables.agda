@@ -44,7 +44,7 @@ data _∈FV_ (x : Var) : Exp → Type where
   var         : ∀ {y} → x ≡ y → x ∈FV var y
   const       : ∀ {c es e} → x ∈FV e → e ∈ es → x ∈FV const c es
 
--- Closed, expect that the given variables may occur.
+-- Closed, except that the given variables may occur.
 
 Closed′ : List Var → Exp → Type
 Closed′ xs e = ∀ x → ¬ x ∈ xs → ¬ x ∈FV e
