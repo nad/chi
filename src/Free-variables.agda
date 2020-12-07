@@ -14,6 +14,7 @@ open import Prelude hiding (const)
 
 open import Bag-equivalence equality-with-J hiding (trans)
 open import Bijection equality-with-J using (_↔_)
+open import Equivalence equality-with-J as Eq using (_≃_)
 open import Function-universe equality-with-J hiding (id; _∘_)
 open import H-level equality-with-J
 open import H-level.Closure equality-with-J
@@ -24,6 +25,14 @@ open import Propositional atoms
 open import Values        atoms
 
 open χ-atoms atoms
+
+private
+  variable
+    bs      : List Br
+    c       : Const
+    e e₁ e₂ : Exp
+    es      : List Exp
+    x y     : Var
 
 ------------------------------------------------------------------------
 -- Definitions
@@ -58,6 +67,62 @@ Closed = Closed′ []
 
 Closed-exp : Type
 Closed-exp = ∃ Closed
+
+------------------------------------------------------------------------
+-- Inversion lemmas for _∈_
+
+∈apply : (x ∈FV apply e₁ e₂) ≃ (x ∈FV e₁ ⊎ x ∈FV e₂)
+∈apply = Eq.↔→≃
+  (λ { (apply-left  x∈) → inj₁ x∈
+     ; (apply-right x∈) → inj₂ x∈
+     })
+  [ apply-left , apply-right ]
+  [ (λ _ → refl) , (λ _ → refl) ]
+  (λ { (apply-left  _) → refl
+     ; (apply-right _) → refl
+     })
+
+∈lambda : (x ∈FV lambda y e) ≃ (x ≢ y × x ∈FV e)
+∈lambda = Eq.↔→≃
+  (λ { (lambda x≢y x∈e) → x≢y , x∈e })
+  (uncurry lambda)
+  (λ _ → refl)
+  (λ { (lambda _ _) → refl })
+
+∈case :
+  (x ∈FV case e bs) ≃
+  (x ∈FV e ⊎
+   ∃ λ c → ∃ λ xs → ∃ λ e′ → x ∈FV e′ × branch c xs e′ ∈ bs × ¬ x ∈ xs)
+∈case = Eq.↔→≃
+  (λ { (case-head x∈)       → inj₁ x∈
+     ; (case-body x∈ b∈ x∉) → inj₂ (_ , _ , _ , x∈ , b∈ , x∉)
+     })
+  [ case-head , (λ (_ , _ , _ , x∈ , b∈ , x∉) → case-body x∈ b∈ x∉) ]
+  [ (λ _ → refl) , (λ _ → refl) ]
+  (λ { (case-head _)     → refl
+     ; (case-body _ _ _) → refl
+     })
+
+∈rec : (x ∈FV rec y e) ≃ (x ≢ y × x ∈FV e)
+∈rec = Eq.↔→≃
+  (λ { (rec x≢y x∈e) → x≢y , x∈e })
+  (uncurry rec)
+  (λ _ → refl)
+  (λ { (rec _ _) → refl })
+
+∈var : (x ∈FV var y) ≃ (x ≡ y)
+∈var = Eq.↔→≃
+  (λ { (var x≡y) → x≡y })
+  var
+  (λ _ → refl)
+  (λ { (var _) → refl })
+
+∈const : (x ∈FV const c es) ≃ (∃ λ e → x ∈FV e × e ∈ es)
+∈const = Eq.↔→≃
+  (λ { (const ∈e ∈es) → _ , ∈e , ∈es })
+  (λ (_ , ∈e , ∈es) → const ∈e ∈es)
+  (λ _ → refl)
+  (λ { (const _ _) → refl })
 
 ------------------------------------------------------------------------
 -- Some properties
@@ -539,49 +604,49 @@ no-swapping :
      Closed e′ →
      Closed (e″ [ x ← e′ ]) →
      e [ x ← e′ ] [ y ← e″ [ x ← e′ ] ] ≡ e [ y ← e″ ] [ x ← e′ ])
-no-swapping hyp = distinct (hyp x y e e′ e″ x≢y cl₁ cl₂)
+no-swapping hyp = distinct (hyp x′ y′ e₁′ e₂′ e₃′ x≢y cl₁ cl₂)
   where
-  x = V.name 0
-  y = V.name 1
+  x′ = V.name 0
+  y′ = V.name 1
 
-  e : Exp
-  e = lambda x (var y)
+  e₁′ : Exp
+  e₁′ = lambda x′ (var y′)
 
-  e′ : Exp
-  e′ = const (C.name 0) []
+  e₂′ : Exp
+  e₂′ = const (C.name 0) []
 
-  e″ : Exp
-  e″ = var x
+  e₃′ : Exp
+  e₃′ = var x′
 
-  x≢y : x ≢ y
+  x≢y : x′ ≢ y′
   x≢y = V.distinct-codes→distinct-names (λ ())
 
-  cl₁ : Closed e′
-  cl₁ = from-⊎ (closed? e′)
+  cl₁ : Closed e₂′
+  cl₁ = from-⊎ (closed? e₂′)
 
-  cl₂ : Closed (e″ [ x ← e′ ])
-  cl₂ with x V.≟ x
+  cl₂ : Closed (e₃′ [ x′ ← e₂′ ])
+  cl₂ with x′ V.≟ x′
   ... | no  x≢x = ⊥-elim (x≢x refl)
   ... | yes _   = cl₁
 
-  lhs : e [ x ← e′ ] [ y ← e″ [ x ← e′ ] ] ≡ lambda x e′
-  lhs with x V.≟ x
+  lhs : e₁′ [ x′ ← e₂′ ] [ y′ ← e₃′ [ x′ ← e₂′ ] ] ≡ lambda x′ e₂′
+  lhs with x′ V.≟ x′
   ... | no  x≢x = ⊥-elim (x≢x refl)
-  ... | yes _   with y V.≟ x
+  ... | yes _   with y′ V.≟ x′
   ...   | yes y≡x = ⊥-elim (x≢y (sym y≡x))
-  ...   | no  _   with y V.≟ y
+  ...   | no  _   with y′ V.≟ y′
   ...     | no  y≢y = ⊥-elim (y≢y refl)
   ...     | yes _   = refl
 
-  rhs : e [ y ← e″ ] [ x ← e′ ] ≡ lambda x (var x)
-  rhs with y V.≟ x
+  rhs : e₁′ [ y′ ← e₃′ ] [ x′ ← e₂′ ] ≡ lambda x′ (var x′)
+  rhs with y′ V.≟ x′
   ... | yes y≡x = ⊥-elim (x≢y (sym y≡x))
-  ... | no  _   with y V.≟ y
+  ... | no  _   with y′ V.≟ y′
   ...   | no  y≢y = ⊥-elim (y≢y refl)
-  ...   | yes _   with x V.≟ x
+  ...   | yes _   with x′ V.≟ x′
   ...     | no  x≢x = ⊥-elim (x≢x refl)
   ...     | yes _   = refl
 
-  distinct : e [ x ← e′ ] [ y ← e″ [ x ← e′ ] ] ≢
-             e [ y ← e″ ] [ x ← e′ ]
+  distinct : e₁′ [ x′ ← e₂′ ] [ y′ ← e₃′ [ x′ ← e₂′ ] ] ≢
+             e₁′ [ y′ ← e₃′ ] [ x′ ← e₂′ ]
   distinct rewrite lhs | rhs = λ ()
