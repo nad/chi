@@ -33,12 +33,13 @@ open χ-atoms atoms
 
 private
   variable
+    A          : Type
     bs         : List Br
     c c′       : Const
     e e₁ e₂ e′ : Exp
     es         : List Exp
     x y        : Var
-    xs′        : List Var
+    xs xs′     : A
 
 ------------------------------------------------------------------------
 -- Definitions
@@ -279,7 +280,7 @@ Closed′-closed-under-subst cl-e cl-e′ y y∉xs =
   ] ∘ subst-∈FV _ _
 
 ------------------------------------------------------------------------
--- Computing the free variables
+-- Computing free or fresh variables
 
 private
 
@@ -518,6 +519,60 @@ mutual
          (∃ λ c → ∃ λ xs → ∃ λ e →
             x ∈FV e × branch c xs e ∈ b ∷ bs × ¬ x ∈ xs)  □)
       (free-B b) (free-B⋆ bs)
+
+-- It is possible to find a variable that is neither free in a given
+-- expression, nor a member of a given finite set.
+
+fresh′ :
+  (xs : Finite-subset-of Var) (e : Exp) →
+  ∃ λ (x : Var) → ¬ x ∈FV e × x S.∉ xs
+fresh′ xs e =
+  Σ-map id
+    (λ {x} →
+       x S.∉ proj₁ (free e) S.∪ xs              ↔⟨ ¬-cong ext S.∈∪≃ ⟩
+       ¬ (x S.∈ proj₁ (free e) T.∥⊎∥ x S.∈ xs)  ↔⟨ T.¬∥∥↔¬ ⟩
+       ¬ (x S.∈ proj₁ (free e) ⊎ x S.∈ xs)      ↝⟨ ¬⊎↔¬×¬ _ ⟩
+       x S.∉ proj₁ (free e) × x S.∉ xs          ↔⟨ ¬-cong-⇔ ext (proj₂ (free e) x) ×-cong F.id ⟩□
+       ¬ x ∈FV e × x S.∉ xs                     □)
+    (V.fresh (proj₁ (free e) S.∪ xs))
+
+-- It is possible to find a variable that is not free in a given
+-- expression.
+
+fresh : (e : Exp) → ∃ λ (x : Var) → ¬ x ∈FV e
+fresh e = Σ-map id proj₁ (fresh′ S.[] e)
+
+-- If two expressions have the same free variables (ignoring any
+-- variables in xs), then fresh′ xs returns the same fresh variable
+-- for both expressions.
+
+fresh′-unique :
+  (∀ x → x S.∉ xs → x ∈FV e₁ ⇔ x ∈FV e₂) →
+  proj₁ (fresh′ xs e₁) ≡ proj₁ (fresh′ xs e₂)
+fresh′-unique {xs = xs} {e₁ = e₁} {e₂ = e₂} same =
+  proj₁ (V.fresh (proj₁ (free e₁) S.∪ xs))  ≡⟨ (cong (proj₁ ∘ V.fresh) $
+                                                _≃_.from S.extensionality λ x →
+      x S.∈ proj₁ (free e₁) S.∪ xs                ↝⟨ lemma x e₁ ⟩
+      x S.∉ xs × x ∈FV e₁ T.∥⊎∥ x S.∈ xs          ↝⟨ ∃-cong (same x) T.∥⊎∥-cong F.id ⟩
+      x S.∉ xs × x ∈FV e₂ T.∥⊎∥ x S.∈ xs          ↝⟨ inverse $ lemma x e₂ ⟩□
+      x S.∈ proj₁ (free e₂) S.∪ xs                □) ⟩∎
+
+  proj₁ (V.fresh (proj₁ (free e₂) S.∪ xs))  ∎
+  where
+  lemma : ∀ _ _ → _ ⇔ _
+  lemma x e =
+    x S.∈ proj₁ (free e) S.∪ xs          ↔⟨ S.∈∪≃ ⟩
+    x S.∈ proj₁ (free e) T.∥⊎∥ x S.∈ xs  ↝⟨ proj₂ (free e) x T.∥⊎∥-cong F.id ⟩
+    x ∈FV e T.∥⊎∥ x S.∈ xs               ↔⟨ T.∥⊎∥≃¬×∥⊎∥ $ T.Dec→Dec-∥∥ $ S.member? _≟V₁_ x xs ⟩□
+    x S.∉ xs × x ∈FV e T.∥⊎∥ x S.∈ xs    □
+
+-- If two expressions have the same free variables, then fresh returns
+-- the same fresh variable for both expressions.
+
+fresh-unique :
+  (∀ x → x ∈FV e₁ ⇔ x ∈FV e₂) →
+  proj₁ (fresh e₁) ≡ proj₁ (fresh e₂)
+fresh-unique same = fresh′-unique (λ x _ → same x)
 
 ------------------------------------------------------------------------
 -- Decision procedures

@@ -14,9 +14,13 @@ open import Bag-equivalence equality-with-J
 open import Bijection equality-with-J as Bijection using (_↔_)
 open import Equality.Decidable-UIP equality-with-J
 open import Equivalence equality-with-J as Eq using (_≃_)
-open import Function-universe equality-with-J
+open import Finite-subset.Listed equality-with-paths as S
+  using (Finite-subset-of; _∉_)
+open import Function-universe equality-with-J hiding (id)
 open import H-level equality-with-J
 open import H-level.Closure equality-with-J
+open import H-level.Truncation.Propositional equality-with-paths
+  using (∥_∥; ∣_∣)
 open import Injection equality-with-J using (Injective)
 import Nat equality-with-J as Nat
 open import Univalence-axiom equality-with-J
@@ -69,6 +73,24 @@ record Atoms : Type₁ where
     name m ≡ name n  ↝⟨ name-injective ⟩
     m ≡ n            ↝⟨ m≢n ⟩□
     ⊥                □
+
+  -- One can always find a name that is distinct from the names in a
+  -- given finite set of names.
+
+  fresh :
+    (ns : Finite-subset-of Name) →
+    ∃ λ (n : Name) → n ∉ ns
+  fresh ns =
+    Σ-map name
+      (λ {m} →
+         →-cong-→
+           (name m S.∈ ns                        ↝⟨ (λ ∈ns → ∣ name m , ∈ns
+                                                             , _↔_.right-inverse-of countably-infinite _
+                                                             ∣) ⟩
+            ∥ (∃ λ n → n S.∈ ns × code n ≡ m) ∥  ↔⟨ inverse S.∈map≃ ⟩□
+            m S.∈ S.map code ns                  □)
+           id)
+      (S.fresh (S.map code ns))
 
   -- Name is a set.
 
