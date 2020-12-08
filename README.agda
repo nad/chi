@@ -49,6 +49,10 @@ import Termination
 
 import Compatibility
 
+-- Some substitution lemmas.
+
+import Substitution
+
 -- Definitions of "free in" and "closed", along with some properties.
 
 import Free-variables
