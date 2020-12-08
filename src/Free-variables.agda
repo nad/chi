@@ -11,9 +11,9 @@ module Free-variables (atoms : χ-atoms) where
 open import Dec
 open import Equality.Propositional.Cubical
 open import Logical-equivalence using (_⇔_)
-open import Prelude hiding (const)
+open import Prelude hiding (const; swap)
 
-open import Bag-equivalence equality-with-J hiding (trans)
+open import Bag-equivalence equality-with-J as B using (_∈_)
 open import Bijection equality-with-J using (_↔_)
 import Erased.Cubical equality-with-paths as E
 open import Equivalence equality-with-J as Eq using (_≃_)
@@ -27,19 +27,20 @@ open import List equality-with-J using (_++_; foldr)
 
 open import Chi           atoms
 open import Propositional atoms
+open import Substitution  atoms
 open import Values        atoms
 
 open χ-atoms atoms
 
 private
   variable
-    A          : Type
-    bs         : List Br
-    c c′       : Const
-    e e₁ e₂ e′ : Exp
-    es         : List Exp
-    x y        : Var
-    xs xs′     : A
+    A             : Type
+    bs            : List Br
+    c c′          : Const
+    e e₁ e₂ e′ e″ : Exp
+    es            : List Exp
+    x y           : Var
+    xs xs′        : A
 
 ------------------------------------------------------------------------
 -- Definitions
@@ -219,7 +220,7 @@ mutual
   subst-∈FV-B⋆     []                   p ()
   subst-∈FV-B⋆ {x} (branch c xs e ∷ bs) p (inj₁ eq)   q with V.member x xs
   subst-∈FV-B⋆ {x} (branch c xs e ∷ bs) p (inj₁ refl) q | yes x∈xs = inj₁ ((c , xs , e , inj₁ refl , p , q) , λ x′≡x →
-                                                                       q (subst (λ x → Any (x ≡_) xs) (sym x′≡x) x∈xs))
+                                                                       q (subst (_∈ _) (sym x′≡x) x∈xs))
   subst-∈FV-B⋆ {x} (branch c xs e ∷ bs) p (inj₁ refl) q | no  x∉xs = ⊎-map (Σ-map (λ p → _ , _ , _ , inj₁ refl , p , q) id)
                                                                            id
                                                                            (subst-∈FV _ e p)
@@ -257,7 +258,7 @@ Closed′-closed-under-case :
 Closed′-closed-under-case cl-e cl-bs y y∉xs = λ where
   (case-head y∈e)           → cl-e y y∉xs y∈e
   (case-body y∈e b∈bs y∉ys) →
-    cl-bs b∈bs y ([ y∉ys , y∉xs ] ∘ _↔_.to (Any-++ _ _ _)) y∈e
+    cl-bs b∈bs y ([ y∉ys , y∉xs ] ∘ _↔_.to (B.Any-++ _ _ _)) y∈e
 
 Closed′-closed-under-const :
   ∀ {xs c es} →
@@ -686,7 +687,7 @@ mutual
   closed′? (case e bs)   xs | yes cl-e  =
     ⊎-map (Closed′-closed-under-case cl-e)
           (λ ¬cl-bs cl → ¬cl-bs (λ b∈bs x x∉ys++xs x∈e →
-             let ¬[x∈ys⊎x∈xs] = x∉ys++xs ∘ _↔_.from (Any-++ _ _ _) in
+             let ¬[x∈ys⊎x∈xs] = x∉ys++xs ∘ _↔_.from (B.Any-++ _ _ _) in
              cl x (¬[x∈ys⊎x∈xs] ∘ inj₂)
                (case-body x∈e b∈bs (¬[x∈ys⊎x∈xs] ∘ inj₁))))
           (closed′?-B⋆ bs xs)
@@ -955,3 +956,85 @@ no-swapping hyp = distinct (hyp x′ y′ e₁′ e₂′ e₃′ x≢y cl₁ cl
   distinct : e₁′ [ x′ ← e₂′ ] [ y′ ← e₃′ [ x′ ← e₂′ ] ] ≢
              e₁′ [ y′ ← e₃′ ] [ x′ ← e₂′ ]
   distinct rewrite lhs | rhs = λ ()
+
+-- Another swapping lemma does hold.
+
+module _
+  (x≢y  : x ≢ y)
+  (x∉e″ : ¬ x ∈FV e″)
+  (y∉e′ : ¬ y ∈FV e′)
+  where
+
+  mutual
+
+    swap : ∀ e → e [ x ← e′ ] [ y ← e″ ] ≡ e [ y ← e″ ] [ x ← e′ ]
+    swap (apply e₁ e₂) = cong₂ apply (swap e₁) (swap e₂)
+
+    swap (lambda z e) with x V.≟ z | y V.≟ z
+    … | yes _ | yes _ = refl
+    … | yes _ | no  _ = refl
+    … | no  _ | yes _ = refl
+    … | no  _ | no  _ = cong (lambda z) (swap e)
+
+    swap (case e bs) = cong₂ case (swap e) (swap-B⋆ bs)
+
+    swap (rec z e) with x V.≟ z | y V.≟ z
+    … | yes _ | yes _ = refl
+    … | yes _ | no  _ = refl
+    … | no  _ | yes _ = refl
+    … | no  _ | no  _ = cong (rec z) (swap e)
+
+    swap (var z) with x V.≟ z | y V.≟ z
+    … | yes x≡z | yes y≡z =
+      ⊥-elim $ x≢y (trans x≡z (sym y≡z))
+
+    … | yes x≡z | no _ =
+      e′ [ y ← e″ ]     ≡⟨ subst-∉ _ _ y∉e′ ⟩
+      e′                ≡⟨ sym $ var-step-≡ x≡z ⟩∎
+      var z [ x ← e′ ]  ∎
+
+    … | no _ | yes y≡z =
+      var z [ y ← e″ ]  ≡⟨ var-step-≡ y≡z ⟩
+      e″                ≡⟨ sym $ subst-∉ _ _ x∉e″ ⟩∎
+      e″ [ x ← e′ ]     ∎
+
+    … | no x≢z | no y≢z =
+      var z [ y ← e″ ]  ≡⟨ var-step-≢ y≢z ⟩
+      var z             ≡⟨ sym $ var-step-≢ x≢z ⟩∎
+      var z [ x ← e′ ]  ∎
+
+    swap (const c es) = cong (const c) (swap-⋆ es)
+
+    swap-B :
+      ∀ b → b [ x ← e′ ]B [ y ← e″ ]B ≡ b [ y ← e″ ]B [ x ← e′ ]B
+    swap-B (branch c zs e) with V.member x zs | V.member y zs
+    … | yes x∈zs | yes y∈zs =
+      branch c zs e [ y ← e″ ]B  ≡⟨ branch-step-∈ y∈zs ⟩
+      branch c zs e              ≡⟨ sym $ branch-step-∈ x∈zs ⟩∎
+      branch c zs e [ x ← e′ ]B  ∎
+
+    … | yes x∈zs | no y∉zs =
+      branch c zs e [ y ← e″ ]B               ≡⟨ branch-step-∉ y∉zs ⟩
+      branch c zs (e [ y ← e″ ])              ≡⟨ sym $ branch-step-∈ x∈zs ⟩∎
+      branch c zs (e [ y ← e″ ]) [ x ← e′ ]B  ∎
+
+    … | no x∉zs | yes y∈zs =
+      branch c zs (e [ x ← e′ ]) [ y ← e″ ]B  ≡⟨ branch-step-∈ y∈zs ⟩
+      branch c zs (e [ x ← e′ ])              ≡⟨ sym $ branch-step-∉ x∉zs ⟩∎
+      branch c zs e [ x ← e′ ]B               ∎
+
+    … | no x∉zs | no y∉zs =
+      branch c zs (e [ x ← e′ ]) [ y ← e″ ]B  ≡⟨ branch-step-∉ y∉zs ⟩
+      branch c zs (e [ x ← e′ ] [ y ← e″ ])   ≡⟨ cong (branch c zs) (swap e) ⟩
+      branch c zs (e [ y ← e″ ] [ x ← e′ ])   ≡⟨ sym $ branch-step-∉ x∉zs ⟩∎
+      branch c zs (e [ y ← e″ ]) [ x ← e′ ]B  ∎
+
+    swap-⋆ :
+      ∀ es → es [ x ← e′ ]⋆ [ y ← e″ ]⋆ ≡ es [ y ← e″ ]⋆ [ x ← e′ ]⋆
+    swap-⋆ []       = refl
+    swap-⋆ (e ∷ es) = cong₂ _∷_ (swap e) (swap-⋆ es)
+
+    swap-B⋆ :
+      ∀ bs → bs [ x ← e′ ]B⋆ [ y ← e″ ]B⋆ ≡ bs [ y ← e″ ]B⋆ [ x ← e′ ]B⋆
+    swap-B⋆ []       = refl
+    swap-B⋆ (b ∷ bs) = cong₂ _∷_ (swap-B b) (swap-B⋆ bs)
