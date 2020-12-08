@@ -57,6 +57,10 @@ import Substitution
 
 import Free-variables
 
+-- Alpha-equivalence.
+
+import Alpha-equivalence
+
 -- Encoders and decoders.
 
 import Coding
