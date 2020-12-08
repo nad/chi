@@ -81,6 +81,10 @@ import Internal-coding
 
 import Combinators
 
+-- The rec construction can be encoded using λ-terms.
+
+import Recursion-without-rec
+
 -- Definition of the size of an expression, along with some
 -- properties.
 
