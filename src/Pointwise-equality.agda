@@ -40,7 +40,7 @@ open import Values        χ-ℕ-atoms
 open Computable-function
 open χ-atoms χ-ℕ-atoms
 
-open import Combinators hiding (if_then_else_)
+open import Combinators hiding (id; if_then_else_)
 
 -- Pointwise equality of computable functions to Bool.
 

@@ -41,7 +41,7 @@ open import Values         χ-ℕ-atoms
 open χ-atoms χ-ℕ-atoms
 
 import Coding.Instances.Nat
-open import Combinators as χ hiding (if_then_else_)
+open import Combinators as χ hiding (id; if_then_else_)
 open import Internal-coding
 
 ------------------------------------------------------------------------

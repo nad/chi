@@ -7,7 +7,7 @@
 module Combinators where
 
 open import Equality.Propositional
-open import Prelude hiding (if_then_else_; not; const)
+open import Prelude hiding (id; if_then_else_; not; const)
 open import Tactic.By.Propositional
 
 open import Equality.Decision-procedures equality-with-J
@@ -25,6 +25,7 @@ open import Constants      χ-ℕ-atoms
 open import Deterministic  χ-ℕ-atoms
 open import Free-variables χ-ℕ-atoms
 open import Reasoning      χ-ℕ-atoms
+open import Substitution   χ-ℕ-atoms
 open import Termination    χ-ℕ-atoms
 open import Values         χ-ℕ-atoms
 
@@ -50,6 +51,21 @@ loop-closed =
   lemma (rec p) with v-x V.≟ v-x
   ... | no  x≢x = x≢x refl
   ... | yes _   = lemma p
+
+------------------------------------------------------------------------
+-- The identity function
+
+id : Exp
+id = lambda v-x (var v-x)
+
+id-closed : Closed id
+id-closed = from-⊎ (closed? id)
+
+id-correct : ∀ {e v} → e ⇓ v → apply id e ⇓ v
+id-correct {e = e} {v = v} e⇓v =
+  apply id e           ⟶⟨ apply lambda e⇓v ⟩
+  var v-x [ v-x ← v ]  ≡⟨ var-step-≡ (refl {x = v-x}) ⟩⟶
+  v                    ■⟨ ⇓-Value e⇓v ⟩
 
 ------------------------------------------------------------------------
 -- Natural numbers

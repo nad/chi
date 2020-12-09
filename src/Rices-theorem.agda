@@ -53,7 +53,7 @@ open import Values        χ-ℕ-atoms
 
 open χ-atoms χ-ℕ-atoms
 
-open import Combinators as χ hiding (if_then_else_)
+open import Combinators as χ hiding (id; if_then_else_)
 open import Halting-problem
 open import Internal-coding
 
