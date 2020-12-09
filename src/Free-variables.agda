@@ -14,7 +14,7 @@ open import Logical-equivalence using (_⇔_)
 open import Prelude hiding (const; swap)
 
 open import Bag-equivalence equality-with-J as B using (_∈_)
-open import Bijection equality-with-J using (_↔_)
+open import Bijection equality-with-J as Bijection using (_↔_)
 import Erased.Cubical equality-with-paths as E
 open import Equivalence equality-with-J as Eq using (_≃_)
 open import Finite-subset.Listed equality-with-paths as S
@@ -22,7 +22,8 @@ open import Finite-subset.Listed equality-with-paths as S
 open import Function-universe equality-with-J as F hiding (id; _∘_)
 open import H-level equality-with-J
 open import H-level.Closure equality-with-J
-import H-level.Truncation.Propositional equality-with-paths as T
+open import H-level.Truncation.Propositional equality-with-paths as T
+  using (∥_∥)
 open import List equality-with-J using (_++_; foldr)
 
 open import Chi           atoms
@@ -41,6 +42,16 @@ private
     es            : List Exp
     x y           : Var
     xs xs′        : A
+
+private
+
+  -- Two variants of V._≟_.
+
+  _≟V₁_ : (x y : Var) → Dec T.∥ x ≡ y ∥
+  _≟V₁_ = T.decidable→decidable-∥∥ V._≟_
+
+  _≟V₂_ : (x y : Var) → E.Dec-Erased T.∥ x ≡ y ∥
+  x ≟V₂ y = E.Dec→Dec-Erased (x ≟V₁ y)
 
 ------------------------------------------------------------------------
 -- Definitions
@@ -131,6 +142,155 @@ Closed-exp = ∃ Closed
   (λ (_ , ∈e , ∈es) → const ∈e ∈es)
   (λ _ → refl)
   (λ { (const _ _) → refl })
+
+------------------------------------------------------------------------
+-- Characterisation lemmas for Closed′
+
+Closed′-apply≃ :
+  Closed′ xs (apply e₁ e₂) ≃ (Closed′ xs e₁ × Closed′ xs e₂)
+Closed′-apply≃ {xs = xs} {e₁ = e₁} {e₂ = e₂} =
+  Closed′ xs (apply e₁ e₂)                                       ↔⟨⟩
+  (∀ x → ¬ x ∈ xs → ¬ x ∈FV apply e₁ e₂)                         ↝⟨ (∀-cong ext λ _ → ∀-cong ext λ _ → ¬-cong ext ∈apply) ⟩
+  (∀ x → ¬ x ∈ xs → ¬ (x ∈FV e₁ ⊎ x ∈FV e₂))                     ↝⟨ (∀-cong ext λ _ → ∀-cong ext λ _ → ¬⊎↔¬×¬ ext) ⟩
+  (∀ x → ¬ x ∈ xs → (¬ x ∈FV e₁ × ¬ x ∈FV e₂))                   ↔⟨ (∀-cong ext λ _ → ΠΣ-comm) ⟩
+  (∀ x → (¬ x ∈ xs → ¬ x ∈FV e₁) × (¬ x ∈ xs → ¬ x ∈FV e₂))      ↔⟨ ΠΣ-comm ⟩
+  (∀ x → ¬ x ∈ xs → ¬ x ∈FV e₁) × (∀ x → ¬ x ∈ xs → ¬ x ∈FV e₂)  ↔⟨⟩
+  Closed′ xs e₁ × Closed′ xs e₂                                  □
+
+Closed′-lambda≃ :
+  Closed′ xs (lambda x e) ≃ Closed′ (x ∷ xs) e
+Closed′-lambda≃ {xs = xs} {x = x} {e = e} =
+  Closed′ xs (lambda x e)                 ↔⟨⟩
+  (∀ y → ¬ y ∈ xs → ¬ y ∈FV lambda x e)   ↝⟨ (∀-cong ext λ _ → ∀-cong ext λ _ → ¬-cong ext ∈lambda) ⟩
+  (∀ y → ¬ y ∈ xs → ¬ (y ≢ x × y ∈FV e))  ↔⟨ (∀-cong ext λ _ → ∀-cong ext λ _ → currying) ⟩
+  (∀ y → ¬ y ∈ xs → y ≢ x → ¬ y ∈FV e)    ↔⟨ (∀-cong ext λ _ → Π-comm) ⟩
+  (∀ y → y ≢ x → ¬ y ∈ xs → ¬ y ∈FV e)    ↔⟨ (∀-cong ext λ _ → inverse currying) ⟩
+  (∀ y → y ≢ x × ¬ y ∈ xs → ¬ y ∈FV e)    ↝⟨ (∀-cong ext λ _ → →-cong₁ {k₁ = equivalence} ext $ inverse $ ¬⊎↔¬×¬ ext) ⟩
+  (∀ y → ¬ (y ≡ x ⊎ y ∈ xs) → ¬ y ∈FV e)  ↔⟨⟩
+  Closed′ (x ∷ xs) e                      □
+
+Closed′-rec≃ :
+  Closed′ xs (rec x e) ≃ Closed′ (x ∷ xs) e
+Closed′-rec≃ {xs = xs} {x = x} {e = e} =
+  Closed′ xs (rec x e)                    ↔⟨⟩
+  (∀ y → ¬ y ∈ xs → ¬ y ∈FV rec x e)      ↝⟨ (∀-cong ext λ _ → ∀-cong ext λ _ → ¬-cong ext ∈rec) ⟩
+  (∀ y → ¬ y ∈ xs → ¬ (y ≢ x × y ∈FV e))  ↔⟨ (∀-cong ext λ _ → ∀-cong ext λ _ → currying) ⟩
+  (∀ y → ¬ y ∈ xs → y ≢ x → ¬ y ∈FV e)    ↔⟨ (∀-cong ext λ _ → Π-comm) ⟩
+  (∀ y → y ≢ x → ¬ y ∈ xs → ¬ y ∈FV e)    ↔⟨ (∀-cong ext λ _ → inverse currying) ⟩
+  (∀ y → y ≢ x × ¬ y ∈ xs → ¬ y ∈FV e)    ↝⟨ (∀-cong ext λ _ → →-cong₁ {k₁ = equivalence} ext $ inverse $ ¬⊎↔¬×¬ ext) ⟩
+  (∀ y → ¬ (y ≡ x ⊎ y ∈ xs) → ¬ y ∈FV e)  ↔⟨⟩
+  Closed′ (x ∷ xs) e                      □
+
+Closed′-case≃ :
+  Closed′ xs (case e bs) ≃
+  (Closed′ xs e ×
+   ∀ {c ys e} → branch c ys e ∈ bs → Closed′ (ys ++ xs) e)
+Closed′-case≃ {xs = xs} {e = e} {bs = bs} =
+  Closed′ xs (case e bs)                                                ↔⟨⟩
+
+  (∀ x → ¬ x ∈ xs → ¬ x ∈FV case e bs)                                  ↝⟨ (∀-cong ext λ _ → ∀-cong ext λ _ → ¬-cong ext ∈case) ⟩
+
+  (∀ x → ¬ x ∈ xs →
+   ¬ (x ∈FV e ⊎
+      ∃ λ c → ∃ λ ys → ∃ λ e′ →
+        x ∈FV e′ × branch c ys e′ ∈ bs × ¬ x ∈ ys))                     ↝⟨ (∀-cong ext λ _ → ∀-cong ext λ _ → ¬⊎↔¬×¬ ext) ⟩
+
+  (∀ x → ¬ x ∈ xs →
+   ¬ x ∈FV e ×
+   ¬ ∃ λ c → ∃ λ ys → ∃ λ e′ →
+       x ∈FV e′ × branch c ys e′ ∈ bs × ¬ x ∈ ys)                       ↔⟨ ΠΣ-comm F.∘
+                                                                           (∀-cong ext λ _ → ΠΣ-comm) ⟩
+  (∀ x → ¬ x ∈ xs → ¬ x ∈FV e) ×
+  (∀ x → ¬ x ∈ xs →
+   ¬ ∃ λ c → ∃ λ ys → ∃ λ e′ →
+       x ∈FV e′ × branch c ys e′ ∈ bs × ¬ x ∈ ys)                       ↝⟨ ∃-cong lemma ⟩
+
+  (∀ x → ¬ x ∈ xs → ¬ x ∈FV e) ×
+  (∀ {c ys e} → branch c ys e ∈ bs → ∀ x → ¬ x ∈ ys ++ xs → ¬ x ∈FV e)  ↔⟨⟩
+
+  Closed′ xs e ×
+  (∀ {c ys e} → branch c ys e ∈ bs → Closed′ (ys ++ xs) e)              □
+  where
+  lemma = λ hyp →
+    (∀ x → ¬ x ∈ xs →
+     ¬ ∃ λ c → ∃ λ ys → ∃ λ e →
+         x ∈FV e × branch c ys e ∈ bs × ¬ x ∈ ys)  ↔⟨ (∀-cong ext λ _ → ∀-cong ext λ _ →
+                                                       (∀-cong ext λ _ →
+                                                        (∀-cong ext λ _ →
+                                                         (∀-cong ext λ _ →
+                                                          currying F.∘
+                                                          Π-comm F.∘
+                                                          currying) F.∘
+                                                         currying) F.∘
+                                                        currying) F.∘
+                                                       currying) ⟩
+    (∀ x → ¬ x ∈ xs → ∀ c ys e →
+     branch c ys e ∈ bs → ¬ x ∈ ys → ¬ x ∈FV e)    ↔⟨ (∀-cong ext λ _ →
+                                                       (∀-cong ext λ _ →
+                                                        (∀-cong ext λ _ →
+                                                         (∀-cong ext λ _ →
+                                                          (∀-cong ext λ _ →
+                                                           inverse currying) F.∘
+                                                          currying) F.∘
+                                                         Π-comm) F.∘
+                                                        Π-comm) F.∘
+                                                       Π-comm) F.∘
+                                                      Π-comm F.∘
+                                                      inverse currying ⟩
+    (∀ c ys e → branch c ys e ∈ bs →
+     ∀ x → ¬ x ∈ xs × ¬ x ∈ ys → ¬ x ∈FV e)        ↝⟨ (∀-cong ext λ _ → ∀-cong ext λ _ → ∀-cong ext λ _ →
+                                                       ∀-cong ext λ _ → ∀-cong ext λ _ → →-cong₁ ext $ inverse $
+                                                       ¬⊎↔¬×¬ {k = equivalence} ext) ⟩
+    (∀ c ys e → branch c ys e ∈ bs →
+     ∀ x → ¬ (x ∈ xs ⊎ x ∈ ys) → ¬ x ∈FV e)        ↝⟨ (∀-cong ext λ _ → ∀-cong ext λ _ → ∀-cong ext λ _ →
+                                                       ∀-cong ext λ _ → ∀-cong ext λ _ → →-cong₁ ext $ ¬-cong ext
+                                                       ⊎-comm) ⟩
+    (∀ c ys e → branch c ys e ∈ bs →
+     ∀ x → ¬ (x ∈ ys ⊎ x ∈ xs) → ¬ x ∈FV e)        ↝⟨ (∀-cong ext λ _ → ∀-cong ext λ _ → ∀-cong ext λ _ →
+                                                       ∀-cong ext λ _ → ∀-cong ext λ _ → →-cong₁ ext $ ¬-cong ext $ inverse $
+                                                       B.Any-++ _ _ _) ⟩
+    (∀ c ys e → branch c ys e ∈ bs →
+     ∀ x → ¬ x ∈ ys ++ xs → ¬ x ∈FV e)             ↔⟨ inverse $
+                                                      (∀-cong ext λ _ →
+                                                       (∀-cong ext λ _ → Bijection.implicit-Π↔Π) F.∘
+                                                       Bijection.implicit-Π↔Π) F.∘
+                                                      Bijection.implicit-Π↔Π ⟩□
+    (∀ {c ys e} → branch c ys e ∈ bs →
+     ∀ x → ¬ x ∈ ys ++ xs → ¬ x ∈FV e)             □
+
+Closed′-const≃ :
+  Closed′ xs (const c es) ≃ (∀ e → e ∈ es → Closed′ xs e)
+Closed′-const≃ {xs = xs} {c = c} {es = es} =
+  Closed′ xs (const c es)                        ↔⟨⟩
+  (∀ x → ¬ x ∈ xs → ¬ x ∈FV const c es)          ↝⟨ (∀-cong ext λ _ → ∀-cong ext λ _ → ¬-cong ext ∈const) ⟩
+  (∀ x → ¬ x ∈ xs → ¬ ∃ λ e → x ∈FV e × e ∈ es)  ↔⟨ currying F.∘
+                                                    (∀-cong ext λ _ →
+                                                     currying) F.∘
+                                                    Π-comm F.∘
+                                                    (∀-cong ext λ _ →
+                                                     inverse currying F.∘
+                                                     (∀-cong ext λ _ →
+                                                      Π-comm F.∘
+                                                      currying) F.∘
+                                                     currying) F.∘
+                                                    inverse currying ⟩
+  (∀ e → e ∈ es → ∀ x → ¬ x ∈ xs → ¬ x ∈FV e)    ↔⟨⟩
+  (∀ e → e ∈ es → Closed′ xs e)                  □
+
+Closed′-var≃ : Closed′ xs (var x) ≃ ∥ x ∈ xs ∥
+Closed′-var≃ {xs = xs} {x = x} =
+  Closed′ xs (var x)                ↔⟨⟩
+  (∀ y → ¬ y ∈ xs → ¬ y ∈FV var x)  ↝⟨ (∀-cong ext λ _ → ∀-cong ext λ _ → ¬-cong ext ∈var) ⟩
+  (∀ y → ¬ y ∈ xs → ¬ y ≡ x)        ↝⟨ (∀-cong ext λ _ → →-cong₁ ext $ inverse T.¬∥∥↔¬) ⟩
+  (∀ y → ¬ ∥ y ∈ xs ∥ → ¬ y ≡ x)    ↝⟨ (∀-cong ext λ _ → inverse $
+                                        →≃¬→¬ ext
+                                          (λ _ _ → T.truncation-is-proposition)
+                                          (λ _ → Dec-map
+                                                   (from-equivalence $ inverse S.∥∈∥≃∈-from-List)
+                                                   (S.member? _≟V₁_ _ _))) ⟩
+  (∀ y → y ≡ x → ∥ y ∈ xs ∥)        ↝⟨ (∀-cong ext λ _ → →-cong₁ ext ≡-comm) ⟩
+  (∀ y → x ≡ y → ∥ y ∈ xs ∥)        ↝⟨ inverse $ ∀-intro ext _ ⟩□
+  ∥ x ∈ xs ∥                        □
 
 ------------------------------------------------------------------------
 -- Some properties
@@ -234,41 +394,33 @@ mutual
 Closed′-closed-under-apply :
   ∀ {xs e₁ e₂} →
   Closed′ xs e₁ → Closed′ xs e₂ → Closed′ xs (apply e₁ e₂)
-Closed′-closed-under-apply cl-e₁ cl-e₂ x x∉xs = λ where
-  (apply-left  x∈e₁) → cl-e₁ x x∉xs x∈e₁
-  (apply-right x∈e₂) → cl-e₂ x x∉xs x∈e₂
+Closed′-closed-under-apply = curry $ _≃_.from Closed′-apply≃
 
 Closed′-closed-under-lambda :
   ∀ {x xs e} →
   Closed′ (x ∷ xs) e → Closed′ xs (lambda x e)
-Closed′-closed-under-lambda cl y y∉xs (lambda y≢x y∈e) =
-  cl y [ y≢x , y∉xs ] y∈e
+Closed′-closed-under-lambda = _≃_.from Closed′-lambda≃
 
 Closed′-closed-under-rec :
   ∀ {x xs e} →
   Closed′ (x ∷ xs) e → Closed′ xs (rec x e)
-Closed′-closed-under-rec cl y y∉xs (rec y≢x y∈e) =
-  cl y [ y≢x , y∉xs ] y∈e
+Closed′-closed-under-rec = _≃_.from Closed′-rec≃
 
 Closed′-closed-under-case :
   ∀ {xs e bs} →
   Closed′ xs e →
   (∀ {c ys e} → branch c ys e ∈ bs → Closed′ (ys ++ xs) e) →
   Closed′ xs (case e bs)
-Closed′-closed-under-case cl-e cl-bs y y∉xs = λ where
-  (case-head y∈e)           → cl-e y y∉xs y∈e
-  (case-body y∈e b∈bs y∉ys) →
-    cl-bs b∈bs y ([ y∉ys , y∉xs ] ∘ _↔_.to (B.Any-++ _ _ _)) y∈e
+Closed′-closed-under-case = curry $ _≃_.from Closed′-case≃
 
 Closed′-closed-under-const :
   ∀ {xs c es} →
   (∀ e → e ∈ es → Closed′ xs e) →
   Closed′ xs (const c es)
-Closed′-closed-under-const cl y y∉xs (const y∈e e∈es) =
-  cl _ e∈es y y∉xs y∈e
+Closed′-closed-under-const = _≃_.from Closed′-const≃
 
 Closed′-closed-under-var : ∀ {x xs} → x ∈ xs → Closed′ xs (var x)
-Closed′-closed-under-var x∈xs ._ x∉xs (var refl) = x∉xs x∈xs
+Closed′-closed-under-var = _≃_.from Closed′-var≃ ∘ T.∣_∣
 
 Closed′-closed-under-subst :
   ∀ {x xs e e′} →
@@ -282,16 +434,6 @@ Closed′-closed-under-subst cl-e cl-e′ y y∉xs =
 
 ------------------------------------------------------------------------
 -- Computing free or fresh variables
-
-private
-
-  -- Two variants of V._≟_.
-
-  _≟V₁_ : (x y : Var) → Dec T.∥ x ≡ y ∥
-  _≟V₁_ = T.decidable→decidable-∥∥ V._≟_
-
-  _≟V₂_ : (x y : Var) → E.Dec-Erased T.∥ x ≡ y ∥
-  x ≟V₂ y = E.Dec→Dec-Erased (x ≟V₁ y)
 
 -- One can construct a finite set containing exactly the free
 -- variables in a term.
