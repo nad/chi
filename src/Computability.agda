@@ -570,13 +570,15 @@ instance
     ∀ {a b} {A : Type a} {B : Type b} {B-set : Is-set B}
       ⦃ rA : Rep A Consts ⦄ ⦃ rB : Rep B Consts ⦄ →
     Rep (Computable-function A B B-set) Consts
-  rep-Computable-function {B-set = B-set} = record
+  rep-Computable-function {A = A} {B = B} {B-set = B-set} = record
     { ⌜_⌝           = ⌜_⌝ P.∘ proj₁ P.∘ computable
     ; rep-injective = injective
     }
     where
     abstract
-      injective : Injective (⌜_⌝ P.∘ proj₁ P.∘ computable)
+      injective :
+        Injective {A = Computable-function A B B-set} {B = Consts}
+          (⌜_⌝ P.∘ proj₁ P.∘ computable)
       injective {f} {g} =
         ⌜ proj₁ (computable f) ⌝ ≡ ⌜ proj₁ (computable g) ⌝             ↝⟨ rep-injective ⟩
 
