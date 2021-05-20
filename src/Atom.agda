@@ -13,6 +13,7 @@ open import Prelude
 open import Bag-equivalence equality-with-J
 open import Bijection equality-with-J as Bijection using (_↔_)
 open import Equality.Decidable-UIP equality-with-J
+open import Equality.Path.Isomorphisms.Univalence equality-with-paths
 open import Equivalence equality-with-J as Eq using (_≃_)
 open import Finite-subset.Listed equality-with-paths as S
   using (Finite-subset-of; _∉_)
