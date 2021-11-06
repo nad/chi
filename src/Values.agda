@@ -2,8 +2,6 @@
 -- Values
 ------------------------------------------------------------------------
 
-{-# OPTIONS --cubical --safe #-}
-
 open import Atom
 
 module Values (atoms : χ-atoms) where

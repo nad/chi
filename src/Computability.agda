@@ -2,8 +2,6 @@
 -- Partial functions, computability
 ------------------------------------------------------------------------
 
-{-# OPTIONS --cubical --safe #-}
-
 open import Atom
 
 module Computability (atoms : χ-atoms) where

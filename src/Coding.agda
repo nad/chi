@@ -2,8 +2,6 @@
 -- Encoders and decoders
 ------------------------------------------------------------------------
 
-{-# OPTIONS --cubical --safe #-}
-
 open import Atom
 
 module Coding (atoms : χ-atoms) where

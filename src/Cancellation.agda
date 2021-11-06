@@ -2,8 +2,6 @@
 -- Some cancellation lemmas
 ------------------------------------------------------------------------
 
-{-# OPTIONS --cubical --safe #-}
-
 open import Atom
 
 module Cancellation (atoms : χ-atoms) where

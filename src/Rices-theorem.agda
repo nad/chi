@@ -2,8 +2,6 @@
 -- Rice's theorem
 ------------------------------------------------------------------------
 
-{-# OPTIONS --cubical --safe #-}
-
 open import Equality.Propositional
 open import Prelude hiding (const; Decidable)
 

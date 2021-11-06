@@ -2,8 +2,6 @@
 -- Encoder and decoder instances
 ------------------------------------------------------------------------
 
-{-# OPTIONS --cubical --safe #-}
-
 open import Atom
 
 module Coding.Instances (atoms : χ-atoms) where

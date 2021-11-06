@@ -2,8 +2,6 @@
 -- Compatibility lemmas
 ------------------------------------------------------------------------
 
-{-# OPTIONS --cubical --safe #-}
-
 open import Atom
 
 module Compatibility (atoms : χ-atoms) where

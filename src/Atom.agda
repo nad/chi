@@ -2,8 +2,6 @@
 -- Atoms
 ------------------------------------------------------------------------
 
-{-# OPTIONS --cubical --safe #-}
-
 module Atom where
 
 open import Equality.Propositional.Cubical

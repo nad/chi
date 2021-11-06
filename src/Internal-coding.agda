@@ -2,8 +2,6 @@
 -- Internal coding
 ------------------------------------------------------------------------
 
-{-# OPTIONS --cubical --safe #-}
-
 module Internal-coding where
 
 open import Equality.Propositional

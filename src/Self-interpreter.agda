@@ -2,8 +2,6 @@
 -- A self-interpreter (without correctness proof)
 ------------------------------------------------------------------------
 
-{-# OPTIONS --cubical --safe #-}
-
 module Self-interpreter where
 
 open import Prelude hiding (const)

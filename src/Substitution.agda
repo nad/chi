@@ -2,8 +2,6 @@
 -- Some substitution lemmas
 ------------------------------------------------------------------------
 
-{-# OPTIONS --cubical --safe #-}
-
 open import Atom
 
 module Substitution (atoms : χ-atoms) where

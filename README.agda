@@ -17,8 +17,6 @@
 -- * https://chalmers.instructure.com/courses/10744/file_contents/course%20files/lectures/L5.pdf
 -- * https://chalmers.instructure.com/courses/10744/file_contents/course%20files/lectures/L6.pdf
 
-{-# OPTIONS --cubical --safe #-}
-
 module README where
 
 -- Atoms.

@@ -2,8 +2,6 @@
 -- The abstract syntax is a set, and the semantics is propositional
 ------------------------------------------------------------------------
 
-{-# OPTIONS --cubical --safe #-}
-
 open import Atom
 
 module Propositional (atoms : χ-atoms) where

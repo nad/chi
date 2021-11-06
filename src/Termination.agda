@@ -2,8 +2,6 @@
 -- The "terminates" relation
 ------------------------------------------------------------------------
 
-{-# OPTIONS --cubical --safe #-}
-
 open import Atom
 
 module Termination (atoms : χ-atoms) where

@@ -2,8 +2,6 @@
 -- Definitions of "free in" and "closed", along with some properties
 ------------------------------------------------------------------------
 
-{-# OPTIONS --cubical --safe #-}
-
 open import Atom
 
 module Free-variables (atoms : χ-atoms) where

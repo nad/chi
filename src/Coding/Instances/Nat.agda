@@ -2,8 +2,6 @@
 -- Encoder and decoder instances for Atom.χ-ℕ-atoms
 ------------------------------------------------------------------------
 
-{-# OPTIONS --cubical --safe #-}
-
 module Coding.Instances.Nat where
 
 open import Atom

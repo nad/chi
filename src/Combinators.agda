@@ -2,8 +2,6 @@
 -- Some χ program combinators
 ------------------------------------------------------------------------
 
-{-# OPTIONS --cubical --safe #-}
-
 module Combinators where
 
 open import Equality.Propositional

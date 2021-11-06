@@ -2,8 +2,6 @@
 -- A specification of the language χ
 ------------------------------------------------------------------------
 
-{-# OPTIONS --cubical --safe #-}
-
 open import Atom
 
 -- The specification is parametrised by an instance of χ-atoms.

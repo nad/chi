@@ -2,8 +2,6 @@
 -- "Reasoning" combinators
 ------------------------------------------------------------------------
 
-{-# OPTIONS --cubical --safe #-}
-
 open import Atom
 
 module Reasoning (atoms : χ-atoms) where

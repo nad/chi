@@ -2,8 +2,6 @@
 -- Alpha-equivalence
 ------------------------------------------------------------------------
 
-{-# OPTIONS --cubical --safe #-}
-
 open import Atom
 
 module Alpha-equivalence (atoms : χ-atoms) where

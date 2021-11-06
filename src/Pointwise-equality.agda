@@ -2,8 +2,6 @@
 -- A theorem related to pointwise equality
 ------------------------------------------------------------------------
 
-{-# OPTIONS --cubical --safe #-}
-
 -- To simplify the development, let's work with actual natural numbers
 -- as variables and constants (see
 -- Atom.one-can-restrict-attention-to-χ-ℕ-atoms).

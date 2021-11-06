@@ -2,8 +2,6 @@
 -- The rec construction can be encoded using λ-terms
 ------------------------------------------------------------------------
 
-{-# OPTIONS --cubical --safe #-}
-
 module Recursion-without-rec where
 
 open import Equality.Propositional.Cubical

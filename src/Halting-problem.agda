@@ -2,8 +2,6 @@
 -- The halting problem
 ------------------------------------------------------------------------
 
-{-# OPTIONS --cubical --safe #-}
-
 module Halting-problem where
 
 open import Equality.Propositional.Cubical

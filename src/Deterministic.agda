@@ -2,8 +2,6 @@
 -- The semantics is deterministic
 ------------------------------------------------------------------------
 
-{-# OPTIONS --cubical --safe #-}
-
 open import Atom
 
 module Deterministic (atoms : χ-atoms) where

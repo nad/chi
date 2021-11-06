@@ -2,8 +2,6 @@
 -- Various constants
 ------------------------------------------------------------------------
 
-{-# OPTIONS --cubical --safe #-}
-
 open import Atom
 
 module Constants (atoms : χ-atoms) where

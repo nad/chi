@@ -2,8 +2,6 @@
 -- Definition of the size of an expression, along with some properties
 ------------------------------------------------------------------------
 
-{-# OPTIONS --cubical --safe #-}
-
 module Expression-size where
 
 open import Equality.Propositional
