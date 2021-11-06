@@ -283,13 +283,14 @@ Closed′-var≃ {xs = xs} {x = x} =
   (∀ y → ¬ y ∈ xs → ¬ y ∈FV var x)  ↝⟨ (∀-cong ext λ _ → ∀-cong ext λ _ → ¬-cong ext ∈var) ⟩
   (∀ y → ¬ y ∈ xs → ¬ y ≡ x)        ↝⟨ (∀-cong ext λ _ → →-cong₁ ext $ inverse T.¬∥∥↔¬) ⟩
   (∀ y → ¬ ∥ y ∈ xs ∥ → ¬ y ≡ x)    ↝⟨ (∀-cong ext λ _ → inverse $
-                                        →≃¬→¬ ext
+                                        →≃¬→¬
                                           (λ _ _ → T.truncation-is-proposition)
                                           (λ _ → Dec-map
                                                    (from-equivalence $ inverse S.∥∈∥≃∈-from-List)
-                                                   (S.member? _≟V₁_ _ _))) ⟩
+                                                   (S.member? _≟V₁_ _ _))
+                                          ext) ⟩
   (∀ y → y ≡ x → ∥ y ∈ xs ∥)        ↝⟨ (∀-cong ext λ _ → →-cong₁ ext ≡-comm) ⟩
-  (∀ y → x ≡ y → ∥ y ∈ xs ∥)        ↝⟨ inverse $ ∀-intro ext _ ⟩□
+  (∀ y → x ≡ y → ∥ y ∈ xs ∥)        ↝⟨ inverse $ ∀-intro _ ext ⟩□
   ∥ x ∈ xs ∥                        □
 
 ------------------------------------------------------------------------
