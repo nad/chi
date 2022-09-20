@@ -14,7 +14,9 @@ open import Equality.Decidable-UIP equality-with-J
 open import Equality.Path.Isomorphisms.Univalence equality-with-paths
 open import Equivalence equality-with-J as Eq using (_≃_)
 open import Finite-subset.Listed equality-with-paths as S
-  using (Finite-subset-of; _∉_)
+  using (Finite-subset-of)
+open import Finite-subset.Listed.Membership equality-with-paths as SM
+  using (_∉_)
 open import Function-universe equality-with-J hiding (id)
 open import H-level equality-with-J
 open import H-level.Closure equality-with-J
@@ -83,13 +85,13 @@ record Atoms : Type₁ where
     Σ-map name
       (λ {m} →
          →-cong-→
-           (name m S.∈ ns                        ↝⟨ (λ ∈ns → ∣ name m , ∈ns
+           (name m SM.∈ ns                        ↝⟨ (λ ∈ns → ∣ name m , ∈ns
                                                              , _↔_.right-inverse-of countably-infinite _
-                                                             ∣) ⟩
-            ∥ (∃ λ n → n S.∈ ns × code n ≡ m) ∥  ↔⟨ inverse S.∈map≃ ⟩□
-            m S.∈ S.map code ns                  □)
+                                                              ∣) ⟩
+            ∥ (∃ λ n → n SM.∈ ns × code n ≡ m) ∥  ↔⟨ inverse SM.∈map≃ ⟩□
+            m SM.∈ S.map code ns                  □)
            id)
-      (S.fresh (S.map code ns))
+      (SM.fresh (S.map code ns))
 
   -- Name is a set.
 

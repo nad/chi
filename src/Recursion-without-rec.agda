@@ -8,6 +8,7 @@ open import Equality.Propositional.Cubical
 open import Prelude hiding (id; swap)
 
 import Finite-subset.Listed equality-with-paths as S
+import Finite-subset.Listed.Membership equality-with-paths as SM
 
 -- To simplify the development, let's work with actual natural numbers
 -- as variables and constants (see
@@ -202,10 +203,10 @@ plain-rec-⇓ {x = x} {v = v} e ⇓v =
   z∉e = proj₁ (proj₂ z,f)
 
   x≢z : v-x ≢ z′
-  x≢z x≡z = proj₂ (proj₂ z,f) (S.≡→∈∷ (sym x≡z))
+  x≢z x≡z = proj₂ (proj₂ z,f) (SM.≡→∈∷ (sym x≡z))
 
   y≢z : v-y ≢ z′
-  y≢z y≡z = proj₂ (proj₂ z,f) (S.∈→∈∷ (S.≡→∈∷ (sym y≡z)))
+  y≢z y≡z = proj₂ (proj₂ z,f) (SM.∈→∈∷ (SM.≡→∈∷ (sym y≡z)))
 
   F⇓ :
     F z′ ⇓
@@ -294,10 +295,10 @@ plain-rec-subst {e′ = e′} {y = y} {e = e} x cl-e′ =
   z¹∉e = proj₁ (proj₂ z¹,f₁)
 
   z¹≢x : z¹ ≢ v-x
-  z¹≢x z¹≡x = proj₂ (proj₂ z¹,f₁) (S.≡→∈∷ z¹≡x)
+  z¹≢x z¹≡x = proj₂ (proj₂ z¹,f₁) (SM.≡→∈∷ z¹≡x)
 
   z¹≢y : z¹ ≢ v-y
-  z¹≢y z¹≡y = proj₂ (proj₂ z¹,f₁) (S.∈→∈∷ (S.≡→∈∷ z¹≡y))
+  z¹≢y z¹≡y = proj₂ (proj₂ z¹,f₁) (SM.∈→∈∷ (SM.≡→∈∷ z¹≡y))
 
   z²,f₂ =
     fresh′ (S.from-List (v-x ∷ v-y ∷ []))
@@ -310,10 +311,10 @@ plain-rec-subst {e′ = e′} {y = y} {e = e} x cl-e′ =
   z²∉ = proj₁ (proj₂ z²,f₂)
 
   z²≢x : z² ≢ v-x
-  z²≢x z²≡x = proj₂ (proj₂ z²,f₂) (S.≡→∈∷ z²≡x)
+  z²≢x z²≡x = proj₂ (proj₂ z²,f₂) (SM.≡→∈∷ z²≡x)
 
   z²≢y : z² ≢ v-y
-  z²≢y z²≡y = proj₂ (proj₂ z²,f₂) (S.∈→∈∷ (S.≡→∈∷ z²≡y))
+  z²≢y z²≡y = proj₂ (proj₂ z²,f₂) (SM.∈→∈∷ (SM.≡→∈∷ z²≡y))
 
   x∉y-id : x ≢ y → ¬ x ∈FV apply (var y) id
   x∉y-id x≢y (apply-left (var x≡y)) = x≢y x≡y

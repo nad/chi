@@ -17,6 +17,7 @@ import Erased.Cubical equality-with-paths as E
 open import Equivalence equality-with-J as Eq using (_≃_)
 open import Finite-subset.Listed equality-with-paths as S
   using (Finite-subset-of)
+import Finite-subset.Listed.Membership equality-with-paths as SM
 open import Function-universe equality-with-J as F hiding (id; _∘_)
 open import H-level equality-with-J
 open import H-level.Closure equality-with-J
@@ -46,7 +47,7 @@ private
   -- Two variants of V._≟_.
 
   _≟V₁_ : (x y : Var) → Dec T.∥ x ≡ y ∥
-  _≟V₁_ = T.decidable→decidable-∥∥ V._≟_
+  _≟V₁_ = T.ΠΠ-Dec→ΠΠ-Dec-∥∥ V._≟_
 
   _≟V₂_ : (x y : Var) → E.Dec-Erased T.∥ x ≡ y ∥
   x ≟V₂ y = E.Dec→Dec-Erased (x ≟V₁ y)
@@ -284,8 +285,8 @@ Closed′-var≃ {xs = xs} {x = x} =
                                         →≃¬→¬
                                           (λ _ _ → T.truncation-is-proposition)
                                           (λ _ → Dec-map
-                                                   (from-equivalence $ inverse S.∥∈∥≃∈-from-List)
-                                                   (S.member? _≟V₁_ _ _))
+                                                   (from-equivalence $ inverse SM.∥∈∥≃∈-from-List)
+                                                   (SM.member? _≟V₁_ _ _))
                                           ext) ⟩
   (∀ y → y ≡ x → ∥ y ∈ xs ∥)        ↝⟨ (∀-cong ext λ _ → →-cong₁ ext ≡-comm) ⟩
   (∀ y → x ≡ y → ∥ y ∈ xs ∥)        ↝⟨ inverse $ ∀-intro _ ext ⟩□
@@ -441,34 +442,34 @@ mutual
 
   free :
     (e : Exp) →
-    ∃ λ (fs : Finite-subset-of Var) → ∀ x → (x S.∈ fs) ⇔ (x ∈FV e)
+    ∃ λ (fs : Finite-subset-of Var) → ∀ x → (x SM.∈ fs) ⇔ (x ∈FV e)
   free (apply e₁ e₂) =
     Σ-zip S._∪_
       (λ {fs₁ fs₂} hyp₁ hyp₂ x →
-         x S.∈ fs₁ S.∪ fs₂          ↔⟨ S.∈∪≃ ⟩
-         x S.∈ fs₁ T.∥⊎∥ x S.∈ fs₂  ↝⟨ T.Dec→∥∥⇔ (Dec-⊎ (S.member? _≟V₁_ _ _)
-                                                        (S.member? _≟V₁_ _ _)) ⟩
-         x S.∈ fs₁ ⊎ x S.∈ fs₂      ↝⟨ hyp₁ x ⊎-cong hyp₂ x ⟩
-         x ∈FV e₁ ⊎ x ∈FV e₂        ↔⟨ inverse ∈apply ⟩□
-         x ∈FV apply e₁ e₂          □)
+         x SM.∈ fs₁ S.∪ fs₂           ↔⟨ SM.∈∪≃ ⟩
+         x SM.∈ fs₁ T.∥⊎∥ x SM.∈ fs₂  ↝⟨ T.Dec→∥∥⇔ (Dec-⊎ (SM.member? _≟V₁_ _ _)
+                                                          (SM.member? _≟V₁_ _ _)) ⟩
+         x SM.∈ fs₁ ⊎ x SM.∈ fs₂      ↝⟨ hyp₁ x ⊎-cong hyp₂ x ⟩
+         x ∈FV e₁ ⊎ x ∈FV e₂          ↔⟨ inverse ∈apply ⟩□
+         x ∈FV apply e₁ e₂            □)
       (free e₁) (free e₂)
   free (lambda x e) =
-    Σ-map (S.delete _≟V₂_ x)
+    Σ-map (SM.delete _≟V₂_ x)
       (λ {fs} hyp y →
-         y S.∈ S.delete _≟V₂_ x fs  ↔⟨ S.∈delete≃ _≟V₂_ ⟩
-         y ≢ x × y S.∈ fs           ↝⟨ (∃-cong λ _ → hyp y) ⟩
-         y ≢ x × y ∈FV e            ↔⟨ inverse ∈lambda ⟩□
-         y ∈FV lambda x e           □)
+         y SM.∈ SM.delete _≟V₂_ x fs  ↔⟨ SM.∈delete≃ _≟V₂_ ⟩
+         y ≢ x × y SM.∈ fs            ↝⟨ (∃-cong λ _ → hyp y) ⟩
+         y ≢ x × y ∈FV e              ↔⟨ inverse ∈lambda ⟩□
+         y ∈FV lambda x e             □)
       (free e)
   free (case e bs) =
     Σ-zip S._∪_
       (λ {fs₁ fs₂} hyp₁ hyp₂ x →
-         x S.∈ fs₁ S.∪ fs₂                              ↔⟨ S.∈∪≃ ⟩
+         x SM.∈ fs₁ S.∪ fs₂                             ↔⟨ SM.∈∪≃ ⟩
 
-         x S.∈ fs₁ T.∥⊎∥ x S.∈ fs₂                      ↝⟨ T.Dec→∥∥⇔ (Dec-⊎ (S.member? _≟V₁_ _ _)
-                                                                            (S.member? _≟V₁_ _ _)) ⟩
+         x SM.∈ fs₁ T.∥⊎∥ x SM.∈ fs₂                    ↝⟨ T.Dec→∥∥⇔ (Dec-⊎ (SM.member? _≟V₁_ _ _)
+                                                                            (SM.member? _≟V₁_ _ _)) ⟩
 
-         x S.∈ fs₁ ⊎ x S.∈ fs₂                          ↝⟨ hyp₁ x ⊎-cong hyp₂ x ⟩
+         x SM.∈ fs₁ ⊎ x SM.∈ fs₂                        ↝⟨ hyp₁ x ⊎-cong hyp₂ x ⟩
 
          (x ∈FV e ⊎
           ∃ λ c → ∃ λ xs → ∃ λ e′ →
@@ -477,24 +478,24 @@ mutual
          x ∈FV case e bs                                □)
       (free e) (free-B⋆ bs)
   free (rec x e) =
-    Σ-map (S.delete _≟V₂_ x)
+    Σ-map (SM.delete _≟V₂_ x)
       (λ {fs} hyp y →
-         y S.∈ S.delete _≟V₂_ x fs  ↔⟨ S.∈delete≃ _≟V₂_ ⟩
-         y ≢ x × y S.∈ fs           ↝⟨ (∃-cong λ _ → hyp y) ⟩
-         y ≢ x × y ∈FV e            ↔⟨ inverse ∈rec ⟩□
-         y ∈FV rec x e              □)
+         y SM.∈ SM.delete _≟V₂_ x fs  ↔⟨ SM.∈delete≃ _≟V₂_ ⟩
+         y ≢ x × y SM.∈ fs            ↝⟨ (∃-cong λ _ → hyp y) ⟩
+         y ≢ x × y ∈FV e              ↔⟨ inverse ∈rec ⟩□
+         y ∈FV rec x e                □)
       (free e)
   free (var x) =
       S.singleton x
     , λ y →
-        y S.∈ S.singleton x  ↔⟨ S.∈singleton≃ ⟩
-        T.∥ y ≡ x ∥          ↔⟨ T.∥∥↔ V.Name-set ⟩
-        y ≡ x                ↔⟨ inverse ∈var ⟩□
-        y ∈FV var x          □
+        y SM.∈ S.singleton x  ↔⟨ SM.∈singleton≃ ⟩
+        T.∥ y ≡ x ∥           ↔⟨ T.∥∥↔ V.Name-set ⟩
+        y ≡ x                 ↔⟨ inverse ∈var ⟩□
+        y ∈FV var x           □
   free (const c es) =
     Σ-map id
       (λ {fs} hyp x →
-         x S.∈ fs                    ↝⟨ hyp x ⟩
+         x SM.∈ fs                   ↝⟨ hyp x ⟩
          (∃ λ e → x ∈FV e × e ∈ es)  ↔⟨ inverse ∈const ⟩□
          x ∈FV const c es            □)
       (free-⋆ es)
@@ -502,11 +503,11 @@ mutual
   free-⋆ :
     (es : List Exp) →
     ∃ λ (fs : Finite-subset-of Var) →
-      ∀ x → (x S.∈ fs) ⇔ (∃ λ e → x ∈FV e × e ∈ es)
+      ∀ x → (x SM.∈ fs) ⇔ (∃ λ e → x ∈FV e × e ∈ es)
   free-⋆ [] =
       S.[]
     , λ x →
-        x S.∈ S.[]                  ↔⟨ S.∈[]≃ ⟩
+        x SM.∈ S.[]                 ↔⟨ SM.∈[]≃ ⟩
         ⊥                           ↔⟨ inverse ×-right-zero ⟩
         Exp × ⊥₀                    ↔⟨ (∃-cong λ _ → inverse ×-right-zero) ⟩
         (∃ λ e → x ∈FV e × ⊥)       ↔⟨⟩
@@ -514,10 +515,10 @@ mutual
   free-⋆ (e ∷ es) =
     Σ-zip S._∪_
       (λ {fs₁ fs₂} hyp₁ hyp₂ x →
-         x S.∈ fs₁ S.∪ fs₂                                            ↔⟨ S.∈∪≃ ⟩
-         x S.∈ fs₁ T.∥⊎∥ x S.∈ fs₂                                    ↝⟨ T.Dec→∥∥⇔ (Dec-⊎ (S.member? _≟V₁_ _ _)
-                                                                                          (S.member? _≟V₁_ _ _)) ⟩
-         x S.∈ fs₁ ⊎ x S.∈ fs₂                                        ↝⟨ hyp₁ x ⊎-cong hyp₂ x ⟩
+         x SM.∈ fs₁ S.∪ fs₂                                           ↔⟨ SM.∈∪≃ ⟩
+         x SM.∈ fs₁ T.∥⊎∥ x SM.∈ fs₂                                  ↝⟨ T.Dec→∥∥⇔ (Dec-⊎ (SM.member? _≟V₁_ _ _)
+                                                                                          (SM.member? _≟V₁_ _ _)) ⟩
+         x SM.∈ fs₁ ⊎ x SM.∈ fs₂                                      ↝⟨ hyp₁ x ⊎-cong hyp₂ x ⟩
          x ∈FV e ⊎ (∃ λ e′ → x ∈FV e′ × e′ ∈ es)                      ↔⟨ inverse $
                                                                          (drop-⊤-right λ _ → _⇔_.to contractible⇔↔⊤ $
                                                                           singleton-contractible _)
@@ -539,20 +540,20 @@ mutual
     (b : Br) →
     ∃ λ (fs : Finite-subset-of Var) →
       ∀ x →
-      (x S.∈ fs) ⇔
+      (x SM.∈ fs) ⇔
       (∃ λ c → ∃ λ xs → ∃ λ e →
          x ∈FV e × branch c xs e ≡ b × ¬ x ∈ xs)
   free-B (branch c xs e) =
-    Σ-map (λ fs → S.minus _≟V₂_ fs (S.from-List xs))
+    Σ-map (λ fs → SM.minus _≟V₂_ fs (S.from-List xs))
       (λ {fs} hyp x →
-         x S.∈ S.minus _≟V₂_ fs (S.from-List xs)                       ↔⟨ S.∈minus≃ ⟩
+         x SM.∈ SM.minus _≟V₂_ fs (S.from-List xs)                     ↔⟨ SM.∈minus≃ ⟩
 
-         x S.∈ fs × x S.∉ S.from-List xs                               ↔⟨ (∃-cong λ _ → ¬-cong ext $ inverse
-                                                                           S.∥∈∥≃∈-from-List) ⟩
+         x SM.∈ fs × x SM.∉ S.from-List xs                             ↔⟨ (∃-cong λ _ → ¬-cong ext $ inverse
+                                                                           SM.∥∈∥≃∈-from-List) ⟩
 
-         x S.∈ fs × ¬ T.∥ x ∈ xs ∥                                     ↔⟨ (∃-cong λ _ → T.¬∥∥↔¬) ⟩
+         x SM.∈ fs × ¬ T.∥ x ∈ xs ∥                                    ↔⟨ (∃-cong λ _ → T.¬∥∥↔¬) ⟩
 
-         x S.∈ fs × ¬ x ∈ xs                                           ↝⟨ hyp x ×-cong F.id ⟩
+         x SM.∈ fs × ¬ x ∈ xs                                          ↝⟨ hyp x ×-cong F.id ⟩
 
          x ∈FV e × ¬ x ∈ xs                                            ↔⟨ (inverse $ drop-⊤-right λ _ →
                                                                            ×-left-identity F.∘ ×-left-identity) ⟩
@@ -608,13 +609,13 @@ mutual
     (bs : List Br) →
     ∃ λ (fs : Finite-subset-of Var) →
       ∀ x →
-      (x S.∈ fs) ⇔
+      (x SM.∈ fs) ⇔
       (∃ λ c → ∃ λ xs → ∃ λ e →
          x ∈FV e × branch c xs e ∈ bs × ¬ x ∈ xs)
   free-B⋆ [] =
       S.[]
     , λ x →
-        x S.∈ S.[]                                         ↔⟨ S.∈[]≃ ⟩
+        x SM.∈ S.[]                                        ↔⟨ SM.∈[]≃ ⟩
 
         ⊥                                                  ↔⟨ (inverse $
                                                                ×-right-zero {ℓ₁ = lzero} F.∘
@@ -633,12 +634,12 @@ mutual
   free-B⋆ (b ∷ bs) =
     Σ-zip S._∪_
       (λ {fs₁ fs₂} hyp₁ hyp₂ x →
-         x S.∈ fs₁ S.∪ fs₂                                ↔⟨ S.∈∪≃ ⟩
+         x SM.∈ fs₁ S.∪ fs₂                               ↔⟨ SM.∈∪≃ ⟩
 
-         x S.∈ fs₁ T.∥⊎∥ x S.∈ fs₂                        ↝⟨ T.Dec→∥∥⇔ (Dec-⊎ (S.member? _≟V₁_ _ _)
-                                                                              (S.member? _≟V₁_ _ _)) ⟩
+         x SM.∈ fs₁ T.∥⊎∥ x SM.∈ fs₂                      ↝⟨ T.Dec→∥∥⇔ (Dec-⊎ (SM.member? _≟V₁_ _ _)
+                                                                              (SM.member? _≟V₁_ _ _)) ⟩
 
-         x S.∈ fs₁ ⊎ x S.∈ fs₂                            ↝⟨ hyp₁ x ⊎-cong hyp₂ x ⟩
+         x SM.∈ fs₁ ⊎ x SM.∈ fs₂                          ↝⟨ hyp₁ x ⊎-cong hyp₂ x ⟩
 
          (∃ λ c → ∃ λ xs → ∃ λ e →
             x ∈FV e × branch c xs e ≡ b × ¬ x ∈ xs) ⊎
@@ -667,15 +668,15 @@ mutual
 
 fresh′ :
   (xs : Finite-subset-of Var) (e : Exp) →
-  ∃ λ (x : Var) → ¬ x ∈FV e × x S.∉ xs
+  ∃ λ (x : Var) → ¬ x ∈FV e × x SM.∉ xs
 fresh′ xs e =
   Σ-map id
     (λ {x} →
-       x S.∉ proj₁ (free e) S.∪ xs              ↔⟨ ¬-cong ext S.∈∪≃ ⟩
-       ¬ (x S.∈ proj₁ (free e) T.∥⊎∥ x S.∈ xs)  ↔⟨ T.¬∥∥↔¬ ⟩
-       ¬ (x S.∈ proj₁ (free e) ⊎ x S.∈ xs)      ↝⟨ ¬⊎↔¬×¬ _ ⟩
-       x S.∉ proj₁ (free e) × x S.∉ xs          ↔⟨ ¬-cong-⇔ ext (proj₂ (free e) x) ×-cong F.id ⟩□
-       ¬ x ∈FV e × x S.∉ xs                     □)
+       x SM.∉ proj₁ (free e) S.∪ xs               ↔⟨ ¬-cong ext SM.∈∪≃ ⟩
+       ¬ (x SM.∈ proj₁ (free e) T.∥⊎∥ x SM.∈ xs)  ↔⟨ T.¬∥∥↔¬ ⟩
+       ¬ (x SM.∈ proj₁ (free e) ⊎ x SM.∈ xs)      ↝⟨ ¬⊎↔¬×¬ _ ⟩
+       x SM.∉ proj₁ (free e) × x SM.∉ xs          ↔⟨ ¬-cong-⇔ ext (proj₂ (free e) x) ×-cong F.id ⟩□
+       ¬ x ∈FV e × x SM.∉ xs                      □)
     (V.fresh (proj₁ (free e) S.∪ xs))
 
 -- It is possible to find a variable that is not free in a given
@@ -689,24 +690,24 @@ fresh e = Σ-map id proj₁ (fresh′ S.[] e)
 -- for both expressions.
 
 fresh′-unique :
-  (∀ x → x S.∉ xs → x ∈FV e₁ ⇔ x ∈FV e₂) →
+  (∀ x → x SM.∉ xs → x ∈FV e₁ ⇔ x ∈FV e₂) →
   proj₁ (fresh′ xs e₁) ≡ proj₁ (fresh′ xs e₂)
 fresh′-unique {xs = xs} {e₁ = e₁} {e₂ = e₂} same =
   proj₁ (V.fresh (proj₁ (free e₁) S.∪ xs))  ≡⟨ (cong (proj₁ ∘ V.fresh) $
-                                                _≃_.from S.extensionality λ x →
-      x S.∈ proj₁ (free e₁) S.∪ xs                ↝⟨ lemma x e₁ ⟩
-      x S.∉ xs × x ∈FV e₁ T.∥⊎∥ x S.∈ xs          ↝⟨ ∃-cong (same x) T.∥⊎∥-cong F.id ⟩
-      x S.∉ xs × x ∈FV e₂ T.∥⊎∥ x S.∈ xs          ↝⟨ inverse $ lemma x e₂ ⟩□
-      x S.∈ proj₁ (free e₂) S.∪ xs                □) ⟩∎
+                                                _≃_.from SM.extensionality λ x →
+      x SM.∈ proj₁ (free e₁) S.∪ xs               ↝⟨ lemma x e₁ ⟩
+      x SM.∉ xs × x ∈FV e₁ T.∥⊎∥ x SM.∈ xs        ↝⟨ ∃-cong (same x) T.∥⊎∥-cong F.id ⟩
+      x SM.∉ xs × x ∈FV e₂ T.∥⊎∥ x SM.∈ xs        ↝⟨ inverse $ lemma x e₂ ⟩□
+      x SM.∈ proj₁ (free e₂) S.∪ xs               □) ⟩∎
 
   proj₁ (V.fresh (proj₁ (free e₂) S.∪ xs))  ∎
   where
   lemma : ∀ _ _ → _ ⇔ _
   lemma x e =
-    x S.∈ proj₁ (free e) S.∪ xs          ↔⟨ S.∈∪≃ ⟩
-    x S.∈ proj₁ (free e) T.∥⊎∥ x S.∈ xs  ↝⟨ proj₂ (free e) x T.∥⊎∥-cong F.id ⟩
-    x ∈FV e T.∥⊎∥ x S.∈ xs               ↔⟨ T.∥⊎∥≃¬×∥⊎∥ $ T.Dec→Dec-∥∥ $ S.member? _≟V₁_ x xs ⟩□
-    x S.∉ xs × x ∈FV e T.∥⊎∥ x S.∈ xs    □
+    x SM.∈ proj₁ (free e) S.∪ xs           ↔⟨ SM.∈∪≃ ⟩
+    x SM.∈ proj₁ (free e) T.∥⊎∥ x SM.∈ xs  ↝⟨ proj₂ (free e) x T.∥⊎∥-cong F.id ⟩
+    x ∈FV e T.∥⊎∥ x SM.∈ xs                ↔⟨ T.∥⊎∥≃¬×∥⊎∥ $ T.Dec→Dec-∥∥ $ SM.member? _≟V₁_ x xs ⟩□
+    x SM.∉ xs × x ∈FV e T.∥⊎∥ x SM.∈ xs    □
 
 -- If two expressions have the same free variables, then fresh returns
 -- the same fresh variable for both expressions.
