@@ -8,7 +8,7 @@ open import Equality.Propositional.Cubical
 open import Prelude hiding (id; swap)
 
 import Finite-subset.Listed equality-with-paths as S
-import Finite-subset.Listed.Membership equality-with-paths as SM
+import Finite-subset.Listed.Membership.Erased equality-with-paths as SM
 
 -- To simplify the development, let's work with actual natural numbers
 -- as variables and constants (see

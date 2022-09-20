@@ -11,12 +11,12 @@ open import Prelude
 open import Bag-equivalence equality-with-J
 open import Bijection equality-with-J as Bijection using (_↔_)
 open import Equality.Decidable-UIP equality-with-J
-open import Equality.Path.Isomorphisms.Univalence equality-with-paths
 open import Equivalence equality-with-J as Eq using (_≃_)
+import Erased.Cubical equality-with-paths as E
 open import Finite-subset.Listed equality-with-paths as S
   using (Finite-subset-of)
-open import Finite-subset.Listed.Membership equality-with-paths as SM
-  using (_∉_)
+open import Finite-subset.Listed.Membership.Erased equality-with-paths
+  as SM using (_∉_)
 open import Function-universe equality-with-J hiding (id)
 open import H-level equality-with-J
 open import H-level.Closure equality-with-J
@@ -84,14 +84,15 @@ record Atoms : Type₁ where
     ∃ λ (n : Name) → n ∉ ns
   fresh ns =
     Σ-map name
-      (λ {m} →
-         →-cong-→
-           (name m SM.∈ ns                        ↝⟨ (λ ∈ns → ∣ name m , ∈ns
-                                                             , _≃_.right-inverse-of countably-infinite _
-                                                              ∣) ⟩
-            ∥ (∃ λ n → n SM.∈ ns × code n ≡ m) ∥  ↔⟨ inverse SM.∈map≃ ⟩□
-            m SM.∈ S.map code ns                  □)
-           id)
+      (λ {m} → E.Stable-Π (λ _ → E.Stable-¬)
+         E.[ →-cong-→
+               (name m SM.∈ ns                        ↝⟨ (λ ∈ns → ∣ name m , ∈ns
+                                                                  , _≃_.right-inverse-of countably-infinite _
+                                                                  ∣) ⟩
+                ∥ (∃ λ n → n SM.∈ ns × code n ≡ m) ∥  ↔⟨ inverse SM.∈map≃ ⟩□
+                m SM.∈ S.map code ns                  □)
+               id
+           ])
       (SM.fresh (S.map code ns))
 
   -- Name is a set.
@@ -123,10 +124,11 @@ record χ-atoms : Type₁ where
 χ-atoms.const-atoms χ-ℕ-atoms = ℕ-atoms
 χ-atoms.var-atoms   χ-ℕ-atoms = ℕ-atoms
 
--- The type of atoms is equivalent to the unit type.
+-- The type of atoms is equivalent to the unit type (assuming
+-- univalence).
 
-Atoms≃⊤ : Atoms ≃ ⊤
-Atoms≃⊤ =
+Atoms≃⊤ : Univalence lzero → Atoms ≃ ⊤
+Atoms≃⊤ univ =
   Atoms                           ↔⟨ eq ⟩
   (∃ λ (Name : Type) → Name ≃ ℕ)  ↔⟨ singleton-with-≃-↔-⊤ ext univ ⟩□
   ⊤                               □
@@ -146,12 +148,13 @@ Atoms≃⊤ =
     ; left-inverse-of = λ _ → refl
     }
 
--- The χ-atoms type is equivalent to the unit type.
+-- The χ-atoms type is equivalent to the unit type (assuming
+-- univalence).
 
-χ-atoms≃⊤ : χ-atoms ≃ ⊤
-χ-atoms≃⊤ =
+χ-atoms≃⊤ : Univalence lzero → χ-atoms ≃ ⊤
+χ-atoms≃⊤ univ =
   χ-atoms        ↔⟨ eq ⟩
-  Atoms × Atoms  ↝⟨ Atoms≃⊤ ×-cong Atoms≃⊤ ⟩
+  Atoms × Atoms  ↝⟨ Atoms≃⊤ univ ×-cong Atoms≃⊤ univ ⟩
   ⊤ × ⊤          ↔⟨ ×-right-identity ⟩□
   ⊤              □
   where
@@ -171,22 +174,25 @@ Atoms≃⊤ =
     }
 
 -- If a property holds for one choice of atoms, then it holds for any
--- other choice of atoms.
+-- other choice of atoms (assuming univalence).
 
 invariant :
+  Univalence lzero →
   ∀ {p} (P : χ-atoms → Type p) →
   ∀ a₁ a₂ → P a₁ → P a₂
-invariant P a₁ a₂ =
-  subst P (prop a₁ a₂)
+invariant univ P a₁ a₂ = subst P (prop a₁ a₂)
   where
   prop : Is-proposition χ-atoms
-  prop = mono₁ 0 $ _⇔_.from contractible⇔↔⊤ $ from-equivalence χ-atoms≃⊤
+  prop =
+    mono₁ 0 $ _⇔_.from contractible⇔↔⊤ $ from-equivalence $
+    χ-atoms≃⊤ univ
 
 -- If a property holds for χ-ℕ-atoms, then it holds for any choice of
--- atoms.
+-- atoms (assuming univalence).
 
 one-can-restrict-attention-to-χ-ℕ-atoms :
+  Univalence lzero →
   ∀ {p} (P : χ-atoms → Type p) →
   P χ-ℕ-atoms → ∀ a → P a
-one-can-restrict-attention-to-χ-ℕ-atoms P p a =
-  invariant P χ-ℕ-atoms a p
+one-can-restrict-attention-to-χ-ℕ-atoms univ P p a =
+  invariant univ P χ-ℕ-atoms a p
