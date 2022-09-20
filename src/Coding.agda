@@ -10,8 +10,8 @@ open import Equality.Propositional
 open import Prelude hiding (const)
 open import Tactic.By.Propositional
 
-open import Bijection equality-with-J as Bijection using (_↔_)
 open import Equality.Decision-procedures equality-with-J
+open import Equivalence equality-with-J as Eq using (_≃_)
 open import Function-universe equality-with-J hiding (id; _∘_)
 open import Injection equality-with-J using (Injective)
 open import List equality-with-J using (foldr)
@@ -98,10 +98,10 @@ record Code {a b} (A : Type a) (B : Type b) : Type (a ⊔ b) where
 
 open Code ⦃ … ⦄ public
 
--- Converts bijections to encoders.
+-- Converts equivalences to encoders.
 
-↔→Code : ∀ {a b} {A : Type a} {B : Type b} → A ↔ B → Code A B
-↔→Code A↔B = record
+≃→Code : ∀ {a b} {A : Type a} {B : Type b} → A ≃ B → Code A B
+≃→Code A≃B = record
   { code        = to
   ; decode      = λ b → just (from b)
   ; decode∘code = λ a →
@@ -109,12 +109,12 @@ open Code ⦃ … ⦄ public
       just a              ∎
   }
   where
-  open _↔_ A↔B
+  open _≃_ A≃B
 
 -- An identity encoder.
 
 id-code : ∀ {a} {A : Type a} → Code A A
-id-code = ↔→Code Bijection.id
+id-code = ≃→Code Eq.id
 
 -- Composition of encoders.
 
@@ -335,12 +335,12 @@ code-ℕ = record
 -- Encoder for variables.
 
 code-Var : Code Var Consts
-code-Var = code-ℕ ∘-code ↔→Code V.countably-infinite
+code-Var = code-ℕ ∘-code ≃→Code V.countably-infinite
 
 -- Encoder for constants.
 
 code-Const : Code Const Consts
-code-Const = code-ℕ ∘-code ↔→Code C.countably-infinite
+code-Const = code-ℕ ∘-code ≃→Code C.countably-infinite
 
 -- Encoders for products.
 

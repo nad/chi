@@ -36,13 +36,14 @@ record Atoms : Type₁ where
 
     -- The type must be countably infinite.
 
-    countably-infinite : Name ↔ ℕ
+    countably-infinite : Name ≃ ℕ
 
   -- Atoms have decidable equality.
 
   _≟_ : Decidable-equality Name
   _≟_ = Bijection.decidable-equality-respects
-          (inverse countably-infinite) Nat._≟_
+          (from-equivalence $ inverse countably-infinite)
+          Nat._≟_
 
   -- Membership test.
 
@@ -57,15 +58,15 @@ record Atoms : Type₁ where
   -- Conversions.
 
   name : ℕ → Name
-  name = _↔_.from countably-infinite
+  name = _≃_.from countably-infinite
 
   code : Name → ℕ
-  code = _↔_.to countably-infinite
+  code = _≃_.to countably-infinite
 
   -- The name function is injective.
 
   name-injective : Injective name
-  name-injective = _↔_.injective (inverse countably-infinite)
+  name-injective = _≃_.injective (inverse countably-infinite)
 
   -- Distinct natural numbers are mapped to distinct names.
 
@@ -86,7 +87,7 @@ record Atoms : Type₁ where
       (λ {m} →
          →-cong-→
            (name m SM.∈ ns                        ↝⟨ (λ ∈ns → ∣ name m , ∈ns
-                                                             , _↔_.right-inverse-of countably-infinite _
+                                                             , _≃_.right-inverse-of countably-infinite _
                                                               ∣) ⟩
             ∥ (∃ λ n → n SM.∈ ns × code n ≡ m) ∥  ↔⟨ inverse SM.∈map≃ ⟩□
             m SM.∈ S.map code ns                  □)
@@ -102,7 +103,7 @@ record Atoms : Type₁ where
 
 ℕ-atoms : Atoms
 Atoms.Name               ℕ-atoms = ℕ
-Atoms.countably-infinite ℕ-atoms = Bijection.id
+Atoms.countably-infinite ℕ-atoms = Eq.id
 
 -- Two sets of atoms, one for constants and one for variables.
 
@@ -122,18 +123,17 @@ record χ-atoms : Type₁ where
 χ-atoms.const-atoms χ-ℕ-atoms = ℕ-atoms
 χ-atoms.var-atoms   χ-ℕ-atoms = ℕ-atoms
 
--- The type of atoms is isomorphic to the unit type.
+-- The type of atoms is equivalent to the unit type.
 
-Atoms↔⊤ : Atoms ↔ ⊤
-Atoms↔⊤ =
-  Atoms                           ↝⟨ eq ⟩
-  (∃ λ (Name : Type) → Name ↔ ℕ)  ↝⟨ ∃-cong (λ _ → Eq.↔↔≃′ ext ℕ-set) ⟩
-  (∃ λ (Name : Type) → Name ≃ ℕ)  ↝⟨ singleton-with-≃-↔-⊤ ext univ ⟩□
+Atoms≃⊤ : Atoms ≃ ⊤
+Atoms≃⊤ =
+  Atoms                           ↔⟨ eq ⟩
+  (∃ λ (Name : Type) → Name ≃ ℕ)  ↔⟨ singleton-with-≃-↔-⊤ ext univ ⟩□
   ⊤                               □
   where
   open Atoms
 
-  eq : Atoms ↔ ∃ λ (Name : Type) → Name ↔ ℕ
+  eq : Atoms ↔ ∃ λ (Name : Type) → Name ≃ ℕ
   eq = record
     { surjection = record
       { logical-equivalence = record
@@ -146,13 +146,13 @@ Atoms↔⊤ =
     ; left-inverse-of = λ _ → refl
     }
 
--- The χ-atoms type is isomorphic to the unit type.
+-- The χ-atoms type is equivalent to the unit type.
 
-χ-atoms↔⊤ : χ-atoms ↔ ⊤
-χ-atoms↔⊤ =
-  χ-atoms        ↝⟨ eq ⟩
-  Atoms × Atoms  ↝⟨ Atoms↔⊤ ×-cong Atoms↔⊤ ⟩
-  ⊤ × ⊤          ↝⟨ ×-right-identity ⟩□
+χ-atoms≃⊤ : χ-atoms ≃ ⊤
+χ-atoms≃⊤ =
+  χ-atoms        ↔⟨ eq ⟩
+  Atoms × Atoms  ↝⟨ Atoms≃⊤ ×-cong Atoms≃⊤ ⟩
+  ⊤ × ⊤          ↔⟨ ×-right-identity ⟩□
   ⊤              □
   where
   open χ-atoms
@@ -177,7 +177,10 @@ invariant :
   ∀ {p} (P : χ-atoms → Type p) →
   ∀ a₁ a₂ → P a₁ → P a₂
 invariant P a₁ a₂ =
-  subst P (mono₁ 0 (_⇔_.from contractible⇔↔⊤ χ-atoms↔⊤) a₁ a₂)
+  subst P (prop a₁ a₂)
+  where
+  prop : Is-proposition χ-atoms
+  prop = mono₁ 0 $ _⇔_.from contractible⇔↔⊤ $ from-equivalence χ-atoms≃⊤
 
 -- If a property holds for χ-ℕ-atoms, then it holds for any choice of
 -- atoms.
