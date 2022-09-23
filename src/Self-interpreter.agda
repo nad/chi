@@ -16,56 +16,8 @@ open import Chi            χ-ℕ-atoms
 open import Constants      χ-ℕ-atoms
 open import Free-variables χ-ℕ-atoms
 
-open χ-atoms χ-ℕ-atoms
-
 open import Combinators
-
--- Substitution.
-
-internal-subst : Exp
-internal-subst = lambda v-x (lambda v-new body)
-  module Internal-subst where
-  private
-    rec-or-lambda : _ → _
-    rec-or-lambda = λ c →
-      branch c (v-y ∷ v-e ∷ []) (
-        case (equal-ℕ (var v-x) (var v-y)) (
-          branch c-true [] (const c (var v-y ∷ var v-e ∷ [])) ∷
-          branch c-false [] (
-            const c (var v-y ∷ apply (var v-subst) (var v-e) ∷ [])) ∷
-          []))
-
-  branches =
-    branch c-apply (v-e₁ ∷ v-e₂ ∷ []) (
-      const c-apply (apply (var v-subst) (var v-e₁) ∷
-                     apply (var v-subst) (var v-e₂) ∷ [])) ∷
-    branch c-case (v-e ∷ v-bs ∷ []) (
-      const c-case (
-        apply (var v-subst) (var v-e) ∷
-        apply (var v-subst) (var v-bs) ∷ [])) ∷
-    rec-or-lambda c-rec ∷
-    rec-or-lambda c-lambda ∷
-    branch c-const (v-c ∷ v-es ∷ []) (
-      const c-const (var v-c ∷ apply (var v-subst) (var v-es) ∷ [])) ∷
-    branch c-var (v-y ∷ []) (
-      case (equal-ℕ (var v-x) (var v-y)) (
-        branch c-true [] (var v-new) ∷
-        branch c-false [] (const c-var (var v-y ∷ [])) ∷ [])) ∷
-    branch c-branch (v-c ∷ v-ys ∷ v-e ∷ []) (
-      const c-branch (
-        var v-c ∷
-        var v-ys ∷
-        case (member (var v-x) (var v-ys)) (
-          branch c-true [] (var v-e) ∷
-          branch c-false [] (apply (var v-subst) (var v-e)) ∷
-          []) ∷ [])) ∷
-    branch c-nil [] (const c-nil []) ∷
-    branch c-cons (v-e ∷ v-es ∷ []) (
-      const c-cons (apply (var v-subst) (var v-e) ∷
-                    apply (var v-subst) (var v-es) ∷ [])) ∷
-    []
-
-  body = rec v-subst (lambda v-e (case (var v-e) branches))
+open import Internal-substitution
 
 -- Searches for a branch matching a given natural number.
 
@@ -77,20 +29,6 @@ internal-lookup =
         case (equal-ℕ (var v-c) (var v-c′)) (
           branch c-false [] (apply (var v-lookup) (var v-bs)) ∷
           branch c-true [] (var v-b) ∷ [])) ∷ [])) ∷ []))))
-
--- Tries to apply multiple substitutions.
-
-internal-substs : Exp
-internal-substs =
-  rec v-substs (lambda v-xs (lambda v-es (lambda v-e′ (
-    case (var v-xs) (
-      branch c-nil [] (case (var v-es) (
-        branch c-nil [] (var v-e′) ∷ [])) ∷
-      branch c-cons (v-x ∷ v-xs ∷ []) (case (var v-es) (
-        branch c-cons (v-e ∷ v-es ∷ []) (
-          apply (apply (apply internal-subst (var v-x)) (var v-e))
-            (apply (apply (apply (var v-substs) (var v-xs))
-               (var v-es)) (var v-e′))) ∷ [])) ∷ [])))))
 
 -- A map function. The application of map to the function is done at
 -- the meta-level in order to simplify proofs.

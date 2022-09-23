@@ -4,11 +4,12 @@
 
 module Combinators where
 
-open import Equality.Propositional
+open import Equality.Propositional.Cubical
 open import Prelude hiding (id; if_then_else_; not; const)
 open import Tactic.By.Propositional
 
 open import Equality.Decision-procedures equality-with-J
+open import H-level.Closure equality-with-J
 import Nat equality-with-J as Nat
 
 -- To simplify the development, let's work with actual natural numbers
@@ -199,6 +200,20 @@ private
     v ≡ ⌜ Prelude.if m Nat.≟ n then true else false ⌝
   equal-ℕ-correct′ m n p =
     ⇓-deterministic p (equal-ℕ-correct m n)
+
+equal-ℕ-correct-ℕ-atoms :
+  ∀ m n →
+  equal-ℕ ⌜ m ⌝ ⌜ n ⌝ ⇓
+  ⌜ Prelude.if Atoms._≟_ ℕ-atoms m n then true else false ⌝
+equal-ℕ-correct-ℕ-atoms m n =
+  subst
+    {x = m Nat.≟ n}
+    {y = Atoms._≟_ ℕ-atoms m n}
+    (λ (x : Dec (m ≡ n)) →
+       equal-ℕ ⌜ m ⌝ ⌜ n ⌝ ⇓
+       ⌜ Prelude.if x then true else false ⌝)
+    (Dec-closure-propositional ext ℕ-set _ _)
+    (equal-ℕ-correct m n)
 
 -- Membership of a list of natural numbers.
 

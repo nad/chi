@@ -100,6 +100,10 @@ import Recursion-without-rec
 
 import Expression-size
 
+-- Internal substitution.
+
+import Internal-substitution
+
 -- A self-interpreter (without correctness proof).
 
 import Self-interpreter
