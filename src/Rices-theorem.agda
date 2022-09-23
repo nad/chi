@@ -52,6 +52,7 @@ open import Values        χ-ℕ-atoms
 open χ-atoms χ-ℕ-atoms
 
 open import Combinators as χ hiding (id; if_then_else_)
+open import Free-variables.Remove-substs
 open import Halting-problem
 open import Internal-coding
 
@@ -193,24 +194,7 @@ module _
             const c-apply (
               ⌜ eval ⌝ [ v-p ← ⌜ p ⌝ ] ∷
               apply (internal-code [ v-p ← ⌜ p ⌝ ]) ⌜ p ⌝ ∷
-                []) ∷ []) ∷ [])                                        ≡⟨ cong (λ e → const _ (_ ∷ const _ (const _ (_ ∷
-                                                                                        const _ (e ∷ _) ∷ _) ∷ _) ∷ _))
-                                                                               (subst-rep (proj₁ e)) ⟩⟶
-        const c-lambda (⌜ v-x ⌝ ∷
-          const c-apply (
-            ⌜ Exp.lambda v-underscore (apply (proj₁ e) (var v-x)) ⌝ ∷
-            const c-apply (
-              ⟨ ⌜ eval ⌝ [ v-p ← ⌜ p ⌝ ] ⟩ ∷
-              apply (internal-code [ v-p ← ⌜ p ⌝ ]) ⌜ p ⌝ ∷
-                []) ∷ []) ∷ [])                                        ≡⟨ ⟨by⟩ (subst-rep eval) ⟩⟶
-
-        const c-lambda (⌜ v-x ⌝ ∷
-          const c-apply (
-            ⌜ Exp.lambda v-underscore (apply (proj₁ e) (var v-x)) ⌝ ∷
-            const c-apply (
-              ⌜ eval ⌝ ∷
-              apply ⟨ internal-code [ v-p ← ⌜ p ⌝ ] ⟩ ⌜ p ⌝ ∷
-                []) ∷ []) ∷ [])                                        ≡⟨ ⟨by⟩ (subst-closed _ _ internal-code-closed) ⟩⟶
+                []) ∷ []) ∷ [])                                        ≡⟨ remove-substs ((internal-code , internal-code-closed) ∷ []) ⟩⟶
 
         const c-lambda (⌜ v-x ⌝ ∷
           const c-apply (

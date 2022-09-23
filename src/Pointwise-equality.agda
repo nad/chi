@@ -39,6 +39,7 @@ open Computable-function
 open χ-atoms χ-ℕ-atoms
 
 open import Combinators hiding (id; if_then_else_)
+open import Free-variables.Remove-substs
 
 -- Pointwise equality of computable functions to Bool.
 
@@ -225,8 +226,8 @@ pointwise-equal-Bool =
         (var f [ v-p ← ⌜ p ⌝ ] ∷ ⌜ ⌜ b ⌝ ⦂ Exp ⌝ [ v-p ← ⌜ p ⌝ ] ∷ [])))  ≡⟨ cong (λ e → decode-Bool (apply _ (const _ (e ∷ _))))
                                                                                (subst-∉ v-p (var f) λ { (var p≡f) → p≢f p≡f }) ⟩
       decode-Bool (apply eval (const c-apply
-        (var f ∷ ⌜ ⌜ b ⌝ ⦂ Exp ⌝ [ v-p ← ⌜ p ⌝ ] ∷ [])))                  ≡⟨ cong (λ e → decode-Bool (apply _ (const _ (_ ∷ e ∷ _))))
-                                                                               (subst-rep (⌜ b ⌝ ⦂ Exp)) ⟩
+        (var f ∷ ⌜ ⌜ b ⌝ ⦂ Exp ⌝ [ v-p ← ⌜ p ⌝ ] ∷ [])))                  ≡⟨ remove-substs [] ⟩
+
       decode-Bool (apply eval (const c-apply
         (var f ∷ ⌜ ⌜ b ⌝ ⦂ Exp ⌝ ∷ [])))                                  ≡⟨⟩
 

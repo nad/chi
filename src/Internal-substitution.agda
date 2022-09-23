@@ -26,6 +26,7 @@ open import Values         χ-ℕ-atoms
 
 open import Coding.Instances.Nat
 open import Combinators
+open import Free-variables.Remove-substs
 
 open χ-atoms χ-ℕ-atoms using (Var; module V)
 
@@ -167,20 +168,7 @@ internal-subst-correct₁ {e = e} {x = x} {e′ = e′} =
         apply (sub [ v-e₂ ← ⌜ e₂ ⌝ ] [ v-e₁ ← ⌜ e₁ ⌝ ]) ⌜ e₁ ⌝ ∷
         apply (sub [ v-e₂ ← ⌜ e₂ ⌝ ] [ v-e₁ ← ⌜ e₁ ⌝ ])
               (⌜ e₂ ⌝ [ v-e₁ ← ⌜ e₁ ⌝ ]) ∷
-        [])                                                       ≡⟨ cong (λ e → const c-apply (
-                                                                             apply (sub [ v-e₂ ← ⌜ e₂ ⌝ ] [ v-e₁ ← ⌜ e₁ ⌝ ]) ⌜ e₁ ⌝ ∷
-                                                                             apply (sub [ v-e₂ ← ⌜ e₂ ⌝ ] [ v-e₁ ← ⌜ e₁ ⌝ ]) e ∷
-                                                                             [])) $
-                                                                     subst-rep e₂ ⟩⟶
-      const c-apply (
-        apply (sub [ v-e₂ ← ⌜ e₂ ⌝ ] [ v-e₁ ← ⌜ e₁ ⌝ ]) ⌜ e₁ ⌝ ∷
-        apply (sub [ v-e₂ ← ⌜ e₂ ⌝ ] [ v-e₁ ← ⌜ e₁ ⌝ ]) ⌜ e₂ ⌝ ∷
-        [])                                                       ≡⟨ cong₂ (λ e₁′ e₂′ → const c-apply (
-                                                                              apply e₁′ ⌜ e₁ ⌝ ∷
-                                                                              apply e₂′ ⌜ e₂ ⌝ ∷
-                                                                              []))
-                                                                       (substs-closed sub sub-closed ((v-e₁ , _) ∷ (v-e₂ , _) ∷ []))
-                                                                       (substs-closed sub sub-closed ((v-e₁ , _) ∷ (v-e₂ , _) ∷ [])) ⟩⟶
+        [])                                                       ≡⟨ remove-substs ((sub , sub-closed) ∷ []) ⟩⟶
 
       const c-apply (apply sub ⌜ e₁ ⌝ ∷ apply sub ⌜ e₂ ⌝ ∷ [])    ⇓⟨ const (sub-Exp e₁ ∷ sub-Exp e₂ ∷ []) ⟩■
 
@@ -205,28 +193,8 @@ internal-subst-correct₁ {e = e} {x = x} {e′ = e′} =
             apply (sub [ v-e ← ⌜ e ⌝ ] [ v-y ← ⌜ y ⌝ ])
               (⌜ e ⌝ [ v-y ← ⌜ y ⌝ ]) ∷
             [])) ∷
-        [])                                                       ≡⟨ cong₂ (λ e₁ e₂ → case (equal-ℕ e₁ ⌜ y ⌝) (
-                                                                              branch c-true [] (
-                                                                                const c-lambda (⌜ y ⌝ ∷ ⌜ e ⌝ [ v-y ← ⌜ y ⌝ ] ∷ [])) ∷
-                                                                              branch c-false [] (
-                                                                                const c-lambda (
-                                                                                  ⌜ y ⌝ ∷ apply e₂ (⌜ e ⌝ [ v-y ← ⌜ y ⌝ ]) ∷ [])) ∷
-                                                                              []))
-                                                                       (substs-rep x (_ ∷ _ ∷ _ ∷ _ ∷ []))
-                                                                       (substs-closed sub sub-closed ((v-y , _) ∷ (v-e , ⌜ e ⌝) ∷ [])) ⟩⟶
-      case (equal-ℕ ⌜ x ⌝ ⌜ y ⌝) (
-        branch c-true [] (
-          const c-lambda (⌜ y ⌝ ∷ ⌜ e ⌝ [ v-y ← ⌜ y ⌝ ] ∷ [])) ∷
-        branch c-false [] (
-          const c-lambda (
-            ⌜ y ⌝ ∷ apply sub (⌜ e ⌝ [ v-y ← ⌜ y ⌝ ]) ∷ [])) ∷
-        [])                                                       ≡⟨ cong (λ e → case (equal-ℕ ⌜ x ⌝ ⌜ y ⌝) (
-                                                                             branch c-true [] (
-                                                                               const c-lambda (⌜ y ⌝ ∷ e ∷ [])) ∷
-                                                                             branch c-false [] (
-                                                                               const c-lambda (⌜ y ⌝ ∷ apply sub e ∷ [])) ∷
-                                                                             [])) $
-                                                                     subst-rep e ⟩⟶
+        [])                                                       ≡⟨ remove-substs ((sub , sub-closed) ∷ []) ⟩⟶
+
       case (equal-ℕ ⌜ x ⌝ ⌜ y ⌝) (
         branch c-true [] (
           const c-lambda (⌜ y ⌝ ∷ ⌜ e ⌝ ∷ [])) ∷
@@ -279,9 +247,7 @@ internal-subst-correct₁ {e = e} {x = x} {e′ = e′} =
         apply (sub [ v-bs ← ⌜ bs ⌝ ] [ v-e ← ⌜ e ⌝ ]) ⌜ e ⌝ ∷
         apply (sub [ v-bs ← ⌜ bs ⌝ ] [ v-e ← ⌜ e ⌝ ])
           (⌜ bs ⌝ [ v-e ← ⌜ e ⌝ ]) ∷
-        [])                                                    ≡⟨ cong₂ (λ e₁ e₂ → const c-case (apply e₁ ⌜ e ⌝ ∷ apply e₁ e₂ ∷ []))
-                                                                    (substs-closed sub sub-closed ((v-e , ⌜ e ⌝) ∷ (v-bs , _) ∷ []))
-                                                                    (subst-rep bs) ⟩⟶
+        [])                                                    ≡⟨ remove-substs ((sub , sub-closed) ∷ []) ⟩⟶
 
       const c-case (apply sub ⌜ e ⌝ ∷ apply sub ⌜ bs ⌝ ∷ [])   ⇓⟨ const (sub-Exp e ∷ sub-Brs bs ∷ []) ⟩■
 
@@ -306,28 +272,8 @@ internal-subst-correct₁ {e = e} {x = x} {e′ = e′} =
             apply (sub [ v-e ← ⌜ e ⌝ ] [ v-y ← ⌜ y ⌝ ])
               (⌜ e ⌝ [ v-y ← ⌜ y ⌝ ]) ∷
             [])) ∷
-        [])                                                     ≡⟨ cong₂ (λ e₁ e₂ → case (equal-ℕ e₁ ⌜ y ⌝) (
-                                                                            branch c-true [] (
-                                                                              const c-rec (⌜ y ⌝ ∷ ⌜ e ⌝ [ v-y ← ⌜ y ⌝ ] ∷ [])) ∷
-                                                                            branch c-false [] (
-                                                                              const c-rec (
-                                                                                ⌜ y ⌝ ∷ apply e₂ (⌜ e ⌝ [ v-y ← ⌜ y ⌝ ]) ∷ [])) ∷
-                                                                            []))
-                                                                     (substs-rep x (_ ∷ _ ∷ _ ∷ _ ∷ []))
-                                                                     (substs-closed sub sub-closed ((v-y , _) ∷ (v-e , ⌜ e ⌝) ∷ [])) ⟩⟶
-      case (equal-ℕ ⌜ x ⌝ ⌜ y ⌝) (
-        branch c-true [] (
-          const c-rec (⌜ y ⌝ ∷ ⌜ e ⌝ [ v-y ← ⌜ y ⌝ ] ∷ [])) ∷
-        branch c-false [] (
-          const c-rec (
-            ⌜ y ⌝ ∷ apply sub (⌜ e ⌝ [ v-y ← ⌜ y ⌝ ]) ∷ [])) ∷
-        [])                                                     ≡⟨ cong (λ e → case (equal-ℕ ⌜ x ⌝ ⌜ y ⌝) (
-                                                                           branch c-true [] (
-                                                                             const c-rec (⌜ y ⌝ ∷ e ∷ [])) ∷
-                                                                           branch c-false [] (
-                                                                             const c-rec (⌜ y ⌝ ∷ apply sub e ∷ [])) ∷
-                                                                           [])) $
-                                                                   subst-rep e ⟩⟶
+        [])                                                     ≡⟨ remove-substs ((sub , sub-closed) ∷ []) ⟩⟶
+
       case (equal-ℕ ⌜ x ⌝ ⌜ y ⌝) (
         branch c-true [] (
           const c-rec (⌜ y ⌝ ∷ ⌜ e ⌝ ∷ [])) ∷
@@ -384,11 +330,8 @@ internal-subst-correct₁ {e = e} {x = x} {e′ = e′} =
         branch c-true [] (⌜ e′ ⌝ [ v-subst ← sub ]
                                  [ v-e ← ⌜ Exp.var y ⌝ ]
                                  [ v-y ← ⌜ y ⌝ ]) ∷
-        branch c-false [] (const c-var (⌜ y ⌝ ∷ [])) ∷ [])  ≡⟨ cong₂ (λ e₁ e₂ → case (equal-ℕ e₁ ⌜ y ⌝) (
-                                                                        branch c-true [] e₂ ∷
-                                                                        branch c-false [] (const c-var (⌜ y ⌝ ∷ [])) ∷ []))
-                                                                 (substs-rep x (_ ∷ _ ∷ _ ∷ _ ∷ []))
-                                                                 (substs-rep e′ (_ ∷ _ ∷ _ ∷ [])) ⟩⟶
+        branch c-false [] (const c-var (⌜ y ⌝ ∷ [])) ∷ [])  ≡⟨ remove-substs [] ⟩⟶
+
       case (equal-ℕ ⌜ x ⌝ ⌜ y ⌝) (
         branch c-true [] ⌜ e′ ⌝ ∷
         branch c-false [] (const c-var (⌜ y ⌝ ∷ [])) ∷ [])  ⇓⟨ var-lemma _ (x V.≟ y) (equal-ℕ-correct-ℕ-atoms x y) ⟩■
@@ -427,10 +370,7 @@ internal-subst-correct₁ {e = e} {x = x} {e′ = e′} =
         apply (sub [ v-e ← ⌜ Exp.const c es ⌝ ]
                    [ v-es ← ⌜ es ⌝ ]
                    [ v-c ← ⌜ c ⌝ ])
-          (⌜ es ⌝ [ v-c ← ⌜ c ⌝ ]) ∷ [])                        ≡⟨ cong₂ (λ e₁ e₂ → const c-const (⌜ c ⌝ ∷ apply e₁ e₂ ∷ []))
-                                                                     (substs-closed sub sub-closed
-                                                                        ((v-c , _) ∷ (v-es , _) ∷ (v-e , ⌜ Exp.const c es ⌝) ∷ []))
-                                                                     (subst-rep es) ⟩⟶
+          (⌜ es ⌝ [ v-c ← ⌜ c ⌝ ]) ∷ [])                        ≡⟨ remove-substs ((sub , sub-closed) ∷ []) ⟩⟶
 
       const c-const (⌜ c ⌝ ∷ apply sub ⌜ es ⌝ ∷ [])             ⇓⟨ const (rep⇓rep c ∷ sub-Exps es ∷ []) ⟩■
 
@@ -465,9 +405,7 @@ internal-subst-correct₁ {e = e} {x = x} {e′ = e′} =
         apply (sub [ v-es ← ⌜ es ⌝ ] [ v-e ← ⌜ e ⌝ ]) ⌜ e ⌝ ∷
         apply (sub [ v-es ← ⌜ es ⌝ ] [ v-e ← ⌜ e ⌝ ])
           (⌜ es ⌝ [ v-e ← ⌜ e ⌝ ]) ∷
-        [])                                                    ≡⟨ cong₂ (λ e₁ e₂ → const c-cons (apply e₁ ⌜ e ⌝ ∷ apply e₁ e₂ ∷ []))
-                                                                    (substs-closed sub sub-closed ((v-e , ⌜ e ⌝) ∷ (v-es , _) ∷ []))
-                                                                    (subst-rep es) ⟩⟶
+        [])                                                    ≡⟨ remove-substs ((sub , sub-closed) ∷ []) ⟩⟶
 
       const c-cons (apply sub ⌜ e ⌝ ∷ apply sub ⌜ es ⌝ ∷ [])   ⇓⟨ const (sub-Exp e ∷ sub-Exps es ∷ []) ⟩■
 
@@ -500,39 +438,8 @@ internal-subst-correct₁ {e = e} {x = x} {e′ = e′} =
                      [ v-c ← ⌜ c ⌝ ])
               (⌜ e ⌝ [ v-ys ← ⌜ ys ⌝ ] [ v-c ← ⌜ c ⌝ ])) ∷
           []) ∷
-        [])                                                             ≡⟨ cong₂ (λ e₁ e₂ → const c-branch (
-                                                                                    ⌜ c ⌝ ∷
-                                                                                    ⌜ ys ⌝ [ v-c ← ⌜ c ⌝ ] ∷
-                                                                                    case (member e₁ (⌜ ys ⌝ [ v-c ← ⌜ c ⌝ ])) (
-                                                                                      branch c-true [] (
-                                                                                        ⌜ e ⌝ [ v-ys ← ⌜ ys ⌝ ] [ v-c ← ⌜ c ⌝ ]) ∷
-                                                                                      branch c-false [] (
-                                                                                        apply e₂ (⌜ e ⌝ [ v-ys ← ⌜ ys ⌝ ] [ v-c ← ⌜ c ⌝ ])) ∷
-                                                                                      []) ∷
-                                                                                    []))
-                                                                             (substs-rep x
-                                                                                ((v-c , _) ∷ (v-ys , _) ∷ (v-e , _) ∷
-                                                                                 (v-subst , _) ∷ (v-new , _) ∷ []))
-                                                                             (substs-closed sub sub-closed
-                                                                                ((v-c , _) ∷ (v-ys , _) ∷ (v-e , ⌜ e ⌝) ∷ [])) ⟩⟶
-      const c-branch (
-        ⌜ c ⌝ ∷
-        ⌜ ys ⌝ [ v-c ← ⌜ c ⌝ ] ∷
-        case (member ⌜ x ⌝ (⌜ ys ⌝ [ v-c ← ⌜ c ⌝ ])) (
-          branch c-true [] (⌜ e ⌝ [ v-ys ← ⌜ ys ⌝ ] [ v-c ← ⌜ c ⌝ ]) ∷
-          branch c-false [] (
-            apply sub (⌜ e ⌝ [ v-ys ← ⌜ ys ⌝ ] [ v-c ← ⌜ c ⌝ ])) ∷
-          []) ∷
-        [])                                                             ≡⟨ cong₂ (λ e₁ e₂ → const c-branch (
-                                                                                    ⌜ c ⌝ ∷
-                                                                                    e₁ ∷
-                                                                                    case (member ⌜ x ⌝ e₁) (
-                                                                                      branch c-true [] e₂ ∷
-                                                                                      branch c-false [] (apply sub e₂) ∷
-                                                                                      []) ∷
-                                                                                    []))
-                                                                             (subst-rep ys)
-                                                                             (substs-rep e ((v-c , _) ∷ (v-ys , _) ∷ [])) ⟩⟶
+        [])                                                             ≡⟨ remove-substs ((sub , sub-closed) ∷ []) ⟩⟶
+
       const c-branch (
         ⌜ c ⌝ ∷
         ⌜ ys ⌝ ∷
@@ -611,9 +518,7 @@ internal-subst-correct₁ {e = e} {x = x} {e′ = e′} =
         apply (sub [ v-es ← ⌜ bs ⌝ ] [ v-e ← ⌜ b ⌝ ]) ⌜ b ⌝ ∷
         apply (sub [ v-es ← ⌜ bs ⌝ ] [ v-e ← ⌜ b ⌝ ])
           (⌜ bs ⌝ [ v-e ← ⌜ b ⌝ ]) ∷
-        [])                                                    ≡⟨ cong₂ (λ e₁ e₂ → const c-cons (apply e₁ ⌜ b ⌝ ∷ apply e₁ e₂ ∷ []))
-                                                                    (substs-closed sub sub-closed ((v-e , ⌜ b ⌝) ∷ (v-es , _) ∷ []))
-                                                                    (subst-rep bs) ⟩⟶
+        [])                                                    ≡⟨ remove-substs ((sub , sub-closed) ∷ []) ⟩⟶
 
       const c-cons (apply sub ⌜ b ⌝ ∷ apply sub ⌜ bs ⌝ ∷ [])   ⇓⟨ const (sub-Br b ∷ sub-Brs bs ∷ []) ⟩■
 
@@ -671,18 +576,8 @@ internal-substs-correct₁ {e = e} {xs = xs} {es = es} {e′ = e′} p =
           (apply (apply (apply internal-substs (var v-xs)) (var v-es))
              ⌜ e ⌝)) ∷
       [])) ∷
-    [])                                                                 ≡⟨ cong₂ (λ e₁ e₂ → case e₁ (
-                                                                                    branch c-nil [] (case e₂ (
-                                                                                      branch c-nil [] ⌜ e ⌝ ∷ [])) ∷
-                                                                                    branch c-cons (v-x ∷ v-xs ∷ []) (case e₂ (
-                                                                                      branch c-cons (v-e ∷ v-es ∷ []) (
-                                                                                        apply (apply (apply internal-subst (var v-x)) (var v-e))
-                                                                                          (apply (apply (apply internal-substs (var v-xs)) (var v-es))
-                                                                                             ⌜ e ⌝)) ∷
-                                                                                      [])) ∷
-                                                                                    []))
-                                                                             (substs-rep xs ((v-e′ , _) ∷ (v-es , _) ∷ []))
-                                                                             (subst-rep es) ⟩⟶
+    [])                                                                 ≡⟨ remove-substs [] ⟩⟶
+
   case ⌜ xs ⌝ (
     branch c-nil [] (case ⌜ es ⌝ (
       branch c-nil [] ⌜ e ⌝ ∷ [])) ∷
@@ -745,23 +640,8 @@ internal-substs-correct₁ {e = e} {xs = xs} {es = es} {e′ = e′} p =
           (apply (apply (apply internal-substs (⌜ xs ⌝ [ v-x ← ⌜ x ⌝ ]))
                     (var v-es))
              (⌜ e ⌝ [ v-xs ← ⌜ xs ⌝ ] [ v-x ← ⌜ x ⌝ ]))) ∷
-      [])                                                                 ≡⟨ trans
-                                                                               (cong₂ (λ e₁ e₂ → case e₁ (
-                                                                                         branch c-cons (v-e ∷ v-es ∷ []) (
-                                                                                           apply (apply (apply internal-subst ⌜ x ⌝) (var v-e))
-                                                                                             (apply (apply (apply internal-substs e₂) (var v-es))
-                                                                                                (⌜ e ⌝ [ v-xs ← ⌜ xs ⌝ ] [ v-x ← ⌜ x ⌝ ]))) ∷
-                                                                                         []))
-                                                                                  (substs-rep (e′ ∷ es′) ((v-x , _) ∷ (v-xs , _) ∷ []))
-                                                                                  (subst-rep xs))
-                                                                               (cong (λ e → case ⌜ e′ ∷ es′ ⌝ (
-                                                                                        branch c-cons (v-e ∷ v-es ∷ []) (
-                                                                                          apply (apply (apply internal-subst ⌜ x ⌝) (var v-e))
-                                                                                            (apply (apply (apply internal-substs ⌜ xs ⌝)
-                                                                                                      (var v-es))
-                                                                                               e)) ∷
-                                                                                        [])) $
-                                                                                substs-rep e ((v-x , _) ∷ (v-xs , _) ∷ [])) ⟩⟶
+      [])                                                                 ≡⟨ remove-substs [] ⟩⟶
+
     case ⌜ e′ ∷ es′ ⌝ (
       branch c-cons (v-e ∷ v-es ∷ []) (
         apply (apply (apply internal-subst ⌜ x ⌝) (var v-e))
@@ -775,17 +655,8 @@ internal-substs-correct₁ {e = e} {xs = xs} {es = es} {e′ = e′} p =
       (apply (apply (apply internal-substs
                        (⌜ xs ⌝ [ v-es ← ⌜ es′ ⌝ ] [ v-e ← ⌜ e′ ⌝ ]))
                 (⌜ es′ ⌝ [ v-e ← ⌜ e′ ⌝ ]))
-         (⌜ e ⌝ [ v-es ← ⌜ es′ ⌝ ] [ v-e ← ⌜ e′ ⌝ ]))                     ≡⟨ trans
-                                                                               (cong₂ (λ e₁ e₂ → apply (apply (apply internal-subst e₁) ⌜ e′ ⌝)
-                                                                                         (apply (apply (apply internal-substs e₂)
-                                                                                                   (⌜ es′ ⌝ [ v-e ← ⌜ e′ ⌝ ]))
-                                                                                            (⌜ e ⌝ [ v-es ← ⌜ es′ ⌝ ] [ v-e ← ⌜ e′ ⌝ ])))
-                                                                                  (substs-rep x ((v-e , _) ∷ (v-es , _) ∷ []))
-                                                                                  (substs-rep xs ((v-e , _) ∷ (v-es , _) ∷ [])))
-                                                                               (cong₂ (λ e₁ e₂ → apply (apply (apply internal-subst ⌜ x ⌝) ⌜ e′ ⌝)
-                                                                                         (apply (apply (apply internal-substs ⌜ xs ⌝) e₁) e₂))
-                                                                                  (subst-rep es′)
-                                                                                  (substs-rep e ((v-e , _) ∷ (v-es , _) ∷ []))) ⟩⟶
+         (⌜ e ⌝ [ v-es ← ⌜ es′ ⌝ ] [ v-e ← ⌜ e′ ⌝ ]))                     ≡⟨ remove-substs [] ⟩⟶
+
     apply (apply (apply internal-subst ⌜ x ⌝) ⌜ e′ ⌝)
       (apply (apply (apply internal-substs ⌜ xs ⌝) ⌜ es′ ⌝) ⌜ e ⌝)        ⟶⟨ []⇓ (apply→ ∙) (internal-substs-correct₁ p) ⟩
 
@@ -816,20 +687,19 @@ internal-substs-correct₂ {e = e} {xs = xs} {es = es} {v = v}
             (apply (apply (apply internal-substs (var v-xs)) (var v-es))
                ⌜ e ⌝)) ∷
         [])) ∷
-      [])                                                                 ≡⟨ sym $
-                                                                             cong₂ (λ x es → case x (
-                                                                                      branch c-nil [] (case es (
-                                                                                        branch c-nil [] ⌜ e ⌝ ∷ [])) ∷
-                                                                                      branch c-cons (v-x ∷ v-xs ∷ []) (case es (
-                                                                                        branch c-cons (v-e ∷ v-es ∷ []) (
-                                                                                          apply (apply (apply internal-subst (var v-x)) (var v-e))
-                                                                                            (apply (apply (apply internal-substs (var v-xs))
-                                                                                                      (var v-es))
-                                                                                               ⌜ e ⌝)) ∷
-                                                                                        [])) ∷
-                                                                                      []))
-                                                                               (substs-rep xs ((v-e′ , _) ∷ (v-es , _) ∷ []))
-                                                                               (subst-rep es) ⟩⟶
+      [])                                                                 ≡⟨ sym $ remove-substs [] ⟩⟶
+
+    case (⌜ xs ⌝ [ v-es ← ⌜ es ⌝ ] [ v-e′ ← ⌜ e ⌝ ]) (
+      branch c-nil [] (case (⌜ es ⌝ [ v-e′ ← ⌜ e ⌝ ]) (
+        branch c-nil [] ⌜ e ⌝ ∷ [])) ∷
+      branch c-cons (v-x ∷ v-xs ∷ []) (case (⌜ es ⌝ [ v-e′ ← ⌜ e ⌝ ]) (
+        branch c-cons (v-e ∷ v-es ∷ []) (
+          apply (apply (apply internal-subst (var v-x)) (var v-e))
+            (apply (apply (apply internal-substs (var v-xs)) (var v-es))
+               ⌜ e ⌝)) ∷
+        [])) ∷
+      [])                                                                 ⟶⟨⟩
+
     body′ [ v-substs ← internal-substs ] [ v-xs ← ⌜ xs ⌝ ]
       [ v-es ← ⌜ es ⌝ ] [ v-e′ ← ⌜ e ⌝ ]                                  ≡⟨ trans
                                                                                (cong (λ xs → body′ [ v-substs ← internal-substs ]
@@ -875,16 +745,8 @@ internal-substs-correct₂ {e = e} {xs = xs} {es = es} {v = v}
           here (∷ ∷ []) p)) =
     lemma′ (
       apply (apply (apply internal-subst ⌜ x ⌝) ⌜ e′ ⌝)
-        (apply (apply (apply internal-substs ⌜ xs ⌝) ⌜ es′ ⌝) ⌜ e ⌝)      ≡⟨ sym $
-                                                                             cong₂ apply
-                                                                               (cong (λ x → apply (apply internal-subst x) ⌜ e′ ⌝) $
-                                                                                substs-rep x ((v-e , _) ∷ (v-es , _) ∷ []))
-                                                                               (cong₂ apply
-                                                                                  (cong₂ (λ xs es′ → apply (apply internal-substs xs) es′)
-                                                                                     (substs-rep xs ((v-e , _) ∷ (v-es , _) ∷ (v-x , _) ∷ []))
-                                                                                     (subst-rep es′))
-                                                                                  (substs-rep e
-                                                                                     ((v-e , _) ∷ (v-es , _) ∷ (v-x , _) ∷ (v-xs , _) ∷ []))) ⟩⟶
+        (apply (apply (apply internal-substs ⌜ xs ⌝) ⌜ es′ ⌝) ⌜ e ⌝)      ≡⟨ sym $ remove-substs [] ⟩⟶
+
       apply (apply (apply internal-subst
                       (⌜ x ⌝ [ v-es ← es″ ] [ v-e ← e″ ]))
                ⌜ e′ ⌝)
@@ -918,13 +780,13 @@ internal-substs-correct₂ {e = e} {xs = xs} {es = es} {v = v}
     where
     ⌜e′⌝⇓e″ : ⌜ e′ ⌝ ⇓ e″
     ⌜e′⌝⇓e″ =
-      ⌜ e′ ⌝                              ≡⟨ sym $ substs-rep e′ ((v-x , _) ∷ (v-xs , _) ∷ []) ⟩⟶
+      ⌜ e′ ⌝                              ≡⟨ sym $ remove-substs [] ⟩⟶
       ⌜ e′ ⌝ [ v-xs ← xs′ ] [ v-x ← x′ ]  ⇓⟨ ⌜e′⌝[xs←xs′][x←x′]⇓e″ ⟩■
       e″
 
     ⌜es′⌝⇓es″ : ⌜ es′ ⌝ ⇓ es″
     ⌜es′⌝⇓es″ =
-      ⌜ es′ ⌝                              ≡⟨ sym $ substs-rep es′ ((v-x , _) ∷ (v-xs , _) ∷ []) ⟩⟶
+      ⌜ es′ ⌝                              ≡⟨ sym $ remove-substs [] ⟩⟶
       ⌜ es′ ⌝ [ v-xs ← xs′ ] [ v-x ← x′ ]  ⇓⟨ ⌜es′⌝[xs←xs′][x←x′]⇓es″ ⟩■
       es″
 

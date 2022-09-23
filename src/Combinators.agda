@@ -31,6 +31,7 @@ open import Values         χ-ℕ-atoms
 open χ-atoms χ-ℕ-atoms
 
 import Coding.Instances.Nat
+open import Free-variables.Remove-substs
 
 ------------------------------------------------------------------------
 -- A non-terminating expression
@@ -115,9 +116,9 @@ equal-ℕ-correct m n =
 
   apply (apply equal-ℕ′ ⌜ m ⌝) ⌜ n ⌝                ⟶⟨ apply (apply (rec lambda) (rep⇓rep m) lambda) (rep⇓rep n) ⟩
 
-  case ⟨ ⌜ m ⌝ [ v-n ← ⌜ n ⌝ ] ⟩
+  case (⌜ m ⌝ [ v-n ← ⌜ n ⌝ ])
     (branches [ v-equal ← equal-ℕ′ ]B⋆
-              [ v-m ← ⌜ m ⌝ ]B⋆ [ v-n ← ⌜ n ⌝ ]B⋆)  ≡⟨ ⟨by⟩ (subst-rep m) ⟩⟶
+              [ v-m ← ⌜ m ⌝ ]B⋆ [ v-n ← ⌜ n ⌝ ]B⋆)  ≡⟨ remove-substs [] ⟩⟶
 
   case ⌜ m ⌝
     (branches [ v-equal ← equal-ℕ′ ]B⋆
@@ -168,15 +169,15 @@ equal-ℕ-correct m n =
       (branches [ v-equal ← equal-ℕ′ ]B⋆
                 [ v-m ← ⌜ suc m ⌝ ]B⋆ [ v-n ← ⌜ suc n ⌝ ]B⋆)    ⟶⟨ case (rep⇓rep (suc m)) (there (λ ()) here) (∷ []) ⟩
 
-    case ⟨ ⌜ suc n ⌝ [ v-m ← ⌜ m ⌝ ] ⟩
+    case (⌜ suc n ⌝ [ v-m ← ⌜ m ⌝ ])
       (suc-branches [ v-equal ← equal-ℕ′ ]B⋆ [ v-m ← ⌜ m ⌝ ]B⋆
-                    [ v-n ← ⌜ suc n ⌝ ]B⋆)                      ≡⟨ ⟨by⟩ (subst-rep (suc n)) ⟩⟶
+                    [ v-n ← ⌜ suc n ⌝ ]B⋆)                      ≡⟨ remove-substs [] ⟩⟶
 
     case ⌜ suc n ⌝
       (suc-branches [ v-equal ← equal-ℕ′ ]B⋆ [ v-m ← ⌜ m ⌝ ]B⋆
                     [ v-n ← ⌜ suc n ⌝ ]B⋆)                      ⟶⟨ case (rep⇓rep (suc n)) (there (λ ()) here) (∷ []) ⟩
 
-    apply (apply equal-ℕ′ ⟨ ⌜ m ⌝ [ v-n ← ⌜ n ⌝ ] ⟩) ⌜ n ⌝      ≡⟨ ⟨by⟩ (subst-rep m) ⟩⟶
+    apply (apply equal-ℕ′ (⌜ m ⌝ [ v-n ← ⌜ n ⌝ ])) ⌜ n ⌝        ≡⟨ remove-substs [] ⟩⟶
 
     apply (apply equal-ℕ′ ⌜ m ⌝) ⌜ n ⌝                          ⟶⟨⟩
 
@@ -287,13 +288,13 @@ member-correct m ns =
       (branches [ v-x ← ⌜ m ⌝ ]B⋆
                 [ v-member ← body [ v-x ← ⌜ m ⌝ ] ]B⋆)         ⟶⟨ case (rep⇓rep (n List.∷ ns)) (there (λ ()) here) (∷ ∷ []) ⟩
 
-    case (equal-ℕ ⟨ ⌜ m ⌝ [ v-member ← body [ v-x ← ⌜ m ⌝ ] ]
-                          [ v-xs ← ⌜ ns ⌝ ] [ v-y ← ⌜ n ⌝ ] ⟩
+    case (equal-ℕ (⌜ m ⌝ [ v-member ← body [ v-x ← ⌜ m ⌝ ] ]
+                         [ v-xs ← ⌜ ns ⌝ ] [ v-y ← ⌜ n ⌝ ])
                   ⌜ n ⌝)
       (cons-branches [ v-x ← ⌜ m ⌝ ]B⋆
                      [ v-member ← body [ v-x ← ⌜ m ⌝ ] ]B⋆
-                     [ v-xs ← ⌜ ns ⌝ ]B⋆ [ v-y ← ⌜ n ⌝ ]B⋆)    ≡⟨ ⟨by⟩ (substs-rep m ((v-y , ⌜ n ⌝) ∷ (v-xs , ⌜ ns ⌝) ∷
-                                                                                      (v-member , body [ v-x ← ⌜ m ⌝ ]) ∷ [])) ⟩⟶
+                     [ v-xs ← ⌜ ns ⌝ ]B⋆ [ v-y ← ⌜ n ⌝ ]B⋆)    ≡⟨ remove-substs [] ⟩⟶
+
     case (equal-ℕ ⌜ m ⌝ ⌜ n ⌝)
       (⟨ cons-branches [ v-x ← ⌜ m ⌝ ]B⋆ ⟩
                        [ v-member ← body [ v-x ← ⌜ m ⌝ ] ]B⋆
@@ -341,22 +342,24 @@ member-correct m ns =
 
     lemma′ (no m≢n) hyp =
       case (equal-ℕ ⌜ m ⌝ ⌜ n ⌝)
-        (cons-branches [ v-member ← body [ v-x ← ⌜ m ⌝ ] ]B⋆
-                       [ v-xs ← ⌜ ns ⌝ ]B⋆)                    ⟶⟨ case hyp (there (λ ()) here) [] ⟩
+        (cons-branches [ v-member ← body′ ]B⋆ [ v-xs ← ⌜ ns ⌝ ]B⋆)  ⟶⟨ case hyp (there (λ ()) here) [] ⟩
 
-      apply ⟨ body [ v-x ← ⌜ m ⌝ ] [ v-xs ← ⌜ ns ⌝ ] ⟩ ⌜ ns ⌝  ≡⟨ ⟨by⟩ (subst-closed v-xs ⌜ ns ⌝
-                                                                          (Closed′-closed-under-subst body-closed (rep-closed m))) ⟩⟶
+      apply (body′ [ v-xs ← ⌜ ns ⌝ ]) ⌜ ns ⌝                        ≡⟨ remove-substs ((body′ , body′-closed) ∷ []) ⟩⟶
 
-      apply (body [ v-x ← ⌜ m ⌝ ]) ⌜ ns ⌝                      ⟶⟨ apply (rec lambda) (rep⇓rep ns) ⟩
+      apply body′ ⌜ ns ⌝                                            ⟶⟨ apply (rec lambda) (rep⇓rep ns) ⟩
 
       case ⌜ ns ⌝
         (branches [ v-x ← ⌜ m ⌝ ]B⋆
-                  [ v-member ← body [ v-x ← ⌜ m ⌝ ] ]B⋆)       ⇓⟨ lemma ns ⟩
+                  [ v-member ← body [ v-x ← ⌜ m ⌝ ] ]B⋆)            ⇓⟨ lemma ns ⟩
 
-      ⌜ Prelude.if V.member m      ns  then true else false ⌝  ≡⟨ cong ⌜_⌝ lem ⟩⟶
+      ⌜ Prelude.if V.member m      ns  then true else false ⌝       ≡⟨ cong ⌜_⌝ lem ⟩⟶
 
-      ⌜ Prelude.if V.member m (n ∷ ns) then true else false ⌝  ■⟨ rep-value (Prelude.if V.member m (n ∷ ns) then true else false) ⟩
+      ⌜ Prelude.if V.member m (n ∷ ns) then true else false ⌝       ■⟨ rep-value (Prelude.if V.member m (n ∷ ns) then true else false) ⟩
       where
+      body′        = body [ v-x ← ⌜ m ⌝ ]
+      body′-closed =
+        Closed′-closed-under-subst body-closed (rep-closed m)
+
       lem : Prelude.if V.member m      ns  then true else false ≡
             Prelude.if V.member m (n ∷ ns) then true else false
       lem with m Nat.≟ n

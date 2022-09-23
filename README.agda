@@ -83,6 +83,11 @@ import Coding.Instances
 
 import Coding.Instances.Nat
 
+-- A tactic that can "remove" applications of substitutions to closed
+-- expressions.
+
+import Free-variables.Remove-substs
+
 -- Internal coding.
 
 import Internal-coding
