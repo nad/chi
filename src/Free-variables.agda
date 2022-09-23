@@ -331,8 +331,8 @@ mutual
 Closed→Closed′ : ∀ {xs e} → Closed e → Closed′ xs e
 Closed→Closed′ cl x _ = cl x (λ ())
 
--- If a variable is free in e [ x ← e′ ], then it is either free in e,
--- or it is distinct from x and free in e′.
+-- If a variable is free in e [ x ← e′ ], then it is either free in e′,
+-- or it is distinct from x and free in e.
 
 mutual
 
