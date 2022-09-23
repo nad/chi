@@ -159,7 +159,7 @@ plain-rec-plain e ok = (_ , plain-subst e ok _) , _
 plain-rec-⇓ :
   ∀ e → e [ x ← plain-rec x e ] ⇓ v → plain-rec x e ⇓ v
 plain-rec-⇓ {x = x} {v = v} e ⇓v =
-  plain-rec x e                                                         ⟶⟨⟩
+  plain-rec x e                                                         ≡⟨⟩⟶
 
   apply (lambda z′
            (apply (F z′) (lambda x (e [ x ← apply (var x) id ]))))
@@ -216,7 +216,7 @@ plain-rec-⇓ {x = x} {v = v} e ⇓v =
       (lambda v-y
          (apply (var v-y)
             (lambda z′ (apply (apply (var v-x) (var v-x)) (var v-y))))
-         [ v-x ← f z′ ]                                                   ⟶⟨⟩
+         [ v-x ← f z′ ]                                                   ≡⟨⟩⟶
 
        lambda v-y
          (apply (var v-y)

@@ -112,7 +112,7 @@ equal-ℕ-correct :
   equal-ℕ ⌜ m ⌝ ⌜ n ⌝ ⇓
   ⌜ Prelude.if m Nat.≟ n then true else false ⌝
 equal-ℕ-correct m n =
-  equal-ℕ ⌜ m ⌝ ⌜ n ⌝                               ⟶⟨⟩
+  equal-ℕ ⌜ m ⌝ ⌜ n ⌝                               ≡⟨⟩⟶
 
   apply (apply equal-ℕ′ ⌜ m ⌝) ⌜ n ⌝                ⟶⟨ apply (apply (rec lambda) (rep⇓rep m) lambda) (rep⇓rep n) ⟩
 
@@ -179,7 +179,7 @@ equal-ℕ-correct m n =
 
     apply (apply equal-ℕ′ (⌜ m ⌝ [ v-n ← ⌜ n ⌝ ])) ⌜ n ⌝        ≡⟨ remove-substs [] ⟩⟶
 
-    apply (apply equal-ℕ′ ⌜ m ⌝) ⌜ n ⌝                          ⟶⟨⟩
+    apply (apply equal-ℕ′ ⌜ m ⌝) ⌜ n ⌝                          ≡⟨⟩⟶
 
     equal-ℕ ⌜ m ⌝ ⌜ n ⌝                                         ⇓⟨ equal-ℕ-correct m n ⟩
 
@@ -259,7 +259,7 @@ member-correct :
   member ⌜ m ⌝ ⌜ ns ⌝ ⇓
   ⌜ Prelude.if V.member m ns then true else false ⌝
 member-correct m ns =
-  member ⌜ m ⌝ ⌜ ns ⌝                                                   ⟶⟨⟩
+  member ⌜ m ⌝ ⌜ ns ⌝                                                   ≡⟨⟩⟶
 
   apply (apply member′ ⌜ m ⌝) ⌜ ns ⌝                                    ⟶⟨ apply (apply lambda (rep⇓rep m) (rec lambda)) (rep⇓rep ns) ⟩
 

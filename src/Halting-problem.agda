@@ -485,7 +485,7 @@ intensional-halting-problem₀ (halts , cl , hyp) =
       apply halts (const c-apply (
         ⌜ p ⌝ ∷ apply internal-code ⌜ p ⌝ ∷ []))                      ⟶⟨ []⇓ (apply→ ∙) (const (rep⇓rep p ∷ internal-code-correct p ∷ [])) ⟩
 
-      apply halts (const c-apply (⌜ p ⌝ ∷ ⌜ ⌜ p ⌝ ⦂ Exp ⌝ ∷ []))      ⟶⟨⟩
+      apply halts (const c-apply (⌜ p ⌝ ∷ ⌜ ⌜ p ⌝ ⦂ Exp ⌝ ∷ []))      ≡⟨⟩⟶
 
       apply halts ⌜ Exp.apply p ⌜ p ⌝ ⌝                               ⇓⟨ halts⇓ ⟩■
 
@@ -761,7 +761,7 @@ halts-with-zero =
     hyp₁′ p b halts[p]=b =
       apply halts ⌜ p ⌝                                                 ⟶⟨ apply lambda (rep⇓rep p) ⟩
       apply ⟨ halts-with-zero [ v-p ← ⌜ p ⌝ ] ⟩ (coded-argument ⌜ p ⌝)  ≡⟨ ⟨by⟩ (subst-closed _ _ cl) ⟩⟶
-      apply halts-with-zero (coded-argument ⌜ p ⌝)                      ⟶⟨⟩
+      apply halts-with-zero (coded-argument ⌜ p ⌝)                      ≡⟨⟩⟶
       apply halts-with-zero ⌜ argument p ⌝                              ⇓⟨ hyp₁ (argument p) b (lemma₁ p _ halts[p]=b) ⟩■
       ⌜ b ⌝
 

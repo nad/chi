@@ -698,7 +698,7 @@ internal-substs-correct₂ {e = e} {xs = xs} {es = es} {v = v}
             (apply (apply (apply internal-substs (var v-xs)) (var v-es))
                ⌜ e ⌝)) ∷
         [])) ∷
-      [])                                                                 ⟶⟨⟩
+      [])                                                                 ≡⟨⟩⟶
 
     body′ [ v-substs ← internal-substs ] [ v-xs ← ⌜ xs ⌝ ]
       [ v-es ← ⌜ es ⌝ ] [ v-e′ ← ⌜ e ⌝ ]                                  ≡⟨ trans

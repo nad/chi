@@ -185,7 +185,7 @@ module _
         (e p : Closed-exp) →
         coded-arg e [ v-p ← ⌜ p ⌝ ] ⇓ ⌜ arg e ⌜ p ⌝ ⌝
       coded-arg⇓⌜arg⌝ e p =
-        coded-arg e [ v-p ← ⌜ p ⌝ ]                                    ⟶⟨⟩
+        coded-arg e [ v-p ← ⌜ p ⌝ ]                                    ≡⟨⟩⟶
 
         const c-lambda (⌜ v-x ⌝ ∷
           const c-apply (
@@ -211,7 +211,7 @@ module _
             const c-apply (
               ⌜ eval ⌝ ∷
               ⌜ ⌜ p ⌝ ⦂ Exp ⌝ ∷
-                []) ∷ []) ∷ [])                                        ⟶⟨⟩
+                []) ∷ []) ∷ [])                                        ≡⟨⟩⟶
 
         ⌜ arg e ⌜ p ⌝ ⌝                                                ■⟨ rep-value (arg e ⌜ p ⌝) ⟩
 

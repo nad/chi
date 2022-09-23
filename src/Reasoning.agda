@@ -12,15 +12,15 @@ open import Chi    atoms
 open import Values atoms
 
 infix  -1 finally-⇓ _■⟨_⟩ _■⟨_⟩⋆
-infixr -2 step-≡⇓ step-⇓ _⟶⟨⟩_ modus-ponens-⇓
+infixr -2 step-≡⇓ step-⇓ _≡⟨⟩⟶_ modus-ponens-⇓
 
 step-≡⇓ : ∀ e₁ {e₂ e₃} → e₂ ⇓ e₃ → e₁ ≡ e₂ → e₁ ⇓ e₃
 step-≡⇓ _ e₂⇓e₃ refl = e₂⇓e₃
 
 syntax step-≡⇓ e₁ e₂⇓e₃ e₁≡e₂ = e₁ ≡⟨ e₁≡e₂ ⟩⟶ e₂⇓e₃
 
-_⟶⟨⟩_ : ∀ e₁ {e₂} → e₁ ⇓ e₂ → e₁ ⇓ e₂
-_ ⟶⟨⟩ e₁⇓e₂ = e₁⇓e₂
+_≡⟨⟩⟶_ : ∀ e₁ {e₂} → e₁ ⇓ e₂ → e₁ ⇓ e₂
+_ ≡⟨⟩⟶ e₁⇓e₂ = e₁⇓e₂
 
 mutual
 
