@@ -17,18 +17,8 @@ open import Constants      χ-ℕ-atoms
 open import Free-variables χ-ℕ-atoms
 
 open import Combinators
+open import Internal-lookup
 open import Internal-substitution
-
--- Searches for a branch matching a given natural number.
-
-internal-lookup : Exp
-internal-lookup =
-  lambda v-c (rec v-lookup (lambda v-bs (case (var v-bs) (
-    branch c-cons (v-b ∷ v-bs ∷ []) (case (var v-b) (
-      branch c-branch (v-c′ ∷ v-underscore ∷ v-underscore ∷ []) (
-        case (equal-ℕ (var v-c) (var v-c′)) (
-          branch c-false [] (apply (var v-lookup) (var v-bs)) ∷
-          branch c-true [] (var v-b) ∷ [])) ∷ [])) ∷ []))))
 
 -- A map function. The application of map to the function is done at
 -- the meta-level in order to simplify proofs.

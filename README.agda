@@ -109,6 +109,10 @@ import Expression-size
 
 import Internal-substitution
 
+-- Internal lookup.
+
+import Internal-lookup
+
 -- A self-interpreter (without correctness proof).
 
 import Self-interpreter
