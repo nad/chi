@@ -48,9 +48,10 @@ mutual
   const c es  [ x ← e′ ] = const c (es [ x ← e′ ]⋆)
 
   _[_←_]B : Br → Var → Exp → Br
-  branch c xs e [ x ← e′ ]B with V.member x xs
-  ... | yes _ = branch c xs e
-  ... | no  _ = branch c xs (e [ x ← e′ ])
+  branch c xs e [ x ← e′ ]B =
+    if V.member x xs
+    then branch c xs e
+    else branch c xs (e [ x ← e′ ])
 
   _[_←_]⋆ : List Exp → Var → Exp → List Exp
   []       [ x ← e′ ]⋆ = []
