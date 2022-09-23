@@ -40,6 +40,7 @@ open χ-atoms χ-ℕ-atoms
 
 import Coding.Instances.Nat
 open import Combinators as χ hiding (id; if_then_else_)
+open import Free-variables.Remove-substs
 open import Internal-coding
 
 ------------------------------------------------------------------------
@@ -100,9 +101,9 @@ extensional-halting-problem (halts , cl , hyp) = contradiction
   subst-lemma =
     terminv (var v-p) [ v-p ← strange ]             ≡⟨⟩
 
-    χ.if apply ⟨ halts [ v-p ← strange ] ⟩
+    χ.if apply (halts [ v-p ← strange ])
                (lambda v-underscore strange)
-    then loop else ⌜ zero ⌝                         ≡⟨ ⟨by⟩ (subst-closed _ _ cl) ⟩
+    then loop else ⌜ zero ⌝                         ≡⟨ remove-substs ((halts , cl) ∷ []) ⟩
 
     χ.if apply halts (lambda v-underscore strange)
     then loop else ⌜ zero ⌝                         ≡⟨⟩
@@ -420,9 +421,9 @@ intensional-halting-problem₁ (halts , cl , hyp) =
           apply halts ⌜ p , p ⌝ ⇓ ⌜ b ⌝ →
           apply halts′ ⌜ p ⌝ ⇓ ⌜ b ⌝
   lemma p b halts⇓ =
-    apply halts′ ⌜ p ⌝                         ⟶⟨ apply lambda (rep⇓rep p) ⟩
-    apply ⟨ halts [ v-p ← ⌜ p ⌝ ] ⟩ ⌜ p , p ⌝  ≡⟨ ⟨by⟩ (subst-closed _ _ cl) ⟩⟶
-    apply halts ⌜ p , p ⌝                      ⇓⟨ halts⇓ ⟩■
+    apply halts′ ⌜ p ⌝                       ⟶⟨ apply lambda (rep⇓rep p) ⟩
+    apply (halts [ v-p ← ⌜ p ⌝ ]) ⌜ p , p ⌝  ≡⟨ remove-substs ((halts , cl) ∷ []) ⟩⟶
+    apply halts ⌜ p , p ⌝                    ⇓⟨ halts⇓ ⟩■
     ⌜ b ⌝
 
 -- The intensional halting problem with zero arguments is not
@@ -476,12 +477,9 @@ intensional-halting-problem₀ (halts , cl , hyp) =
     lemma p b halts⇓ =
       apply halts′ ⌜ p ⌝                                              ⟶⟨ apply lambda (rep⇓rep p) ⟩
 
-      apply ⟨ halts [ v-p ← ⌜ p ⌝ ] ⟩ (const c-apply (
-        ⌜ p ⌝ ∷ apply (internal-code [ v-p ← ⌜ p ⌝ ]) ⌜ p ⌝ ∷ []))    ≡⟨ ⟨by⟩ (subst-closed _ _ cl) ⟩⟶
-
-      apply halts (const c-apply (
-        ⌜ p ⌝ ∷ apply ⟨ internal-code [ v-p ← ⌜ p ⌝ ] ⟩ ⌜ p ⌝ ∷ []))  ≡⟨ ⟨by⟩ (subst-closed v-p ⌜ p ⌝ internal-code-closed) ⟩⟶
-
+      apply (halts [ v-p ← ⌜ p ⌝ ]) (const c-apply (
+        ⌜ p ⌝ ∷ apply (internal-code [ v-p ← ⌜ p ⌝ ]) ⌜ p ⌝ ∷ []))    ≡⟨ remove-substs
+                                                                           ((halts , cl) ∷ (internal-code , internal-code-closed) ∷ []) ⟩⟶
       apply halts (const c-apply (
         ⌜ p ⌝ ∷ apply internal-code ⌜ p ⌝ ∷ []))                      ⟶⟨ []⇓ (apply→ ∙) (const (rep⇓rep p ∷ internal-code-correct p ∷ [])) ⟩
 
@@ -611,13 +609,13 @@ half-of-the-halting-problem eval cl eval⇓ eval¬⇓ =
   lemma₁ : ∀ p → Closed p → Terminates p →
            apply halts ⌜ p ⌝ ⇓ ⌜ true ⦂ Bool ⌝
   lemma₁ p cl-p (v , p⇓v) =
-    apply halts ⌜ p ⌝                             ⟶⟨ apply lambda (rep⇓rep p) ⟩
+    apply halts ⌜ p ⌝                            ⟶⟨ apply lambda (rep⇓rep p) ⟩
 
     apply (lambda v-underscore ⌜ true ⦂ Bool ⌝)
-          (apply ⟨ eval [ v-p ← ⌜ p ⌝ ] ⟩ ⌜ p ⌝)  ≡⟨ ⟨by⟩ (subst-closed _ _ cl) ⟩⟶
+          (apply (eval [ v-p ← ⌜ p ⌝ ]) ⌜ p ⌝)   ≡⟨ remove-substs ((eval , cl) ∷ []) ⟩⟶
 
     apply (lambda v-underscore ⌜ true ⦂ Bool ⌝)
-          (apply eval ⌜ p ⌝)                      ⇓⟨ apply lambda (eval⇓ p v cl-p p⇓v) (rep⇓rep (true ⦂ Bool)) ⟩■
+          (apply eval ⌜ p ⌝)                     ⇓⟨ apply lambda (eval⇓ p v cl-p p⇓v) (rep⇓rep (true ⦂ Bool)) ⟩■
 
     ⌜ true ⦂ Bool ⌝
 
@@ -628,7 +626,7 @@ half-of-the-halting-problem eval cl eval⇓ eval¬⇓ =
   halts-eval-inversion e (_ , apply {v₂ = v} lambda e⇓
                            (apply {v₂ = v₂} _ eval⇓ _)) =
     _ , (apply eval e                ⟶⟨ []⇓ (apply→ ∙) e⇓ ⟩
-         apply eval v                ≡⟨ by (subst-closed _ _ cl) ⟩⟶
+         apply eval v                ≡⟨ sym $ remove-substs ((eval , cl) ∷ []) ⟩⟶
          apply (eval [ v-p ← v ]) v  ⇓⟨ eval⇓ ⟩■
          v₂)
 
@@ -759,10 +757,10 @@ halts-with-zero =
     hyp₁′ : ∀ p b → proj₁ Intensional-halting-problem₀₁ [ p ]= b →
             apply halts ⌜ p ⌝ ⇓ ⌜ b ⌝
     hyp₁′ p b halts[p]=b =
-      apply halts ⌜ p ⌝                                                 ⟶⟨ apply lambda (rep⇓rep p) ⟩
-      apply ⟨ halts-with-zero [ v-p ← ⌜ p ⌝ ] ⟩ (coded-argument ⌜ p ⌝)  ≡⟨ ⟨by⟩ (subst-closed _ _ cl) ⟩⟶
-      apply halts-with-zero (coded-argument ⌜ p ⌝)                      ≡⟨⟩⟶
-      apply halts-with-zero ⌜ argument p ⌝                              ⇓⟨ hyp₁ (argument p) b (lemma₁ p _ halts[p]=b) ⟩■
+      apply halts ⌜ p ⌝                                               ⟶⟨ apply lambda (rep⇓rep p) ⟩
+      apply (halts-with-zero [ v-p ← ⌜ p ⌝ ]) (coded-argument ⌜ p ⌝)  ≡⟨ remove-substs ((halts-with-zero , cl) ∷ []) ⟩⟶
+      apply halts-with-zero (coded-argument ⌜ p ⌝)                    ≡⟨⟩⟶
+      apply halts-with-zero ⌜ argument p ⌝                            ⇓⟨ hyp₁ (argument p) b (lemma₁ p _ halts[p]=b) ⟩■
       ⌜ b ⌝
 
     pattern coded-argument-⇓ p =
@@ -777,7 +775,7 @@ halts-with-zero =
       apply halts ⌜ p ⌝ ⇓ v →
       apply halts-with-zero ⌜ argument p ⌝ ⇓ v
     lemma₂ p v (apply {v₂ = v₂} lambda q r) =
-      apply ⟨ halts-with-zero ⟩ ⌜ argument p ⌝                     ≡⟨ ⟨by⟩ (subst-closed _ _ cl) ⟩⟶
+      apply halts-with-zero ⌜ argument p ⌝                         ≡⟨ sym $ remove-substs ((halts-with-zero , cl) ∷ []) ⟩⟶
       apply (halts-with-zero [ v-p ← v₂ ]) (coded-argument ⌜ p ⌝)  ⟶⟨ []⇓ (apply→ ∙) (coded-argument-⇓ q) ⟩
       apply (halts-with-zero [ v-p ← v₂ ]) (coded-argument v₂)     ⇓⟨ r ⟩■
       v

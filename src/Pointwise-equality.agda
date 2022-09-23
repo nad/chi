@@ -218,16 +218,11 @@ pointwise-equal-Bool =
       var f at b [ v-p ← ⌜ p ⌝ ]                                          ≡⟨⟩
 
       decode-Bool (apply (eval [ v-p ← ⌜ p ⌝ ]) (const c-apply
-        (var f [ v-p ← ⌜ p ⌝ ] ∷ ⌜ ⌜ b ⌝ ⦂ Exp ⌝ [ v-p ← ⌜ p ⌝ ] ∷ [])))  ≡⟨ cong (λ e → decode-Bool (apply e (const _
-                                                                                          (var f [ v-p ← ⌜ p ⌝ ] ∷
-                                                                                           ⌜ ⌜ b ⌝ ⦂ Exp ⌝ [ v-p ← ⌜ p ⌝ ] ∷ []))))
-                                                                               (subst-closed v-p ⌜ p ⌝ cl-eval) ⟩
-      decode-Bool (apply eval (const c-apply
-        (var f [ v-p ← ⌜ p ⌝ ] ∷ ⌜ ⌜ b ⌝ ⦂ Exp ⌝ [ v-p ← ⌜ p ⌝ ] ∷ [])))  ≡⟨ cong (λ e → decode-Bool (apply _ (const _ (e ∷ _))))
-                                                                               (subst-∉ v-p (var f) λ { (var p≡f) → p≢f p≡f }) ⟩
-      decode-Bool (apply eval (const c-apply
-        (var f ∷ ⌜ ⌜ b ⌝ ⦂ Exp ⌝ [ v-p ← ⌜ p ⌝ ] ∷ [])))                  ≡⟨ remove-substs [] ⟩
+        (var f [ v-p ← ⌜ p ⌝ ] ∷ ⌜ ⌜ b ⌝ ⦂ Exp ⌝ [ v-p ← ⌜ p ⌝ ] ∷ [])))  ≡⟨ remove-substs ((eval , cl-eval) ∷ []) ⟩
 
+      decode-Bool (apply eval (const c-apply
+        (var f [ v-p ← ⌜ p ⌝ ] ∷ ⌜ ⌜ b ⌝ ⦂ Exp ⌝ ∷ [])))                  ≡⟨ cong (λ e → decode-Bool (apply _ (const _ (e ∷ _))))
+                                                                               (subst-∉ v-p (var f) λ { (var p≡f) → p≢f p≡f }) ⟩
       decode-Bool (apply eval (const c-apply
         (var f ∷ ⌜ ⌜ b ⌝ ⦂ Exp ⌝ ∷ [])))                                  ≡⟨⟩
 

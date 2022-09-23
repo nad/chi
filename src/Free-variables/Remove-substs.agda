@@ -20,7 +20,7 @@ import Chi
 import Coding
 open import Coding.Instances.Nat
 
-open        Chi            χ-ℕ-atoms
+open        Chi            χ-ℕ-atoms hiding (∷_)
 open        Coding         χ-ℕ-atoms
 open import Free-variables χ-ℕ-atoms
 open import Reasoning      χ-ℕ-atoms
@@ -46,8 +46,8 @@ private
   -- made to construct a proof showing that the left-hand side is
   -- equal to the right-hand side.
 
-  proof : List (Name × Term) → Term → TC Term
-  proof closed t = the-proof ⟨$⟩ term t
+  proof : List (Name × Term) → List (ℕ × Term) → Term → TC Term
+  proof closed-defs closed-vars t = the-proof ⟨$⟩ term t
     where
     -- Different kinds of right-hand sides.
 
@@ -110,6 +110,12 @@ private
       term (def (quote Chi._[_←_])
               (_ ∷ varg (def e₁ []) ∷ varg x ∷ varg e₂ ∷ [])) =
         subst-def-proof e₁ x e₂
+      term (def (quote _[_←_])
+              (varg (var x₁ []) ∷ varg x ∷ varg e₂ ∷ [])) =
+        subst-var-proof x₁ x e₂
+      term (def (quote Chi._[_←_])
+              (_ ∷ varg (var x₁ []) ∷ varg x ∷ varg e₂ ∷ [])) =
+        subst-var-proof x₁ x e₂
 
       -- General cases for applications.
       term (con c ts) = try-cong (con c []) ts
@@ -150,7 +156,15 @@ private
 
       subst-def-proof : Name → Term → Term → TC Proof
       subst-def-proof e₁ x e₂ =
-        return $ case lookup eq-Name e₁ closed of λ where
+        return $ case lookup eq-Name e₁ closed-defs of λ where
+          nothing   → trivial
+          (just cl) → non-trivial
+            (def (quote subst-closed) (varg x ∷ varg e₂ ∷ varg cl ∷ []))
+            (just (closed-rhs cl))
+
+      subst-var-proof : ℕ → Term → Term → TC Proof
+      subst-var-proof x₁ x e₂ =
+        return $ case lookup eq-ℕ x₁ closed-vars of λ where
           nothing   → trivial
           (just cl) → non-trivial
             (def (quote subst-closed) (varg x ∷ varg e₂ ∷ varg cl ∷ []))
@@ -208,17 +222,18 @@ private
   -- along with the quoted proofs.
 
   process-closed :
-    List (∃ λ (e : Exp) → Closed e) → TC (List (Name × Term))
-  process-closed []               = return []
+    List (∃ λ (e : Exp) → Closed e) →
+    TC (List (Name × Term) × List (ℕ × Term))
+  process-closed []               = return ([] , [])
   process-closed ((e , c) ∷ rest) = do
     e ← quoteTC e
     c ← quoteTC c
     case e of λ where
-      (def f []) → do
-        rest ← process-closed rest
-        return ((f , c) ∷ rest)
+      (def f []) → Σ-map ((f , c) ∷_) id ⟨$⟩ process-closed rest
+      (var x []) → Σ-map id ((x , c) ∷_) ⟨$⟩ process-closed rest
       _ → typeError $
-        termErr e ∷ strErr " is not the name of a definition" ∷ []
+        termErr e ∷
+        strErr " is not the name of a definition or variable" ∷ []
 
   -- A function used to implement remove-substs.
 
@@ -226,8 +241,8 @@ private
   remove-substs-tactic closed goal =
     inferType goal >>= reduce >>= λ where
       (def (quote _≡_) (_ ∷ _ ∷ arg _ e ∷ _ ∷ [])) → do
-        closed ← process-closed closed
-        t      ← proof closed e
+        closed-defs , closed-vars ← process-closed closed
+        t                         ← proof closed-defs closed-vars e
         debugPrint "remove-substs" 5 $
           strErr "The macro remove-substs constructed the following " ∷
           strErr "proof term:\n" ∷
@@ -258,7 +273,7 @@ macro
   --
   -- The tactic's first argument is a list of pairs of expressions and
   -- proofs that the expressions are closed. The expressions must be
-  -- given as names of definitions.
+  -- given as names of definitions or variables.
 
   remove-substs :
     List (∃ λ (e : Exp) → Closed e) → Term → TC ⊤
@@ -291,6 +306,11 @@ private
   _ : Exp.const 12 ([id] [ x ← e′ ] [ y ← e″ ] ∷ []) ≡
       Exp.const 12 ([id] ∷ [])
   _ = remove-substs (([id] , [id]-is-closed) ∷ [])
+
+  _ : (e : Exp) (cl : Closed e) →
+      Exp.const 12 (e [ x ← e′ ] [ y ← e″ ] ∷ []) ≡
+      Exp.const 12 (e ∷ [])
+  _ = λ e cl → remove-substs ((e , cl) ∷ [])
 
   _ : (n : ℕ) → const 3 (⌜ n ⌝ ∷ []) ⇓ const 3 (⌜ n ⌝ ∷ [])
   _ = λ n →

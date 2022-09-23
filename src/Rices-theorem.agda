@@ -226,13 +226,13 @@ module _
                (apply {v₂ = vp} lambda _
                   (apply {x = x} {e = e-body} {v₂ = ve″} q₂ q₃ q₄))) →
 
-              apply ⟨ e ⟩ e′                                    ≡⟨ ⟨by⟩ (substs-closed e cl-e ((v-underscore , vp) ∷ (v-x , ve′) ∷ [])) ⟩⟶
+              apply e e′                                        ≡⟨ sym $ remove-substs ((e , cl-e) ∷ []) ⟩⟶
 
               apply (e [ v-x ← ve′ ] [ v-underscore ← vp ]) e′  ⟶⟨ apply q₂ q₁ ⟩
 
               e-body [ x ← ⟨ ve′ ⟩ ]                            ≡⟨ ⟨by⟩ (values-only-compute-to-themselves (⇓-Value q₁) (
 
-                  ve′                                                    ≡⟨ sym $ subst-closed _ _ (closed⇓closed q₁ cl-e′) ⟩⟶
+                  ve′                                                    ≡⟨ sym $ remove-substs ((ve′ , closed⇓closed q₁ cl-e′) ∷ []) ⟩⟶
                   ve′ [ v-underscore ← vp ]                              ⇓⟨ q₃ ⟩■
                   ve″                                                    )) ⟩⟶
 
@@ -244,17 +244,14 @@ module _
 
               proj₁ (apply-cl (arg (e , cl-e) ⌜ p ⌝) (e′ , cl-e′))       ⟶⟨ apply lambda q₂ ⟩
 
-              apply (lambda v-underscore (apply ⟨ e [ v-x ← ve′ ] ⟩ ve′))
-                    (apply eval ⌜ p ⌝ [ v-x ← ve′ ])                     ≡⟨ ⟨by⟩ (subst-closed _ _ cl-e) ⟩⟶
+              apply (lambda v-underscore (apply (e [ v-x ← ve′ ]) ve′))
+                    (apply (eval [ v-x ← ve′ ]) (⌜ p ⌝ [ v-x ← ve′ ]))   ≡⟨ remove-substs ((e , cl-e) ∷ (eval , cl-eval) ∷ []) ⟩⟶
 
-              apply (lambda v-underscore (apply e ve′))
-                    ⟨ apply eval ⌜ p ⌝ [ v-x ← ve′ ] ⟩                   ≡⟨ ⟨by⟩ (subst-closed _ _ $
-                                                                                    Closed′-closed-under-apply cl-eval (rep-closed p)) ⟩⟶
               apply (lambda v-underscore (apply e ve′))
                     (apply eval ⌜ p ⌝)                                   ⟶⟨ apply lambda (eval₁ p _ cl-p p⇓vp) ⟩
 
-              apply e ve′ [ v-underscore ← ⌜ vp ⌝ ]                      ≡⟨ subst-closed _ _ $
-                                                                              Closed′-closed-under-apply cl-e (closed⇓closed q₂ cl-e′) ⟩⟶
+              apply (e [ v-underscore ← ⌜ vp ⌝ ])
+                (ve′ [ v-underscore ← ⌜ vp ⌝ ])                          ≡⟨ remove-substs ((e , cl-e) ∷ (ve′ , closed⇓closed q₂ cl-e′) ∷ []) ⟩⟶
 
               apply e ve′                                                ⇓⟨ apply q₁ (values-compute-to-themselves (⇓-Value q₂)) q₃ ⟩■
 
@@ -287,8 +284,8 @@ module _
             (apply {v₂ = ve′} lambda _ (apply {v₂ = vp} _ q _)) →
               ⊥-elim $ ¬p⇓ $ Σ-map id proj₁ $
                 eval₂ p vp cl-p (
-                  apply eval ⌜ p ⌝                ≡⟨ sym $ subst-closed _ _ $ Closed′-closed-under-apply cl-eval (rep-closed p) ⟩⟶
-                  apply eval ⌜ p ⌝ [ v-x ← ve′ ]  ⇓⟨ q ⟩■
+                  apply eval ⌜ p ⌝                                  ≡⟨ sym $ remove-substs ((eval , cl-eval) ∷ []) ⟩⟶
+                  apply (eval [ v-x ← ve′ ]) (⌜ p ⌝ [ v-x ← ve′ ])  ⇓⟨ q ⟩■
                   vp)
         ; from = λ where
             (apply lambda _ loop⇓) → ⊥-elim $ ¬loop⇓ (_ , loop⇓)
@@ -339,8 +336,8 @@ module _
       halts⇓-lemma {v} ∃bool e e∈⇓v e∉⇓v =
         apply halts ⌜ e ⌝                                                 ⟶⟨ apply lambda (rep⇓rep e) ⟩
 
-        case (apply ⟨ p [ v-p ← ⌜ e ⌝ ] ⟩ (proj₁ ⌜const-loop⌝))
-          (branches [ v-p ← ⌜ e ⌝ ]B⋆)                                    ≡⟨ ⟨by⟩ (subst-closed _ _ cl-p) ⟩⟶
+        case (apply (p [ v-p ← ⌜ e ⌝ ]) (proj₁ ⌜const-loop⌝))
+          (branches [ v-p ← ⌜ e ⌝ ]B⋆)                                    ≡⟨ remove-substs ((p , cl-p) ∷ []) ⟩⟶
 
         case (apply p (proj₁ ⌜const-loop⌝)) (branches [ v-p ← ⌜ e ⌝ ]B⋆)  ⇓⟨ lemma ∃bool ⟩■
 
@@ -348,15 +345,15 @@ module _
         where
         lemma : ∃Bool → _
         lemma (true , p⌜const-loop⌝⇓true , P-const-loop) =
-          case (apply p (proj₁ ⌜const-loop⌝)) (branches [ v-p ← ⌜ e ⌝ ]B⋆)    ⟶⟨ case p⌜const-loop⌝⇓true (there (λ ()) here) [] ⟩
-          χ.not (apply ⟨ p [ v-p ← ⌜ e ⌝ ] ⟩ (coded-arg e∉ [ v-p ← ⌜ e ⌝ ]))  ≡⟨ ⟨by⟩ (subst-closed _ _ cl-p) ⟩⟶
-          χ.not (apply p (coded-arg e∉ [ v-p ← ⌜ e ⌝ ]))                      ⟶⟨ []⇓ (case (apply→ ∙)) (coded-arg⇓⌜arg⌝ e∉ e) ⟩
-          χ.not (apply p (⌜ arg e∉ ⌜ e ⌝ ⌝))                                  ⇓⟨ e∉⇓v P-const-loop ⟩■
+          case (apply p (proj₁ ⌜const-loop⌝)) (branches [ v-p ← ⌜ e ⌝ ]B⋆)  ⟶⟨ case p⌜const-loop⌝⇓true (there (λ ()) here) [] ⟩
+          χ.not (apply (p [ v-p ← ⌜ e ⌝ ]) (coded-arg e∉ [ v-p ← ⌜ e ⌝ ]))  ≡⟨ remove-substs ((p , cl-p) ∷ []) ⟩⟶
+          χ.not (apply p (coded-arg e∉ [ v-p ← ⌜ e ⌝ ]))                    ⟶⟨ []⇓ (case (apply→ ∙)) (coded-arg⇓⌜arg⌝ e∉ e) ⟩
+          χ.not (apply p (⌜ arg e∉ ⌜ e ⌝ ⌝))                                ⇓⟨ e∉⇓v P-const-loop ⟩■
           v
 
         lemma (false , p⌜const-loop⌝⇓false , ¬P-const-loop) =
           case (apply p (proj₁ ⌜const-loop⌝)) (branches [ v-p ← ⌜ e ⌝ ]B⋆)  ⟶⟨ case p⌜const-loop⌝⇓false here [] ⟩
-          apply ⟨ p [ v-p ← ⌜ e ⌝ ] ⟩ (coded-arg e∈ [ v-p ← ⌜ e ⌝ ])        ≡⟨ ⟨by⟩ (subst-closed _ _ cl-p) ⟩⟶
+          apply (p [ v-p ← ⌜ e ⌝ ]) (coded-arg e∈ [ v-p ← ⌜ e ⌝ ])          ≡⟨ remove-substs ((p , cl-p) ∷ []) ⟩⟶
           apply p (coded-arg e∈ [ v-p ← ⌜ e ⌝ ])                            ⟶⟨ []⇓ (apply→ ∙) (coded-arg⇓⌜arg⌝ e∈ e) ⟩
           apply p (⌜ arg e∈ ⌜ e ⌝ ⌝)                                        ⇓⟨ e∈⇓v ¬P-const-loop ⟩■
           v
