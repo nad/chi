@@ -13,10 +13,11 @@ open import Tactic.By
 
 open import List equality-with-J using (map)
 
-open import Chi       atoms
-open import Constants atoms
-open import Reasoning atoms
-open import Values    atoms
+open import Chi           atoms
+open import Constants     atoms
+open import Deterministic atoms
+open import Reasoning     atoms
+open import Values        atoms
 
 open χ-atoms atoms
 
@@ -116,3 +117,26 @@ mutual
     e ⇓ v → c [ v ]⋆ ⇓⋆ vs → c [ e ]⋆ ⇓⋆ vs
   []⇓⋆ (here  c) p (q ∷ qs) = []⇓ c p q ∷ qs
   []⇓⋆ (there c) p (q ∷ qs) = q ∷ []⇓⋆ c p qs
+
+mutual
+
+  -- If e₁ terminates with v₁ and c [ e₁ ] terminates with v₂, then
+  -- c [ v₁ ] also terminates with v₂.
+
+  []⇓⁻¹ :
+    ∀ c {e₁ v₁ v₂} →
+    e₁ ⇓ v₁ → c [ e₁ ] ⇓ v₂ → c [ v₁ ] ⇓ v₂
+  []⇓⁻¹ ∙ {v₁ = v₁} {v₂ = v₂} e₁⇓v₁ e₁⇓v₂ =
+    v₁  ≡⟨ ⇓-deterministic e₁⇓v₁ e₁⇓v₂ ⟩⟶
+    v₂  ■⟨ ⇓-Value e₁⇓v₂ ⟩
+
+  []⇓⁻¹ (apply← c) p (apply q r s)  = apply ([]⇓⁻¹ c p q) r s
+  []⇓⁻¹ (apply→ c) p (apply q r s)  = apply q ([]⇓⁻¹ c p r) s
+  []⇓⁻¹ (const c)  p (const ps)     = const ([]⇓⋆⁻¹ c p ps)
+  []⇓⁻¹ (case c)   p (case q r s t) = case ([]⇓⁻¹ c p q) r s t
+
+  []⇓⋆⁻¹ :
+    ∀ c {e v vs} →
+    e ⇓ v → c [ e ]⋆ ⇓⋆ vs → c [ v ]⋆ ⇓⋆ vs
+  []⇓⋆⁻¹ (here  c) p (q ∷ qs) = []⇓⁻¹ c p q ∷ qs
+  []⇓⋆⁻¹ (there c) p (q ∷ qs) = q ∷ []⇓⋆⁻¹ c p qs
