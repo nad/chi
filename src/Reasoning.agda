@@ -22,15 +22,11 @@ syntax step-≡⇓ e₁ e₂⇓e₃ e₁≡e₂ = e₁ ≡⟨ e₁≡e₂ ⟩⟶
 _≡⟨⟩⟶_ : ∀ e₁ {e₂} → e₁ ⇓ e₂ → e₁ ⇓ e₂
 _ ≡⟨⟩⟶ e₁⇓e₂ = e₁⇓e₂
 
-mutual
+_■⟨_⟩ : ∀ e → Value e → e ⇓ e
+_ ■⟨ p ⟩ = values-compute-to-themselves p
 
-  _■⟨_⟩ : ∀ e → Value e → e ⇓ e
-  _ ■⟨ lambda x e ⟩ = lambda
-  _ ■⟨ const c vs ⟩ = const (_ ■⟨ vs ⟩⋆)
-
-  _■⟨_⟩⋆ : ∀ es → Values es → es ⇓⋆ es
-  _ ■⟨ []     ⟩⋆ = []
-  _ ■⟨ v ∷ vs ⟩⋆ = (_ ■⟨ v ⟩) ∷ (_ ■⟨ vs ⟩⋆)
+_■⟨_⟩⋆ : ∀ es → Values es → es ⇓⋆ es
+_ ■⟨ ps ⟩⋆ = values-compute-to-themselves⋆ ps
 
 finally-⇓ : (e₁ e₂ : Exp) → e₁ ⇓ e₂ → e₁ ⇓ e₂
 finally-⇓ _ _ e₁⇓e₂ = e₁⇓e₂
