@@ -1,5 +1,6 @@
 ------------------------------------------------------------------------
--- Definition of the size of an expression, along with some properties
+-- A definition of the size of an expression, along with some
+-- properties
 ------------------------------------------------------------------------
 
 module Expression-size where
@@ -10,9 +11,7 @@ open import Prelude hiding (const)
 open import List equality-with-J
 open import Nat equality-with-J
 
--- To simplify the development, let's work with actual natural numbers
--- as variables and constants (see
--- Atom.one-can-restrict-attention-to-χ-ℕ-atoms).
+-- In this module variables and constants are natural numbers.
 
 open import Atom
 

@@ -100,7 +100,7 @@ import Combinators
 
 import Recursion-without-rec
 
--- Definition of the size of an expression, along with some
+-- A definition of the size of an expression, along with some
 -- properties.
 
 import Expression-size
