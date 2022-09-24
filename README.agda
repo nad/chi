@@ -105,6 +105,11 @@ import Recursion-without-rec
 
 import Expression-size
 
+-- A definition of the size of an operational semantics derivation,
+-- along with some properties.
+
+import Derivation-size
+
 -- Internal substitution.
 
 import Internal-substitution
