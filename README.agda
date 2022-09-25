@@ -110,6 +110,10 @@ import Expression-size
 
 import Derivation-size
 
+-- Partial functions, computability.
+
+import Computability
+
 -- Internal substitution.
 
 import Internal-substitution
@@ -118,13 +122,9 @@ import Internal-substitution
 
 import Internal-lookup
 
--- A self-interpreter (without correctness proof).
+-- A self-interpreter.
 
 import Self-interpreter
-
--- Partial functions, computability.
-
-import Computability
 
 -- The halting problem.
 

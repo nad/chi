@@ -2,34 +2,12 @@
 -- Rice's theorem
 ------------------------------------------------------------------------
 
+module Rices-theorem where
+
 open import Equality.Propositional
-open import Prelude hiding (const; Decidable)
-
--- To simplify the development, let's work with actual natural numbers
--- as variables and constants (see
--- Atom.one-can-restrict-attention-to-χ-ℕ-atoms).
-
-open import Atom
-
-open import Chi            χ-ℕ-atoms
-open import Coding         χ-ℕ-atoms
-open import Free-variables χ-ℕ-atoms
-
-import Coding.Instances.Nat
-
--- The theorem is stated and proved under the assumption that a
--- correct self-interpreter can be implemented.
-
-module Rices-theorem
-  (eval : Exp)
-  (cl-eval : Closed eval)
-  (eval₁ : ∀ p v → Closed p → p ⇓ v → apply eval ⌜ p ⌝ ⇓ ⌜ v ⌝)
-  (eval₂ : ∀ p v → Closed p → apply eval ⌜ p ⌝ ⇓ v →
-           ∃ λ v′ → p ⇓ v′ × v ≡ ⌜ v′ ⌝)
-  where
-
 open import H-level.Truncation.Propositional as Trunc hiding (rec)
 open import Logical-equivalence using (_⇔_)
+open import Prelude hiding (const; Decidable)
 open import Tactic.By.Propositional
 
 open import Double-negation equality-with-J
@@ -39,22 +17,33 @@ open import H-level equality-with-J
 open import H-level.Closure equality-with-J
 open import Monad equality-with-J
 
-open import Cancellation  χ-ℕ-atoms
-open import Compatibility χ-ℕ-atoms
-open import Computability χ-ℕ-atoms hiding (_∘_)
-open import Constants     χ-ℕ-atoms
-open import Deterministic χ-ℕ-atoms
-open import Propositional χ-ℕ-atoms
-open import Reasoning     χ-ℕ-atoms
-open import Termination   χ-ℕ-atoms
-open import Values        χ-ℕ-atoms
+-- To simplify the development, let's work with actual natural numbers
+-- as variables and constants (see
+-- Atom.one-can-restrict-attention-to-χ-ℕ-atoms).
+
+open import Atom
+
+open import Cancellation   χ-ℕ-atoms
+open import Chi            χ-ℕ-atoms
+open import Coding         χ-ℕ-atoms
+open import Compatibility  χ-ℕ-atoms
+open import Computability  χ-ℕ-atoms hiding (_∘_)
+open import Constants      χ-ℕ-atoms
+open import Deterministic  χ-ℕ-atoms
+open import Free-variables χ-ℕ-atoms
+open import Propositional  χ-ℕ-atoms
+open import Reasoning      χ-ℕ-atoms
+open import Termination    χ-ℕ-atoms
+open import Values         χ-ℕ-atoms
 
 open χ-atoms χ-ℕ-atoms
 
+import Coding.Instances.Nat as I
 open import Combinators as χ hiding (id; if_then_else_)
 open import Free-variables.Remove-substs
 open import Halting-problem
 open import Internal-coding
+open import Self-interpreter
 
 ------------------------------------------------------------------------
 -- The theorem
@@ -107,7 +96,7 @@ module _
                 (Closed→Closed′ $ proj₂ e)
                 (Closed′-closed-under-var (inj₂ (inj₁ refl))))
              (Closed′-closed-under-apply
-                (Closed→Closed′ cl-eval)
+                (Closed→Closed′ eval-closed)
                 (Closed→Closed′ (proj₂ p))))
 
       coded-arg : Closed-exp → Exp
@@ -245,10 +234,10 @@ module _
               proj₁ (apply-cl (arg (e , cl-e) ⌜ p ⌝) (e′ , cl-e′))       ⟶⟨ apply lambda q₂ ⟩
 
               apply (lambda v-underscore (apply (e [ v-x ← ve′ ]) ve′))
-                    (apply (eval [ v-x ← ve′ ]) (⌜ p ⌝ [ v-x ← ve′ ]))   ≡⟨ remove-substs ((e , cl-e) ∷ (eval , cl-eval) ∷ []) ⟩⟶
+                    (apply (eval [ v-x ← ve′ ]) (⌜ p ⌝ [ v-x ← ve′ ]))   ≡⟨ remove-substs ((e , cl-e) ∷ (eval , eval-closed) ∷ []) ⟩⟶
 
               apply (lambda v-underscore (apply e ve′))
-                    (apply eval ⌜ p ⌝)                                   ⟶⟨ apply lambda (eval₁ p _ cl-p p⇓vp) ⟩
+                    (apply eval ⌜ p ⌝)                                   ⟶⟨ apply lambda (eval-correct₁ p⇓vp) ⟩
 
               apply (e [ v-underscore ← ⌜ vp ⌝ ])
                 (ve′ [ v-underscore ← ⌜ vp ⌝ ])                          ≡⟨ remove-substs ((e , cl-e) ∷ (ve′ , closed⇓closed q₂ cl-e′) ∷ []) ⟩⟶
@@ -283,8 +272,8 @@ module _
         { to = λ where
             (apply {v₂ = ve′} lambda _ (apply {v₂ = vp} _ q _)) →
               ⊥-elim $ ¬p⇓ $ Σ-map id proj₁ $
-                eval₂ p vp cl-p (
-                  apply eval ⌜ p ⌝                                  ≡⟨ sym $ remove-substs ((eval , cl-eval) ∷ []) ⟩⟶
+                eval-correct₂ (
+                  apply eval ⌜ p ⌝                                  ≡⟨ sym $ remove-substs ((eval , eval-closed) ∷ []) ⟩⟶
                   apply (eval [ v-x ← ve′ ]) (⌜ p ⌝ [ v-x ← ve′ ])  ⇓⟨ q ⟩■
                   vp)
         ; from = λ where

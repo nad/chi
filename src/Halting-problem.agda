@@ -42,6 +42,7 @@ import Coding.Instances.Nat
 open import Combinators as χ hiding (id; if_then_else_)
 open import Free-variables.Remove-substs
 open import Internal-coding
+open import Self-interpreter
 
 ------------------------------------------------------------------------
 -- The extensional halting problem
@@ -575,15 +576,9 @@ Intensional-halting-problem₀₁→Intensional-halting-problem₀₂ em =
 ------------------------------------------------------------------------
 -- "Half of the halting problem"
 
--- If a (correct) self-interpreter can be implemented, then "half of
--- the halting problem" is computable.
+-- "Half of the halting problem" is computable.
 
 half-of-the-halting-problem :
-  (eval : Exp) →
-  Closed eval →
-  (∀ p v → Closed p → p ⇓ v → apply eval ⌜ p ⌝ ⇓ ⌜ v ⌝) →
-  (∀ p → Closed p → ¬ Terminates p →
-     ¬ Terminates (apply eval ⌜ p ⌝)) →
   ∃ λ halts →
       Closed halts
         ×
@@ -591,7 +586,7 @@ half-of-the-halting-problem :
         (Terminates p → apply halts ⌜ p ⌝ ⇓ ⌜ true ⦂ Bool ⌝)
           ×
         (¬ Terminates p → ¬ Terminates (apply halts ⌜ p ⌝))
-half-of-the-halting-problem eval cl eval⇓ eval¬⇓ =
+half-of-the-halting-problem =
   halts , cl′ , λ p cl-p → lemma₁ p cl-p , lemma₂ p cl-p
   module Half-of-the-halting-problem where
   halts = lambda v-p (apply (lambda v-underscore ⌜ true ⦂ Bool ⌝)
@@ -603,7 +598,7 @@ half-of-the-halting-problem eval cl eval⇓ eval¬⇓ =
     Closed′-closed-under-apply
       (from-⊎ (closed′? (lambda v-underscore ⌜ true ⦂ Bool ⌝) _))
       (Closed′-closed-under-apply
-        (Closed→Closed′ cl)
+        (Closed→Closed′ eval-closed)
         (Closed′-closed-under-var (inj₁ refl)))
 
   lemma₁ : ∀ p → Closed p → Terminates p →
@@ -612,10 +607,10 @@ half-of-the-halting-problem eval cl eval⇓ eval¬⇓ =
     apply halts ⌜ p ⌝                            ⟶⟨ apply lambda (rep⇓rep p) ⟩
 
     apply (lambda v-underscore ⌜ true ⦂ Bool ⌝)
-          (apply (eval [ v-p ← ⌜ p ⌝ ]) ⌜ p ⌝)   ≡⟨ remove-substs ((eval , cl) ∷ []) ⟩⟶
+          (apply (eval [ v-p ← ⌜ p ⌝ ]) ⌜ p ⌝)   ≡⟨ remove-substs ((eval , eval-closed) ∷ []) ⟩⟶
 
     apply (lambda v-underscore ⌜ true ⦂ Bool ⌝)
-          (apply eval ⌜ p ⌝)                     ⇓⟨ apply lambda (eval⇓ p v cl-p p⇓v) (rep⇓rep (true ⦂ Bool)) ⟩■
+          (apply eval ⌜ p ⌝)                     ⇓⟨ apply lambda (eval-correct₁ p⇓v) (rep⇓rep (true ⦂ Bool)) ⟩■
 
     ⌜ true ⦂ Bool ⌝
 
@@ -626,7 +621,7 @@ half-of-the-halting-problem eval cl eval⇓ eval¬⇓ =
   halts-eval-inversion e (_ , apply {v₂ = v} lambda e⇓
                            (apply {v₂ = v₂} _ eval⇓ _)) =
     _ , (apply eval e                ⟶⟨ []⇓ (apply→ ∙) e⇓ ⟩
-         apply eval v                ≡⟨ sym $ remove-substs ((eval , cl) ∷ []) ⟩⟶
+         apply eval v                ≡⟨ sym $ remove-substs ((eval , eval-closed) ∷ []) ⟩⟶
          apply (eval [ v-p ← v ]) v  ⇓⟨ eval⇓ ⟩■
          v₂)
 
@@ -635,7 +630,7 @@ half-of-the-halting-problem eval cl eval⇓ eval¬⇓ =
            ¬ Terminates (apply halts ⌜ p ⌝)
   lemma₂ p cl-p ¬p⇓ =
     Terminates (apply halts ⌜ p ⌝)  ↝⟨ halts-eval-inversion ⌜ p ⌝ ⟩
-    Terminates (apply eval ⌜ p ⌝)   ↝⟨ eval¬⇓ p cl-p ¬p⇓ ⟩□
+    Terminates (apply eval ⌜ p ⌝)   ↝⟨ eval-preserves-non-termination ¬p⇓ ⟩□
     ⊥                               □
 
 -- Two statements of "half of the halting problem".
@@ -650,17 +645,11 @@ Half-of-the-halting-problem₂ =
     (Terminates ∘ proj₁)
     Terminates-propositional
 
--- If a (correct) self-interpreter can be implemented, then
 -- Half-of-the-halting-problem₂ is computable.
 
 half-of-the-halting-problem₂ :
-  (eval : Exp) →
-  Closed eval →
-  (∀ p v → Closed p → p ⇓ v → apply eval ⌜ p ⌝ ⇓ ⌜ v ⌝) →
-  (∀ p v → Closed p → apply eval ⌜ p ⌝ ⇓ v →
-     ∃ λ v′ → p ⇓ v′ × v ≡ ⌜ v′ ⌝) →
   Computable Half-of-the-halting-problem₂
-half-of-the-halting-problem₂ eval cl eval₁ eval₂ =
+half-of-the-halting-problem₂ =
   H.halts , H.cl′ ,
   (λ { (p , cl-p) .true (p⇓ , refl) → H.lemma₁ p cl-p p⇓ }) ,
   (λ { (p , cl-p) v halts⌜p⌝⇓v → true ,
@@ -670,13 +659,9 @@ half-of-the-halting-problem₂ eval cl eval₁ eval₂ =
     ∀ p → Closed p →
     Terminates (apply eval ⌜ p ⌝) →
     Terminates p
-  eval-inversion p cl-p = Σ-map id proj₁ ∘ eval₂ p _ cl-p ∘ proj₂
+  eval-inversion p cl-p = Σ-map id proj₁ ∘ eval-correct₂ ∘ proj₂
 
-  module H = Half-of-the-halting-problem eval cl eval₁
-               (λ { p cl-p ¬p⇓ →
-                    Terminates (apply eval ⌜ p ⌝)  ↝⟨ eval-inversion p cl-p ⟩
-                    Terminates p                   ↝⟨ ¬p⇓ ⟩□
-                    ⊥                              □ })
+  module H = Half-of-the-halting-problem
 
   lemma₂ : ∀ p v → Closed p → apply H.halts ⌜ p ⌝ ⇓ v →
            Terminates p × v ≡ ⌜ true ⦂ Bool ⌝

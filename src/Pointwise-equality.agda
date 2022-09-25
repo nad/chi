@@ -2,26 +2,7 @@
 -- A theorem related to pointwise equality
 ------------------------------------------------------------------------
 
--- To simplify the development, let's work with actual natural numbers
--- as variables and constants (see
--- Atom.one-can-restrict-attention-to-χ-ℕ-atoms).
-
-open import Atom
-
-open import Chi            χ-ℕ-atoms
-open import Coding         χ-ℕ-atoms
-open import Free-variables χ-ℕ-atoms
-
-import Coding.Instances.Nat
-
--- The results are stated and proved under the assumption that a
--- correct self-interpreter can be implemented.
-
-module Pointwise-equality
-  (eval : Exp)
-  (cl-eval : Closed eval)
-  (eval-correct₁ : ∀ p v → Closed p → p ⇓ v → apply eval ⌜ p ⌝ ⇓ ⌜ v ⌝)
-  where
+module Pointwise-equality where
 
 open import Equality.Propositional
 open import Prelude hiding (const; Decidable)
@@ -30,16 +11,27 @@ open import Bag-equivalence equality-with-J
 open import Equality.Decision-procedures equality-with-J
 open import H-level.Closure equality-with-J
 
-open import Computability χ-ℕ-atoms
-open import Constants     χ-ℕ-atoms
-open import Reasoning     χ-ℕ-atoms
-open import Values        χ-ℕ-atoms
+-- To simplify the development, let's work with actual natural numbers
+-- as variables and constants (see
+-- Atom.one-can-restrict-attention-to-χ-ℕ-atoms).
+
+open import Atom
+
+open import Chi            χ-ℕ-atoms
+open import Coding         χ-ℕ-atoms
+open import Computability  χ-ℕ-atoms
+open import Constants      χ-ℕ-atoms
+open import Free-variables χ-ℕ-atoms
+open import Reasoning      χ-ℕ-atoms
+open import Values         χ-ℕ-atoms
 
 open Computable-function
 open χ-atoms χ-ℕ-atoms
 
+import Coding.Instances.Nat
 open import Combinators hiding (id; if_then_else_)
 open import Free-variables.Remove-substs
+open import Self-interpreter
 
 -- Pointwise equality of computable functions to Bool.
 
@@ -133,7 +125,7 @@ pointwise-equal-Bool =
     at-closed f b f∈ =
       decode-Bool-closed $
       Closed′-closed-under-apply
-        (Closed→Closed′ cl-eval)
+        (Closed→Closed′ eval-closed)
         (Closed′-closed-under-const λ where
            _ (inj₁ refl)        → Closed′-closed-under-var f∈
            _ (inj₂ (inj₁ refl)) → Closed→Closed′ $
@@ -150,11 +142,6 @@ pointwise-equal-Bool =
     ∀ (f : F) b → ⌜ f ⌝ at b ⇓ ⌜ function f b ⌝
   at-correct f b = decode-Bool-correct (function f b) (
     apply eval ⌜ apply (proj₁ (computable f)) ⌜ b ⌝ ⦂ Exp ⌝  ⇓⟨ eval-correct₁
-                                                                  (apply (proj₁ $ computable f) ⌜ b ⌝)
-                                                                  ⌜ function f b ⌝
-                                                                  (Closed′-closed-under-apply
-                                                                     (proj₁ $ proj₂ $ computable f)
-                                                                     (rep-closed b))
                                                                   (proj₁ (proj₂ $ proj₂ $ computable f)
                                                                      b
                                                                      (function f b)
@@ -182,7 +169,7 @@ pointwise-equal-Bool =
     lemma : ∀ _ → _
     lemma = λ e →
       cong₂ (λ e₁ e₂ → decode-Bool (apply e₁ (const _ (e ∷ e₂ ∷ []))))
-        (substs-closed eval cl-eval ss)
+        (substs-closed eval eval-closed ss)
         (substs-rep (⌜ b ⌝ ⦂ Exp) ss)
 
   correct :
@@ -218,7 +205,7 @@ pointwise-equal-Bool =
       var f at b [ v-p ← ⌜ p ⌝ ]                                          ≡⟨⟩
 
       decode-Bool (apply (eval [ v-p ← ⌜ p ⌝ ]) (const c-apply
-        (var f [ v-p ← ⌜ p ⌝ ] ∷ ⌜ ⌜ b ⌝ ⦂ Exp ⌝ [ v-p ← ⌜ p ⌝ ] ∷ [])))  ≡⟨ remove-substs ((eval , cl-eval) ∷ []) ⟩
+        (var f [ v-p ← ⌜ p ⌝ ] ∷ ⌜ ⌜ b ⌝ ⦂ Exp ⌝ [ v-p ← ⌜ p ⌝ ] ∷ [])))  ≡⟨ remove-substs ((eval , eval-closed) ∷ []) ⟩
 
       decode-Bool (apply eval (const c-apply
         (var f [ v-p ← ⌜ p ⌝ ] ∷ ⌜ ⌜ b ⌝ ⦂ Exp ⌝ ∷ [])))                  ≡⟨ cong (λ e → decode-Bool (apply _ (const _ (e ∷ _))))
