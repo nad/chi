@@ -17,13 +17,14 @@ open import H-level.Closure equality-with-J
 
 open import Atom
 
-open import Chi            χ-ℕ-atoms
-open import Coding         χ-ℕ-atoms
-open import Computability  χ-ℕ-atoms
-open import Constants      χ-ℕ-atoms
-open import Free-variables χ-ℕ-atoms
-open import Reasoning      χ-ℕ-atoms
-open import Values         χ-ℕ-atoms
+open import Chi                 χ-ℕ-atoms
+open import Coding              χ-ℕ-atoms
+open import Computability       χ-ℕ-atoms
+open import Computable-function χ-ℕ-atoms
+open import Constants           χ-ℕ-atoms
+open import Free-variables      χ-ℕ-atoms
+open import Reasoning           χ-ℕ-atoms
+open import Values              χ-ℕ-atoms
 
 open Computable-function
 open χ-atoms χ-ℕ-atoms

@@ -118,6 +118,10 @@ import Decidable
 
 import Computability
 
+-- Computable Agda functions.
+
+import Computable-function
+
 -- Internal coding.
 
 import Internal-coding
