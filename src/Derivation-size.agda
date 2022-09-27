@@ -38,7 +38,7 @@ mutual
   size (apply p q r)  = 1 + size p + size q + size r
   size (case p _ _ q) = 1 + size p + size q
   size (rec p)        = 1 + size p
-  size lambda         = 0
+  size lambda         = 1
   size (const ps)     = 1 + size⋆ ps
 
   size⋆ : es ⇓⋆ vs → ℕ
@@ -46,7 +46,16 @@ mutual
   size⋆ (p ∷ ps) = size p + size⋆ ps
 
 ------------------------------------------------------------------------
--- A uniqueness lemma
+-- Some properties
+
+-- The size of a derivation is at least one.
+
+1≤size : (p : e ⇓ v) → 1 ≤ size p
+1≤size (apply _ _ _)  = Nat.suc≤suc $ Nat.zero≤ _
+1≤size (case _ _ _ _) = Nat.suc≤suc $ Nat.zero≤ _
+1≤size (rec _)        = Nat.suc≤suc $ Nat.zero≤ _
+1≤size lambda         = Nat.suc≤suc $ Nat.zero≤ _
+1≤size (const _)      = Nat.suc≤suc $ Nat.zero≤ _
 
 -- Two derivations for a given starting expression always have the
 -- same size.
@@ -71,7 +80,7 @@ mutual
     (p : Value v) (q : e ⇓ v) →
     size (values-compute-to-themselves p) ≤ size q
   size-values-compute-to-themselves (lambda x e) q =
-    0       ≤⟨ Nat.zero≤ _ ⟩∎
+    1       ≤⟨ 1≤size q ⟩∎
     size q  ∎≤
   size-values-compute-to-themselves p (apply q₁ q₂ q₃) =
     size (values-compute-to-themselves p)  ≤⟨ size-values-compute-to-themselves p q₃ ⟩
@@ -153,7 +162,7 @@ mutual
     1 + ⟨ size (trans-⇓ p q) ⟩  ≡⟨ ⟨by⟩ (size-trans-⇓ p) ⟩∎
     1 + size p                  ∎
   size-trans-⇓ {q = lambda} lambda =
-    0  ∎
+    1  ∎
   size-trans-⇓ {q = const qs} (const ps) =
     1 + ⟨ size⋆ (trans-⇓⋆ ps qs) ⟩  ≡⟨ ⟨by⟩ (size⋆-trans-⇓⋆ ps) ⟩∎
     1 + size⋆ ps                    ∎

@@ -120,21 +120,24 @@ private
           )
 
   terminates-in′ : (n : ℕ) → (∀ {m} → m < n → P m) → P n
+  terminates-in′ zero _ e = no (
+    e ⇓≤ 0                                               →⟨ (λ (v , p , ≤0) → v , p , Nat.≤-antisymmetric ≤0 (Nat.zero≤ _) , 1≤size p) ⟩
+    (∃ λ v → ∃ λ (p : e ⇓ v) → size p ≡ 0 × 1 ≤ size p)  →⟨ (λ (_ , _ , ≡0 , 1≤) → subst (1 ≤_) ≡0 1≤) ⟩
+    0 < 0                                                →⟨ Nat.≮0 _ ⟩□
+    ⊥                                                    □)
+
   terminates-in′ n _ (var x) = no (
     var x ⇓≤ n  →⟨ (λ { (_ , () , _) }) ⟩□
     ⊥           □)
 
-  terminates-in′ n _ (lambda x e) = yes
+  terminates-in′ (suc n) _ (lambda x e) = yes
     ( lambda x e
     , (lambda x e ⇓⟨ lambda ⟩■
        lambda x e)
-    , (0  ≤⟨ Nat.zero≤ n ⟩∎
-       n  ∎≤)
+    , (1      ≤⟨ Nat.suc≤suc $ Nat.zero≤ n ⟩∎
+       1 + n  ∎≤)
     )
 
-  terminates-in′ zero _ (rec x e) = no (
-    rec x e ⇓≤ 0  →⟨ (λ { (_ , rec _ , <0) → ⊥-elim $ Nat.≮0 _ <0 }) ⟩□
-    ⊥             □)
   terminates-in′ (suc n) ih (rec x e) =
                                   $⟨ ih (suc n ∎≤) (e [ x ← rec x e ]) ⟩
     Dec (e [ x ← rec x e ] ⇓≤ n)  →⟨ (Dec-map $ ∃-cong λ _ → record
@@ -143,9 +146,6 @@ private
                                         }) ⟩□
     Dec (rec x e ⇓≤ suc n)        □
 
-  terminates-in′ zero _ (apply e₁ e₂) = no (
-    apply e₁ e₂ ⇓≤ 0  →⟨ (λ { (_ , apply _ _ _ , <0) → ⊥-elim $ Nat.≮0 _ <0 }) ⟩□
-    ⊥                 □)
   terminates-in′ (suc n) ih (apply e₁ e₂) =
     case ih (suc n ∎≤) e₁ of λ where
       (no p) → no (
@@ -231,9 +231,6 @@ private
 
                      1 + n                                          ∎≤))
 
-  terminates-in′ zero _ (case e bs) = no (
-    case e bs ⇓≤ 0  →⟨ (λ { (_ , case _ _ _ _ , <0) → ⊥-elim $ Nat.≮0 _ <0 }) ⟩□
-    ⊥               □)
   terminates-in′ (suc n) ih (case e bs) =
     case ih (suc n ∎≤) e of λ where
       (no p) → no (
@@ -304,9 +301,6 @@ private
                      1 + n                      ∎≤)
                   )
 
-  terminates-in′ zero _ (const c es) = no (
-    const c es ⇓≤ 0  →⟨ (λ { (_ , const _ , <0) → ⊥-elim $ Nat.≮0 _ <0 }) ⟩□
-    ⊥                □)
   terminates-in′ (suc n) ih (const c es) =
                                $⟨ terminates-in⋆′ n
                                     (λ {m = m} →

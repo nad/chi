@@ -385,8 +385,8 @@ private
                                                                        Nat.≤-trans (Nat.m≤n+m _ 1) $
                                                                        Nat.≤-trans (Nat.m≤m+n _ (size p₆ + 0)) $
                                                                        Nat.≤-trans (Nat.m≤n+m _ (1 + size q₂)) $
-                                                                       Nat.m≤n+m _ (1 + size q₁) ⟩
-       2 + size q₁ + (1 + size q₂ + (1 + size p₅ + (size p₆ + 0)))  ≤⟨ size≤n ⟩∎
+                                                                       Nat.m≤n+m _ (2 + size q₁) ⟩
+       3 + size q₁ + (1 + size q₂ + (1 + size p₅ + (size p₆ + 0)))  ≤⟨ size≤n ⟩∎
        n                                                            ∎≤)
       e
       (apply eval′ ⌜ e ⌝  ≡⟨ lem₁ ⟩⟶
@@ -408,8 +408,8 @@ private
        size p₆                                                      ≤⟨ Nat.≤-trans (Nat.m≤m+n _ 0) $
                                                                        Nat.≤-trans (Nat.m≤n+m _ (1 + size p₅)) $
                                                                        Nat.≤-trans (Nat.m≤n+m _ (1 + size q₂)) $
-                                                                       Nat.m≤n+m _ (2 + size q₁) ⟩
-       2 + size q₁ + (1 + size q₂ + (1 + size p₅ + (size p₆ + 0)))  ≤⟨ size≤n ⟩∎
+                                                                       Nat.m≤n+m _ (3 + size q₁) ⟩
+       3 + size q₁ + (1 + size q₂ + (1 + size p₅ + (size p₆ + 0)))  ≤⟨ size≤n ⟩∎
        n                                                            ∎≤)
 
   -- The main lemma.
@@ -465,8 +465,8 @@ private
                                                                    Nat.≤-trans (Nat.m≤n+m _ 1) $
                                                                    Nat.≤-trans (Nat.m≤m+n _ (size q₃)) $
                                                                    Nat.≤-trans (Nat.m≤n+m _ (1 + size q₂)) $
-                                                                   Nat.m≤n+m _ (1 + size q₁) ⟩
-         2 + size q₁ + (1 + size q₂ + (1 + size p₅ + size q₃))  ≡⟨ size≡n ⟩≤
+                                                                   Nat.m≤n+m _ (2 + size q₁) ⟩
+         3 + size q₁ + (1 + size q₂ + (1 + size p₅ + size q₃))  ≡⟨ size≡n ⟩≤
          n                                                      ∎≤)
         e₁
         (apply eval′ ⌜ e₁ ⌝             ≡⟨ lem₁ ⟩⟶
@@ -518,8 +518,8 @@ private
                                                                     Nat.≤-trans (Nat.m≤m+n _ (size p₁₂)) $
                                                                     Nat.≤-trans (Nat.m≤n+m _ (1 + size p₅)) $
                                                                     Nat.≤-trans (Nat.m≤n+m _ (1 + size q₂)) $
-                                                                    Nat.m≤n+m _ (1 + size q₁) ⟩
-         2 + size q₁ +
+                                                                    Nat.m≤n+m _ (2 + size q₁) ⟩
+         3 + size q₁ +
          (1 + size q₂ +
           (1 + size p₅ +
            (1 + size p₆ +
@@ -583,8 +583,8 @@ private
                                                                               Nat.≤-refl) $
                                                                            Nat.≤-trans (Nat.m≤n+m _ (1 + size p₅)) $
                                                                            Nat.≤-trans (Nat.m≤n+m _ (1 + size q₂)) $
-                                                                           Nat.m≤n+m _ (1 + size q₁) ⟩
-         2 + size q₁ +
+                                                                           Nat.m≤n+m _ (2 + size q₁) ⟩
+         3 + size q₁ +
          (1 + size q₂ +
           (1 + size p₅ +
            (1 + size p₆ +
@@ -713,9 +713,9 @@ private
 
          1 + size p₅                                                ≤⟨ Nat.suc≤suc $
                                                                        Nat.≤-trans (Nat.m≤n+m _ (1 + size q₂)) $
-                                                                       Nat.m≤n+m _ (1 + size q₁) ⟩
+                                                                       Nat.m≤n+m _ (2 + size q₁) ⟩
 
-         2 + size q₁ + (1 + size q₂ + size p₅)                      ≡⟨ size≡n ⟩≤
+         3 + size q₁ + (1 + size q₂ + size p₅)                      ≡⟨ size≡n ⟩≤
 
          n                                                          ∎≤)
         (e [ x ← rec x e ])
@@ -797,8 +797,8 @@ private
          size p₆                                                      ≤⟨ Nat.≤-trans (Nat.m≤m+n _ 0) $
                                                                          Nat.≤-trans (Nat.m≤n+m _ (1 + size p₅)) $
                                                                          Nat.≤-trans (Nat.m≤n+m _ (1 + size q₂)) $
-                                                                         Nat.m≤n+m _ (2 + size q₁) ⟩
-         2 + size q₁ + (1 + size q₂ + (1 + size p₅ + (size p₆ + 0)))  ≡⟨ size≡n ⟩≤
+                                                                         Nat.m≤n+m _ (3 + size q₁) ⟩
+         3 + size q₁ + (1 + size q₂ + (1 + size p₅ + (size p₆ + 0)))  ≡⟨ size≡n ⟩≤
          n                                                            ∎≤)
 
   eval-correct₂′ n ih (case e bs)
@@ -817,8 +817,8 @@ private
                                                                    Nat.≤-trans (Nat.m≤n+m _ (1 + size p₆)) $
                                                                    Nat.≤-trans (Nat.m≤n+m _ (1 + size p₅)) $
                                                                    Nat.≤-trans (Nat.m≤n+m _ (1 + size q₂)) $
-                                                                   Nat.m≤n+m _ (1 + size q₁) ⟩
-     2 + size q₁ +
+                                                                   Nat.m≤n+m _ (2 + size q₁) ⟩
+     3 + size q₁ +
        (1 + size q₂ + (1 + size p₅ + (1 + size p₆ + size p₇)))  ≡⟨ size≡n ⟩≤
 
      n                                                          ∎≤)
@@ -851,8 +851,8 @@ private
                                                                    Nat.≤-trans (Nat.m≤n+m _ 1) $
                                                                    Nat.≤-trans (Nat.m≤m+n _ (size q₃)) $
                                                                    Nat.≤-trans (Nat.m≤n+m _ (1 + size q₂)) $
-                                                                   Nat.m≤n+m _ (1 + size q₁) ⟩
-         2 + size q₁ + (1 + size q₂ + (1 + size p₅ + size q₃))  ≡⟨ size≡n ⟩≤
+                                                                   Nat.m≤n+m _ (2 + size q₁) ⟩
+         3 + size q₁ + (1 + size q₂ + (1 + size p₅ + size q₃))  ≡⟨ size≡n ⟩≤
          n                                                      ∎≤)
         e
         (apply eval′ ⌜ e ⌝             ≡⟨ lem₁ ⟩⟶
@@ -1026,13 +1026,13 @@ private
            size p₉′ ≡ size p₉ →
            ∃ λ v′ → e″ ⇓ v′ × v ≡ ⌜ v′ ⌝)
         (λ p₈′ p₉′ eq₈ eq₉ → ih
-           (3 + size (rep⇓rep e″) + size p₉′  ≤⟨ Nat.≤-refl {n = 3}
+           (4 + size (rep⇓rep e″) + size p₉′  ≤⟨ Nat.≤-refl {n = 4}
                                                    Nat.+-mono
                                                  size-values-compute-to-themselves (rep-value e″) p₈′
                                                    Nat.+-mono
                                                  Nat.≤-refl {n = size p₉′} ⟩
-            3 + size p₈′ + size p₉′           ≡⟨ cong₂ (λ p₈ p₉ → 3 + p₈ + p₉) eq₈ eq₉ ⟩≤
-            3 + size p₈ + size p₉             ≤⟨ size<n ⟩∎
+            4 + size p₈′ + size p₉′           ≡⟨ cong₂ (λ p₈ p₉ → 4 + p₈ + p₉) eq₈ eq₉ ⟩≤
+            4 + size p₈ + size p₉             ≤⟨ size<n ⟩∎
             n                                 ∎≤)
            e″
            (apply eval′ ⌜ e″ ⌝                               ⟶⟨ apply (rec lambda) (rep⇓rep e″) ⟩
