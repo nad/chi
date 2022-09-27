@@ -525,7 +525,7 @@ Decidable′ :
   A →Bool → Type a
 Decidable′ = Computable‴ P.∘ proj₁
 
--- Computable functions from a type to a set.
+-- Computable (Agda) functions from a type to a set.
 
 record Computable-function
          {a b} (A : Type a) (B : Type b) (B-set : Is-set B)

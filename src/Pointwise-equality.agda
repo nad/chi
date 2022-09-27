@@ -33,7 +33,7 @@ open import Combinators hiding (id; if_then_else_)
 open import Free-variables.Remove-substs
 open import Self-interpreter
 
--- Pointwise equality of computable functions to Bool.
+-- Pointwise equality of computable (Agda) functions to Bool.
 
 Pointwise-equal :
   ∀ {a} (A : Type a) ⦃ rA : Rep A Consts ⦄ →
@@ -43,8 +43,8 @@ Pointwise-equal _ =
   as-function-to-Bool₁
     (λ { (f , g) → ∀ x → function f x ≡ function g x })
 
--- Pointwise equality of computable functions from Bool to Bool is
--- decidable.
+-- Pointwise equality of computable Agda functions from Bool to Bool
+-- is decidable.
 
 pointwise-equal-Bool : Decidable (Pointwise-equal Bool)
 pointwise-equal-Bool =
