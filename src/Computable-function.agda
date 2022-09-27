@@ -19,6 +19,7 @@ open import Coding         atoms
 import Coding.Instances    atoms as Dummy
 open import Computability  atoms hiding (_∘_)
 open import Deterministic  atoms
+open import Free-variables atoms
 open import Values         atoms
 
 -- Computable (Agda) functions from a type to a set.
@@ -102,3 +103,25 @@ instance
         (function f , computable f) ≡ (function g , computable g)       ↔⟨ Eq.≃-≡ (Eq.↔⇒≃ Computable-function↔) ⟩□
 
         f ≡ g                                                           □
+
+-- A function that constructs computable functions.
+
+computable-function :
+  ∀ {a b} {A : Type a} {B : Type b} {B-set : Is-set B}
+    ⦃ rA : Rep A Consts ⦄ ⦃ rB : Rep B Consts ⦄ →
+  (f : A → B) (e : Exp) → Closed e →
+  (∀ x → apply e ⌜ x ⌝ ⇓ ⌜ f x ⌝) →
+  Computable-function A B B-set
+computable-function {B-set = B-set} f e cl e-implements-f = record
+  { function   = f
+  ; computable =
+      total→almost-computable→computable id id
+        (as-partial B-set f)
+        (λ _ → _ , lift refl)
+        ( e
+        , cl
+        , (λ where
+             x .(f x) (lift refl) →
+               e-implements-f x)
+        )
+  }
