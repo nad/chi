@@ -83,6 +83,10 @@ import Coding.Instances
 
 import Coding.Instances.Nat
 
+-- The "not the code of" operator ⌞_⌟.
+
+import Not-the-code-of
+
 -- A tactic that can "remove" applications of substitutions to closed
 -- expressions.
 
