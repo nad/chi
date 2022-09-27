@@ -65,6 +65,21 @@ Total : ∀ {a b} {A : Type a} {B : Type b} →
         A ⇀ B → Type (a ⊔ b)
 Total P f = ∀ a → P (∃ λ b → f [ a ]= b)
 
+-- If P maps propositions to propositions then Total P f is a
+-- proposition.
+
+Total-propositional :
+  ∀ {a b} {A : Type a} {B : Type b}
+    ⦃ rA : Rep A Consts ⦄ ⦃ rB : Rep B Consts ⦄ →
+    {P : Type (a ⊔ b) → Type (a ⊔ b)}
+  (f : A ⇀ B) →
+  (∀ {A} → Is-proposition A → Is-proposition (P A)) →
+  Is-proposition (Total P f)
+Total-propositional f pres =
+  Π-closure ext 1 λ _ →
+  pres $
+  _⇀_.∃[]=-propositional f
+
 -- Totality with ∥_∥ as the modality implies totality with the
 -- identity function as the modality.
 
