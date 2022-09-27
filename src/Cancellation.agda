@@ -11,6 +11,8 @@ open import Prelude hiding (const)
 
 open import Chi atoms
 
+-- Some cancellation lemmas.
+
 cancel-const :
   ∀ {c₁ c₂ es₁ es₂} →
   Exp.const c₁ es₁ ≡ const c₂ es₂ →
