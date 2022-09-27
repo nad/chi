@@ -88,10 +88,6 @@ import Coding.Instances.Nat
 
 import Free-variables.Remove-substs
 
--- Internal coding.
-
-import Internal-coding
-
 -- Some χ program combinators.
 
 import Combinators
@@ -117,6 +113,10 @@ import Decidable
 -- Partial functions, computability.
 
 import Computability
+
+-- Internal coding.
+
+import Internal-coding
 
 -- Internal substitution.
 
