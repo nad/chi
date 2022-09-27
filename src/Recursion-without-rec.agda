@@ -85,7 +85,7 @@ mutual
         lambda z (
           apply (apply (var v-x) (var v-x)) (var v-y)))))
 
--- The expressions f z, F z and id are closed.
+-- The expressions f z and F z are closed.
 
 f-closed : Closed (f z)
 f-closed =
