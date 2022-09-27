@@ -9,8 +9,7 @@ module Cancellation (atoms : χ-atoms) where
 open import Equality.Propositional
 open import Prelude hiding (const)
 
-open import Chi    atoms
-open import Values atoms
+open import Chi atoms
 
 cancel-const :
   ∀ {c₁ c₂ es₁ es₂} →

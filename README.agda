@@ -31,6 +31,10 @@ import Constants
 
 import Chi
 
+-- Some cancellation lemmas.
+
+import Cancellation
+
 -- The semantics is deterministic.
 
 import Deterministic
@@ -38,10 +42,6 @@ import Deterministic
 -- Values.
 
 import Values
-
--- Some cancellation lemmas.
-
-import Cancellation
 
 -- "Reasoning" combinators.
 
