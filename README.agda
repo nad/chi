@@ -110,6 +110,10 @@ import Expression-size
 
 import Derivation-size
 
+-- Some aspects of the semantics are decidable.
+
+import Decidable
+
 -- Partial functions, computability.
 
 import Computability
