@@ -146,6 +146,6 @@ import Halting-problem
 
 import Rices-theorem
 
--- A theorem related to pointwise equality.
+-- Some results related to pointwise equality.
 
 import Pointwise-equality
