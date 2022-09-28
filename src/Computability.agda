@@ -427,6 +427,92 @@ as-partial-function-to-Bool₂ P P-prop = record
   ; propositional = ×-closure 1 P-prop Bool-set
   }
 
+-- If a is mapped to b by as-partial-function-to-Bool₂ P P-prop, then
+-- a is also mapped to b by as-partial-function-to-Bool₁ P.
+
+partial-to-Bool₂→partial-to-Bool₁ :
+  ∀ {a} {A : Type a} ⦃ rA : Rep A Consts ⦄
+  (P : A → Type a) (P-prop : ∀ {a} → Is-proposition (P a)) {a b} →
+  as-partial-function-to-Bool₂ P P-prop [ a ]= b →
+  as-partial-function-to-Bool₁ P [ a ]= b
+partial-to-Bool₂→partial-to-Bool₁
+  P _ {a = a} {b = b} =
+  P a × b ≡ true              →⟨ (λ (hyp₁ , hyp₂) → P.const hyp₂ , return hyp₁ .run) ⟩□
+  (P a → b ≡ true) × ¬ ¬ P a  □
+
+-- If a is mapped to b by as-partial-function-to-Bool₁ P, then a is
+-- not not mapped to b by as-partial-function-to-Bool₂ P P-prop.
+
+partial-to-Bool₁→partial-to-Bool₂ :
+  ∀ {a} {A : Type a} ⦃ rA : Rep A Consts ⦄
+  (P : A → Type a) (P-prop : ∀ {a} → Is-proposition (P a)) {a b} →
+  as-partial-function-to-Bool₁ P [ a ]= b →
+  ¬¬ as-partial-function-to-Bool₂ P P-prop [ a ]= b
+partial-to-Bool₁→partial-to-Bool₂
+  P P-prop {a = a} {b = b} =
+  (P a → b ≡ true) × ¬ ¬ P a  →⟨ (λ (hyp₁ , hyp₂) →
+                                    wrap hyp₂ >>= λ Pa → return (Pa , hyp₁ Pa)) ⟩□
+  ¬¬ (P a × b ≡ true)         □
+
+-- If as-partial-function-to-Bool₁ P is ¬¬-computable, then
+-- as-partial-function-to-Bool₂ P P-prop is also ¬¬-computable.
+
+partial-to-Bool₁-computable→partial-to-Bool₂-computable :
+  ∀ {a} {A : Type a} ⦃ rA : Rep A Consts ⦄
+  (P : A → Type a) (P-prop : ∀ {a} → Is-proposition (P a)) →
+  Computable′ (λ A → ¬¬ A) (as-partial-function-to-Bool₁ P) →
+  Computable′ (λ A → ¬¬ A) (as-partial-function-to-Bool₂ P P-prop)
+partial-to-Bool₁-computable→partial-to-Bool₂-computable P
+  P-prop (p , cl , hyp₁ , hyp₂) =
+    p
+  , cl
+  , (λ a b →
+       as-partial-function-to-Bool₂ P P-prop [ a ]= b  →⟨ partial-to-Bool₂→partial-to-Bool₁ P P-prop ⟩
+       as-partial-function-to-Bool₁ P [ a ]= b         →⟨ hyp₁ a b ⟩□
+       apply p ⌜ a ⌝ ⇓ ⌜ b ⌝                           □)
+  , (λ a b →
+       apply p ⌜ a ⌝ ⇓ b                                             →⟨ hyp₂ a b ⟩
+
+       ¬¬ (∃ λ b′ →
+               as-partial-function-to-Bool₁ P [ a ]= b′ ×
+               b ≡ ⌜ b′ ⌝)                                           →⟨ _>>= (λ (b′ , =b′ , ≡⌜b′⌝) →
+                                                                                partial-to-Bool₁→partial-to-Bool₂ P P-prop =b′ >>= λ =b′ →
+                                                                                return (b′ , =b′ , ≡⌜b′⌝)) ⟩□
+       ¬¬ (∃ λ b′ →
+               as-partial-function-to-Bool₂ P P-prop [ a ]= b′ ×
+               b ≡ ⌜ b′ ⌝)                                           □)
+
+-- If as-partial-function-to-Bool₂ P P-prop is computable, then
+-- as-partial-function-to-Bool₁ P is also computable (assuming
+-- excluded middle).
+
+partial-to-Bool₂-computable→partial-to-Bool₁-computable :
+  ∀ {a} {A : Type a} ⦃ rA : Rep A Consts ⦄ →
+  Excluded-middle a →
+  (P : A → Type a) (P-prop : ∀ {a} → Is-proposition (P a)) →
+  Computable (as-partial-function-to-Bool₂ P P-prop) →
+  Computable (as-partial-function-to-Bool₁ P)
+partial-to-Bool₂-computable→partial-to-Bool₁-computable
+  em P P-prop (p , cl , hyp₁ , hyp₂) =
+    p
+  , cl
+  , (λ a b →
+       as-partial-function-to-Bool₁ P [ a ]= b            →⟨ partial-to-Bool₁→partial-to-Bool₂ P P-prop ⟩
+       ¬¬ as-partial-function-to-Bool₂ P P-prop [ a ]= b  →⟨ Excluded-middle→Double-negation-elimination em $
+                                                             ×-closure 1 P-prop Bool-set ⟩
+       as-partial-function-to-Bool₂ P P-prop [ a ]= b     →⟨ hyp₁ a b ⟩□
+       apply p ⌜ a ⌝ ⇓ ⌜ b ⌝                              □)
+  , (λ a b →
+       apply p ⌜ a ⌝ ⇓ b                                       →⟨ hyp₂ a b ⟩
+
+       (∃ λ b′ →
+            as-partial-function-to-Bool₂ P P-prop [ a ]= b′ ×
+            b ≡ ⌜ b′ ⌝)                                        →⟨ Σ-map id (Σ-map (partial-to-Bool₂→partial-to-Bool₁ P P-prop) id) ⟩□
+
+       (∃ λ b′ →
+            as-partial-function-to-Bool₁ P [ a ]= b′ ×
+            b ≡ ⌜ b′ ⌝)                                        □)
+
 ------------------------------------------------------------------------
 -- Total partial functions to the booleans
 
