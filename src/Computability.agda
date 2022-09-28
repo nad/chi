@@ -31,6 +31,9 @@ open import Propositional  atoms
 open import Reasoning      atoms
 open import Values         atoms
 
+------------------------------------------------------------------------
+-- Partial functions
+
 -- Partial functions for which the relation defining the partial
 -- function must be propositional.
 
@@ -44,7 +47,7 @@ record _⇀_ {a b} (A : Type a) (B : Type b) : Type (lsuc (a ⊔ b)) where
     deterministic : ∀ {a b₁ b₂} → _[_]=_ a b₁ → _[_]=_ a b₂ → b₁ ≡ b₂
     propositional : ∀ {a b} → Is-proposition (_[_]=_ a b)
 
-  -- A simple lemma.
+  -- The type ∃ (_[_]=_ a) is a proposition.
 
   ∃[]=-propositional :
     ∀ {a} →
@@ -54,6 +57,69 @@ record _⇀_ {a b} (A : Type a) (B : Type b) : Type (lsuc (a ⊔ b)) where
             (propositional _ _)
 
 open _⇀_ public using (_[_]=_)
+
+-- The semantics of χ as a partial function.
+
+semantics : Closed-exp ⇀ Closed-exp
+semantics = record
+  { _[_]=_        = _⇓_ on proj₁
+  ; deterministic = λ e⇓v₁ e⇓v₂ →
+      closed-equal-if-expressions-equal (⇓-deterministic e⇓v₁ e⇓v₂)
+  ; propositional = ⇓-propositional
+  }
+
+-- Composition of partial functions.
+
+infixr 9 _∘_
+
+_∘_ : ∀ {ℓ c} {A B : Type ℓ} {C : Type c} →
+      B ⇀ C → A ⇀ B → A ⇀ C
+f ∘ g = record
+  { _[_]=_        = λ a c → ∃ λ b → g [ a ]= b × f [ b ]= c
+  ; deterministic = λ where
+      (b₁ , g[a]=b₁ , f[b₁]=c₁) (b₂ , g[a]=b₂ , f[b₂]=c₂) →
+        _⇀_.deterministic f
+          (subst (f [_]= _) (_⇀_.deterministic g g[a]=b₁ g[a]=b₂) f[b₁]=c₁)
+          f[b₂]=c₂
+  ; propositional = λ {a c} →                                           $⟨ Σ-closure 1 (_⇀_.∃[]=-propositional g) (λ _ → _⇀_.propositional f) ⟩
+      Is-proposition (∃ λ (p : ∃ λ b → g [ a ]= b) → f [ proj₁ p ]= c)  ↝⟨ H-level.respects-surjection (_↔_.surjection $ inverse Σ-assoc) 1 ⟩□
+      Is-proposition (∃ λ b → g [ a ]= b × f [ b ]= c)                  □
+  }
+
+-- If the codomain of a function is a set, then the function can be
+-- turned into a partial function.
+
+as-partial : ∀ {a b} {A : Type a} {B : Type b} →
+             Is-set B → (A → B) → A ⇀ B
+as-partial {ℓa} B-set f = record
+  { _[_]=_        = λ a b → ↑ ℓa (f a ≡ b)
+  ; deterministic = λ {a b₁ b₂} fa≡b₁ fa≡b₂ →
+                      b₁   ≡⟨ sym (lower fa≡b₁) ⟩
+                      f a  ≡⟨ lower fa≡b₂ ⟩∎
+                      b₂   ∎
+  ; propositional = ↑-closure 1 (+⇒≡ {n = 1} B-set)
+  }
+
+-- If f is a partial function, g a function whose domain is a set, and
+-- f (g a) = c, then (f ∘ g) a = c.
+
+pre-apply : ∀ {ℓ c} {A B : Type ℓ} {C : Type c}
+            (f : B ⇀ C) {g : A → B} {a c}
+            (B-set : Is-set B) →
+            f [ g a ]= c → f ∘ as-partial B-set g [ a ]= c
+pre-apply _ _ f[ga]=b = _ , lift refl , f[ga]=b
+
+-- If f is a function whose domain is a set, g a partial function, and
+-- g a = b, then (f ∘ g) a = f b.
+
+post-apply : ∀ {ℓ c} {A B : Type ℓ} {C : Type c}
+               {f : B → C} (g : A ⇀ B) {a b}
+             (C-set : Is-set C) →
+             g [ a ]= b → as-partial C-set f ∘ g [ a ]= f b
+post-apply _ _ g[a]=b = _ , g[a]=b , lift refl
+
+------------------------------------------------------------------------
+-- Totality
 
 -- Totality. The definition is parametrised by something which could
 -- be a modality.
@@ -91,55 +157,8 @@ total-with-∥∥→total f total a =
     id
     (total a)
 
--- If the codomain of a function is a set, then the function can be
--- turned into a partial function.
-
-as-partial : ∀ {a b} {A : Type a} {B : Type b} →
-             Is-set B → (A → B) → A ⇀ B
-as-partial {ℓa} B-set f = record
-  { _[_]=_        = λ a b → ↑ ℓa (f a ≡ b)
-  ; deterministic = λ {a b₁ b₂} fa≡b₁ fa≡b₂ →
-                      b₁   ≡⟨ sym (lower fa≡b₁) ⟩
-                      f a  ≡⟨ lower fa≡b₂ ⟩∎
-                      b₂   ∎
-  ; propositional = ↑-closure 1 (+⇒≡ {n = 1} B-set)
-  }
-
--- Composition of partial functions.
-
-infixr 9 _∘_
-
-_∘_ : ∀ {ℓ c} {A B : Type ℓ} {C : Type c} →
-      B ⇀ C → A ⇀ B → A ⇀ C
-f ∘ g = record
-  { _[_]=_        = λ a c → ∃ λ b → g [ a ]= b × f [ b ]= c
-  ; deterministic = λ where
-      (b₁ , g[a]=b₁ , f[b₁]=c₁) (b₂ , g[a]=b₂ , f[b₂]=c₂) →
-        _⇀_.deterministic f
-          (subst (f [_]= _) (_⇀_.deterministic g g[a]=b₁ g[a]=b₂) f[b₁]=c₁)
-          f[b₂]=c₂
-  ; propositional = λ {a c} →                                           $⟨ Σ-closure 1 (_⇀_.∃[]=-propositional g) (λ _ → _⇀_.propositional f) ⟩
-      Is-proposition (∃ λ (p : ∃ λ b → g [ a ]= b) → f [ proj₁ p ]= c)  ↝⟨ H-level.respects-surjection (_↔_.surjection $ inverse Σ-assoc) 1 ⟩□
-      Is-proposition (∃ λ b → g [ a ]= b × f [ b ]= c)                  □
-  }
-
--- If f is a partial function, g a function whose domain is a set, and
--- f (g a) = c, then (f ∘ g) a = c.
-
-pre-apply : ∀ {ℓ c} {A B : Type ℓ} {C : Type c}
-            (f : B ⇀ C) {g : A → B} {a c}
-            (B-set : Is-set B) →
-            f [ g a ]= c → f ∘ as-partial B-set g [ a ]= c
-pre-apply _ _ f[ga]=b = _ , lift refl , f[ga]=b
-
--- If f is a function whose domain is a set, g a partial function, and
--- g a = b, then (f ∘ g) a = f b.
-
-post-apply : ∀ {ℓ c} {A B : Type ℓ} {C : Type c}
-               {f : B → C} (g : A ⇀ B) {a b}
-             (C-set : Is-set C) →
-             g [ a ]= b → as-partial C-set f ∘ g [ a ]= f b
-post-apply _ _ g[a]=b = _ , g[a]=b , lift refl
+------------------------------------------------------------------------
+-- Computability
 
 -- Implements P p f means that p is an implementation of f. The
 -- definition is parametrised by P, which could be a modality.
@@ -223,16 +242,6 @@ total→almost-computable→computable P map f total (p , cl-p , hyp) =
       flip map (total x) λ where
         (y′ , f[x]=y′) →
           y′ , f[x]=y′ , ⇓-deterministic px⇓y (hyp x y′ f[x]=y′)
-
--- The semantics of χ as a partial function.
-
-semantics : Closed-exp ⇀ Closed-exp
-semantics = record
-  { _[_]=_        = _⇓_ on proj₁
-  ; deterministic = λ e⇓v₁ e⇓v₂ →
-      closed-equal-if-expressions-equal (⇓-deterministic e⇓v₁ e⇓v₂)
-  ; propositional = ⇓-propositional
-  }
 
 -- Another definition of computability.
 
@@ -320,6 +329,9 @@ Computable‴→Computable f ((p , cl-p) , hyp) =
          , f[a]=b
          , ⇓-deterministic p⌜a⌝⇓v p⌜a⌝⇓⌜b⌝)
 
+------------------------------------------------------------------------
+-- Reductions
+
 module _  {a b c d} {A : Type a} {B : Type b} {C : Type c} {D : Type d}
           ⦃ rA : Rep A Consts ⦄ ⦃ rB : Rep B Consts ⦄
           ⦃ rC : Rep C Consts ⦄ ⦃ rD : Rep D Consts ⦄ where
@@ -336,6 +348,50 @@ module _  {a b c d} {A : Type a} {B : Type b} {C : Type c} {D : Type d}
     (f : A ⇀ B) (g : C ⇀ D) →
     Reduction f g → ¬ Computable f → ¬ Computable g
   Reduction→¬Computable→¬Computable _ _ red ¬f g = ¬f (red g)
+
+------------------------------------------------------------------------
+-- Turning predicates into partial functions
+
+-- One way to view a predicate as a partial function to the booleans.
+
+as-partial-function-to-Bool₁ :
+  ∀ {a} {A : Type a} → (A → Type a) → A ⇀ Bool
+as-partial-function-to-Bool₁ P = record
+  { _[_]=_        = λ a b →
+                      (P a → b ≡ true)
+                        ×
+                      ¬ ¬ P a
+  ; deterministic = λ where
+      {b₁ = true}  {b₂ = true}  _ _ → refl
+      {b₁ = false} {b₂ = false} _ _ → refl
+      {b₁ = true}  {b₂ = false} _ f →
+        ⊥-elim $ proj₂ f (Bool.true≢false P.∘ sym P.∘ proj₁ f)
+      {b₁ = false} {b₂ = true}  f _ →
+        ⊥-elim $ proj₂ f (Bool.true≢false P.∘ sym P.∘ proj₁ f)
+  ; propositional = ×-closure 1
+                      (Π-closure ext 1 λ _ →
+                       Bool-set)
+                      (¬-propositional ext)
+  }
+
+-- Another way to view a predicate as a partial function to the
+-- booleans.
+--
+-- See also as-function-to-Bool₁ and as-function-to-Bool₂ below.
+
+as-partial-function-to-Bool₂ :
+  ∀ {a} {A : Type a} →
+  (P : A → Type a) →
+  (∀ {a} → Is-proposition (P a)) →
+  A ⇀ Bool
+as-partial-function-to-Bool₂ P P-prop = record
+  { _[_]=_        = λ a b → P a × b ≡ true
+  ; deterministic = λ { (_ , refl) (_ , refl) → refl }
+  ; propositional = ×-closure 1 P-prop Bool-set
+  }
+
+------------------------------------------------------------------------
+-- Total partial functions to the booleans
 
 -- Total partial functions to the booleans. Note that totality is
 -- defined using the double-negation modality.
@@ -471,41 +527,8 @@ to-Bool₁-computable→to-Bool₂-computable
   helper true  hyp = inj₁ (_⇔_.from hyp _ , refl)
   helper false hyp = inj₂ (_⇔_.to hyp , refl)
 
--- One way to view a predicate as a partial function to the booleans.
-
-as-partial-function-to-Bool₁ :
-  ∀ {a} {A : Type a} → (A → Type a) → A ⇀ Bool
-as-partial-function-to-Bool₁ P = record
-  { _[_]=_        = λ a b →
-                      (P a → b ≡ true)
-                        ×
-                      ¬ ¬ P a
-  ; deterministic = λ where
-      {b₁ = true}  {b₂ = true}  _ _ → refl
-      {b₁ = false} {b₂ = false} _ _ → refl
-      {b₁ = true}  {b₂ = false} _ f →
-        ⊥-elim $ proj₂ f (Bool.true≢false P.∘ sym P.∘ proj₁ f)
-      {b₁ = false} {b₂ = true}  f _ →
-        ⊥-elim $ proj₂ f (Bool.true≢false P.∘ sym P.∘ proj₁ f)
-  ; propositional = ×-closure 1
-                      (Π-closure ext 1 λ _ →
-                       Bool-set)
-                      (¬-propositional ext)
-  }
-
--- Another way to view a predicate as a partial function to the
--- booleans.
-
-as-partial-function-to-Bool₂ :
-  ∀ {a} {A : Type a} →
-  (P : A → Type a) →
-  (∀ {a} → Is-proposition (P a)) →
-  A ⇀ Bool
-as-partial-function-to-Bool₂ P P-prop = record
-  { _[_]=_        = λ a b → P a × b ≡ true
-  ; deterministic = λ { (_ , refl) (_ , refl) → refl }
-  ; propositional = ×-closure 1 P-prop Bool-set
-  }
+------------------------------------------------------------------------
+-- Decidability
 
 -- One definition of what it means for a total partial function to the
 -- booleans to be decidable.
