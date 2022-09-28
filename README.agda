@@ -51,10 +51,6 @@ import Reasoning
 
 import Propositional
 
--- The "terminates" relation.
-
-import Termination
-
 -- Compatibility lemmas.
 
 import Compatibility
@@ -92,23 +88,27 @@ import Not-the-code-of
 
 import Free-variables.Remove-substs
 
+-- A definition of the size of an operational semantics derivation,
+-- along with some properties.
+
+import Derivation-size
+
+-- The "terminates" relation.
+
+import Termination
+
 -- Some χ program combinators.
 
 import Combinators
-
--- The rec construction can be encoded using λ-terms.
-
-import Recursion-without-rec
 
 -- A definition of the size of an expression, along with some
 -- properties.
 
 import Expression-size
 
--- A definition of the size of an operational semantics derivation,
--- along with some properties.
+-- The rec construction can be encoded using λ-terms.
 
-import Derivation-size
+import Recursion-without-rec
 
 -- Some aspects of the semantics are decidable.
 

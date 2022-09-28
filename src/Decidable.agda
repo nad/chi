@@ -26,6 +26,7 @@ open import Chi             χ-ℕ-atoms
 open import Derivation-size χ-ℕ-atoms
 open import Deterministic   χ-ℕ-atoms
 open import Reasoning       χ-ℕ-atoms
+open import Termination     χ-ℕ-atoms
 open import Values          χ-ℕ-atoms
 
 -- The Lookup relation is decidable (in a certain sense).
@@ -54,16 +55,6 @@ Lookup-decidable c (branch c′ xs e ∷ bs) =
     (yes (e″ , p)) → yes (e″ [ x ← e′ ] , ∷ p)
     (no p)         → no λ where
       (_ , ∷ q) → p (_ , q)
-
--- Termination in at most a given number of steps.
-
-infix 4 _⇓≤_ _⇓⋆≤_
-
-_⇓≤_ : Exp → ℕ → Type
-e ⇓≤ n = ∃ λ v → ∃ λ (p : e ⇓ v) → size p ≤ n
-
-_⇓⋆≤_ : List Exp → ℕ → Type
-es ⇓⋆≤ n = ∃ λ vs → ∃ λ (ps : es ⇓⋆ vs) → size⋆ ps ≤ n
 
 private
 
