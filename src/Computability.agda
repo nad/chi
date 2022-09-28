@@ -15,6 +15,8 @@ open import Bool equality-with-J
 open import Bijection equality-with-J using (_↔_)
 open import Double-negation equality-with-J
 open import Equality.Decision-procedures equality-with-J
+open import Equivalence equality-with-J as Eq using (_≃_)
+open import Excluded-middle equality-with-J
 open import Function-universe equality-with-J hiding (id; _∘_)
 open import H-level equality-with-J as H-level
 open import H-level.Closure equality-with-J
@@ -511,21 +513,68 @@ to-Bool₁-computable→to-Bool₂-computable
       ¬¬ (∃ λ b → proj₁ (as-function-to-Bool₂ P P-prop) [ a ]= b ×
                   e ≡ ⌜ b ⌝)                                        □
 
--- A lemma related to as-function-to-Bool₂.
+-- If P is pointwise propositional then
+-- P a × b ≡ true ⊎ ¬ P a × b ≡ false is a proposition.
 
-×≡true⊎¬×≡false⇔⇔T :
-  ∀ {a} {A : Type a} (P : A → Type a) →
-  ∀ {a b} → P a × b ≡ true ⊎ ¬ P a × b ≡ false ⇔ (P a ⇔ T b)
-×≡true⊎¬×≡false⇔⇔T P {a} {b} = record
-  { to = λ where
-      (inj₁ (p  , refl)) → record { from = λ _ → p }
-      (inj₂ (¬p , refl)) → record { to = ¬p; from = ⊥-elim }
-  ; from = helper b
-  }
+×≡true⊎¬×≡false-propositional :
+  ∀ {a} {A : Type a}
+  (P : A → Type a) → (∀ {a} → Is-proposition (P a)) →
+  ∀ {a b} → Is-proposition (P a × b ≡ true ⊎ ¬ P a × b ≡ false)
+×≡true⊎¬×≡false-propositional P P-prop =
+  ⊎-closure-propositional
+    (λ (Pa , _) (¬Pa , _) → ¬Pa Pa)
+    (×-closure 1 P-prop Bool-set)
+    (×-closure 1 (¬-propositional ext) Bool-set)
+
+-- The statement P a × b ≡ true ⊎ ¬ P a × b ≡ false is equivalent to
+-- stating that P a holds exactly when T b holds (assuming that P is
+-- pointwise propositional).
+
+×≡true⊎¬×≡false≃⇔T :
+  ∀ {a} {A : Type a} {P : A → Type a} →
+  (∀ {a} → Is-proposition (P a)) →
+  ∀ {a b} → (P a × b ≡ true ⊎ ¬ P a × b ≡ false) ≃ (P a ⇔ T b)
+×≡true⊎¬×≡false≃⇔T {P = P} P-prop {a = a} {b = b} = Eq.⇔→≃
+  (×≡true⊎¬×≡false-propositional P P-prop)
+  (⇔-closure ext 1 P-prop (T-propositional b))
+  (λ where
+     (inj₁ (p  , refl)) → record { from = λ _ → p }
+     (inj₂ (¬p , refl)) → record { to = ¬p; from = ⊥-elim })
+  (helper b)
   where
   helper : ∀ b → P a ⇔ T b → P a × b ≡ true ⊎ ¬ P a × b ≡ false
   helper true  hyp = inj₁ (_⇔_.from hyp _ , refl)
   helper false hyp = inj₂ (_⇔_.to hyp , refl)
+
+-- If as-function-to-Bool₂ P P-prop is computable, then
+-- as-function-to-Bool₁ P is computable (assuming excluded middle).
+
+to-Bool₂-computable→to-Bool₁-computable :
+  ∀ {a} {A : Type a} ⦃ rA : Rep A Consts ⦄ →
+  Excluded-middle a →
+  (P : A → Type a) (P-prop : ∀ {a} → Is-proposition (P a)) →
+  Computable (proj₁ (as-function-to-Bool₂ P P-prop)) →
+  Computable (proj₁ (as-function-to-Bool₁ P))
+to-Bool₂-computable→to-Bool₁-computable
+  em P P-prop (p , cl-p , hyp₁ , hyp₂) =
+    p
+  , cl-p
+  , (λ a b →
+       proj₁ (as-function-to-Bool₁ P) [ a ]= b            →⟨ to-Bool₁→to-Bool₂ P P-prop ⟩
+       ¬¬ proj₁ (as-function-to-Bool₂ P P-prop) [ a ]= b  →⟨ Excluded-middle→Double-negation-elimination em $
+                                                             ×≡true⊎¬×≡false-propositional P P-prop ⟩
+       proj₁ (as-function-to-Bool₂ P P-prop) [ a ]= b     →⟨ hyp₁ a b ⟩□
+       apply p ⌜ a ⌝ ⇓ ⌜ b ⌝                              □)
+  , (λ a b →
+       apply p ⌜ a ⌝ ⇓ b                                       →⟨ hyp₂ a b ⟩
+
+       (∃ λ b′ →
+            proj₁ (as-function-to-Bool₂ P P-prop) [ a ]= b′ ×
+            b ≡ ⌜ b′ ⌝)                                        →⟨ Σ-map id (Σ-map (to-Bool₂→to-Bool₁ P P-prop) id) ⟩□
+
+       (∃ λ b′ →
+            proj₁ (as-function-to-Bool₁ P) [ a ]= b′ ×
+            b ≡ ⌜ b′ ⌝)                                        □)
 
 ------------------------------------------------------------------------
 -- Decidability
