@@ -317,3 +317,32 @@ terminates-in = flip $ Nat.well-founded-elim P terminates-in′
 
 terminates-in⋆ : (es : List Exp) (n : ℕ) → Dec (es ⇓⋆≤ n)
 terminates-in⋆ es n = terminates-in⋆′ n (λ _ e → terminates-in e _) es
+
+-- A unary variant of terminates-in that returns a boolean.
+
+terminates-in-Bool : Exp × ℕ → Bool
+terminates-in-Bool (e , n) =
+  if terminates-in e n then true else false
+
+-- If terminates-in-Bool (e , n) is equal to true, then e terminates
+-- in at most n steps.
+
+terminates-in-Bool-true :
+  ∀ {e n} → terminates-in-Bool (e , n) ≡ true → e ⇓≤ n
+terminates-in-Bool-true {e = e} {n = n} hyp =
+  lemma (terminates-in e n) hyp
+  where
+  lemma : (b : Dec (e ⇓≤ n)) → if b then true else false ≡ true → e ⇓≤ n
+  lemma (yes p) _ = p
+
+-- If terminates-in-Bool (e , n) is equal to false, then e does not
+-- terminate in at most n steps.
+
+terminates-in-Bool-false :
+  ∀ {e n} → terminates-in-Bool (e , n) ≡ false → ¬ e ⇓≤ n
+terminates-in-Bool-false {e = e} {n = n} hyp =
+  lemma (terminates-in e n) hyp
+  where
+  lemma :
+    (b : Dec (e ⇓≤ n)) → if b then true else false ≡ false → ¬ e ⇓≤ n
+  lemma (no p) _ = p
