@@ -178,6 +178,33 @@ Implements P p f =
   (∀ x y → apply p ⌜ x ⌝ ⇓ y →
      P (∃ λ y′ → f [ x ]= y′ × y ≡ ⌜ y′ ⌝))
 
+private
+
+  -- A lemma used below.
+
+  Σ[]=×≡⌜⌝-propositional :
+    ∀ {a b} {A : Type a} {B : Type b} ⦃ rB : Rep B Consts ⦄
+      {x} {y : Exp}
+    (p : Exp) (f : A ⇀ B) →
+    Is-proposition (∃ λ y′ → f [ x ]= y′ × y ≡ ⌜ y′ ⌝)
+  Σ[]=×≡⌜⌝-propositional {x = x} {y = y} _ f =                    $⟨ (Σ-closure 1 (_⇀_.∃[]=-propositional f) λ _ → Exp-set) ⟩
+    Is-proposition (∃ λ ((y′ , _) : ∃ (f [ x ]=_)) → y ≡ ⌜ y′ ⌝)  →⟨ H-level-cong _ 1 (inverse Σ-assoc) ⟩□
+    Is-proposition (∃ λ y′ → f [ x ]= y′ × y ≡ ⌜ y′ ⌝)            □
+
+-- If excluded middle holds then Implements ¬¬_ p f is equivalent to
+-- Implements id p f.
+
+Implements-¬¬≃Implements-id :
+  ∀ {a b} {A : Type a} {B : Type b} {p : Exp}
+    ⦃ rA : Rep A Consts ⦄ ⦃ rB : Rep B Consts ⦄ →
+  Excluded-middle (a ⊔ b) →
+  (f : A ⇀ B) → Implements ¬¬_ p f ≃ Implements id p f
+Implements-¬¬≃Implements-id {p = p} em f =
+  ∃-cong λ _ → ∃-cong λ _ →
+  ∀-cong ext λ x → ∀-cong ext λ y → ∀-cong ext λ _ →
+  ¬¬≃ (Σ[]=×≡⌜⌝-propositional p f)
+    (Excluded-middle→Double-negation-elimination em) ext
+
 -- If P maps propositions to propositions, then Implements P p f is a
 -- proposition.
 
@@ -188,7 +215,7 @@ Implements-propositional :
   (f : A ⇀ B) →
   (∀ {A} → Is-proposition A → Is-proposition (P A)) →
   Is-proposition (Implements P p f)
-Implements-propositional f pres =
+Implements-propositional {p = p} f pres =
   ×-closure 1 Closed-propositional $
   ×-closure 1 (Π-closure ext 1 λ _ →
                Π-closure ext 1 λ _ →
@@ -198,10 +225,7 @@ Implements-propositional f pres =
                Π-closure ext 1 λ y →
                Π-closure ext 1 λ _ →
                pres $
-               H-level.respects-surjection
-                 (_↔_.surjection $ inverse Σ-assoc) 1
-                 (Σ-closure 1 (_⇀_.∃[]=-propositional f) λ _ →
-                              Exp-set))
+               Σ[]=×≡⌜⌝-propositional p f)
 
 -- Computability. The definition is parametrised by something which
 -- could be a modality.
@@ -220,6 +244,17 @@ Computable :
     ⦃ rA : Rep A Consts ⦄ ⦃ rB : Rep B Consts ⦄ →
   A ⇀ B → Type (a ⊔ b)
 Computable = Computable′ id
+
+-- If excluded middle holds then Computable′ ¬¬_ f is equivalent to
+-- Computable f.
+
+Computable′-¬¬≃Computable :
+  ∀ {a b} {A : Type a} {B : Type b}
+    ⦃ rA : Rep A Consts ⦄ ⦃ rB : Rep B Consts ⦄ →
+  Excluded-middle (a ⊔ b) →
+  (f : A ⇀ B) → Computable′ ¬¬_ f ≃ Computable f
+Computable′-¬¬≃Computable em f =
+  ∃-cong λ _ → Implements-¬¬≃Implements-id em f
 
 -- If the partial function is total, then one part of the proof of
 -- computability can be omitted.
