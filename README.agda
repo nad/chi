@@ -9,13 +9,13 @@
 -- and proofs used in this development, can be found in "The language
 -- χ" by Bengt Nordström (edited by me):
 --
--- * https://chalmers.instructure.com/courses/10744/file_contents/course%20files/reading/The_language_chi.pdf
+-- * https://chalmers.instructure.com/courses/20908/file_contents/course%20files/reading/The_language_chi.pdf
 --
 -- See also the following lecture slides:
 --
--- * https://chalmers.instructure.com/courses/10744/file_contents/course%20files/lectures/L4.pdf
--- * https://chalmers.instructure.com/courses/10744/file_contents/course%20files/lectures/L5.pdf
--- * https://chalmers.instructure.com/courses/10744/file_contents/course%20files/lectures/L6.pdf
+-- * https://chalmers.instructure.com/courses/20908/file_contents/course%20files/lectures/L4.pdf
+-- * https://chalmers.instructure.com/courses/20908/file_contents/course%20files/lectures/L5.pdf
+-- * https://chalmers.instructure.com/courses/20908/file_contents/course%20files/lectures/L6.pdf
 
 module README where
 
