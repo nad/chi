@@ -6,12 +6,18 @@ open import Atom
 
 module Alpha-equivalence (atoms : χ-atoms) where
 
-open import Equality.Propositional
+open import Equality.Propositional.Cubical
 open import Logical-equivalence using (_⇔_)
 open import Prelude hiding (const; module List)
 
 open import Bag-equivalence equality-with-J using (_∈_)
-import List equality-with-J as List
+open import Equivalence equality-with-J using (_≃_)
+open import Function-universe equality-with-J as F hiding (id; _∘_)
+open import H-level.Closure equality-with-J
+open import H-level.Truncation.Propositional equality-with-paths as T
+  using (∥_∥)
+open import List equality-with-J as List using (_++_)
+open import List.All equality-with-J as All using (All)
 import Nat equality-with-J as Nat
 
 open import Chi            atoms
@@ -29,7 +35,7 @@ private
     es₁ es₂                    : List Exp
     R R₁ R₂                    : A → A → Type
     x x₁ x₁′ x₂ x₂′ y y₁ y₂    : A
-    xs xs₁ xs₂                 : List A
+    xs xs₁ xs₂ ys₁ ys₂         : List A
 
 ------------------------------------------------------------------------
 -- The definition of α-equivalence
@@ -444,6 +450,149 @@ mutual
 
 sym-α : e₁ ≈α e₂ → e₂ ≈α e₁
 sym-α = map-Alpha sym ∘ sym-Alpha
+
+------------------------------------------------------------------------
+-- A kind of weakening property
+
+-- If (_≡_ [ xs ]ʳ) x₁ x₂ holds, and it is "merely true" that x₁ is
+-- equal to the first projection of an element in xs, then
+-- (R [ xs ]ʳ) x₁ x₂ holds for any R.
+
+≡-[]ʳ→[]ʳ :
+  ∀ xs →
+  ∥ x₁ ∈ List.map proj₁ xs ∥ →
+  (_≡_ [ xs ]ʳ) x₁ x₂ →
+  (R [ xs ]ʳ) x₁ x₂
+≡-[]ʳ→[]ʳ {x₁ = x₁} {x₂ = x₂} {R = R} [] cl _ =
+               $⟨ cl ⟩
+  ∥ x₁ ∈ [] ∥  ↔⟨⟩
+  ∥ ⊥ ∥        ↔⟨ T.∥∥↔ ⊥-propositional ⟩
+  ⊥            →⟨ ⊥-elim ⟩□
+  R x₁ x₂      □
+≡-[]ʳ→[]ʳ {x₁ = x₁} {x₂ = x₂} {R = R} ((y₁ , y₂) ∷ xs) cl =
+  (_≡_ [ xs ]ʳ [ y₁ ∼ y₂ ]) x₁ x₂                              ↔⟨⟩
+  y₁ ≡ x₁ × y₂ ≡ x₂ ⊎ y₁ ≢ x₁ × y₂ ≢ x₂ × (_≡_ [ xs ]ʳ) x₁ x₂  →⟨ (⊎-map id $ ∃-cong λ y₁≢x₁ → ∃-cong λ _ →
+                                                                   ≡-[]ʳ→[]ʳ xs (cl′ y₁≢x₁)) ⟩
+  y₁ ≡ x₁ × y₂ ≡ x₂ ⊎ y₁ ≢ x₁ × y₂ ≢ x₂ × (R [ xs ]ʳ) x₁ x₂    ↔⟨⟩
+  (R   [ xs ]ʳ [ y₁ ∼ y₂ ]) x₁ x₂                              □
+  where
+  cl′ : y₁ ≢ x₁ → ∥ x₁ ∈ List.map proj₁ xs ∥
+  cl′ y₁≢x₁ =                             $⟨ cl ⟩
+    ∥ x₁ ∈ y₁ ∷ List.map proj₁ xs ∥       ↔⟨⟩
+    ∥ x₁ ≡ y₁ ⊎ x₁ ∈ List.map proj₁ xs ∥  →⟨ T.∥∥-map [ ⊥-elim ∘ y₁≢x₁ ∘ sym , id ] ⟩□
+    ∥ x₁ ∈ List.map proj₁ xs ∥            □
+
+-- The previous lemma was stated using ∥ x₁ ∈ List.map proj₁ xs ∥. As
+-- the following lemma shows this choice was a bit arbitrary.
+
+≡-[]ʳ→∈₁⇔∈₂ :
+  ∀ xs →
+  (_≡_ [ xs ]ʳ) x₁ x₂ →
+  x₁ ∈ List.map proj₁ xs ⇔ x₂ ∈ List.map proj₂ xs
+≡-[]ʳ→∈₁⇔∈₂ {x₁ = x₁} {x₂ = x₂} xs p =
+  record { to = curry (to xs) p; from = from }
+  where
+  to :
+    ∀ {x₁ x₂} xs →
+    (_≡_ [ xs ]ʳ) x₁ x₂ × x₁ ∈ List.map proj₁ xs →
+    x₂ ∈ List.map proj₂ xs
+  to {x₁ = x₁} {x₂ = x₂} ((y₁ , y₂) ∷ xs) =
+    (y₁ ≡ x₁ × y₂ ≡ x₂ ⊎ y₁ ≢ x₁ × y₂ ≢ x₂ × (_≡_ [ xs ]ʳ) x₁ x₂) ×
+    (x₁ ≡ y₁ ⊎ x₁ ∈ List.map proj₁ xs)                                    ↔⟨ (F.id ⊎-cong ∃-⊎-distrib-left) F.∘
+                                                                             ∃-⊎-distrib-right ⟩
+    (y₁ ≡ x₁ × y₂ ≡ x₂) × (x₁ ≡ y₁ ⊎ x₁ ∈ List.map proj₁ xs) ⊎
+    ((y₁ ≢ x₁ × y₂ ≢ x₂ × (_≡_ [ xs ]ʳ) x₁ x₂) × x₁ ≡ y₁ ⊎
+     (y₁ ≢ x₁ × y₂ ≢ x₂ × (_≡_ [ xs ]ʳ) x₁ x₂) × x₁ ∈ List.map proj₁ xs)  →⟨ ⊎-map (sym ∘ proj₂ ∘ proj₁)
+                                                                               [ (λ ((y₁≢x₁ , _) , x₁≡y₁) → ⊥-elim $ y₁≢x₁ (sym x₁≡y₁))
+                                                                               , Σ-map (proj₂ ∘ proj₂) id
+                                                                               ] ⟩
+
+    x₂ ≡ y₂ ⊎ (_≡_ [ xs ]ʳ) x₁ x₂ × x₁ ∈ List.map proj₁ xs                →⟨ ⊎-map id (to xs) ⟩□
+
+    x₂ ≡ y₂ ⊎ x₂ ∈ List.map proj₂ xs                                      □
+
+  from :
+    x₂ ∈ List.map proj₂ xs →
+    x₁ ∈ List.map proj₁ xs
+  from =
+    x₂ ∈ List.map proj₂ xs                          →⟨ subst (_ ∈_) $ sym $ List.map∘map xs ⟩
+    x₂ ∈ List.map proj₁ (List.map Prelude.swap xs)  →⟨ curry (to (List.map Prelude.swap xs)) lemma ⟩
+    x₁ ∈ List.map proj₂ (List.map Prelude.swap xs)  →⟨ subst (_ ∈_) $ List.map∘map xs ⟩□
+    x₁ ∈ List.map proj₁ xs                          □
+    where
+    lemma =                                   $⟨ p ⟩
+      (_≡_ [ xs ]ʳ) x₁ x₂                     →⟨ sym-[]ʳ xs ⟩
+      (flip _≡_ [ List.map swap xs ]ʳ) x₂ x₁  →⟨ map-[]ʳ (List.map swap xs) sym ⟩□
+      (_≡_ [ List.map swap xs ]ʳ) x₂ x₁       □
+
+mutual
+
+  -- If e₁ and e₂ are α-equivalent and e₁ is closed, then
+  -- Alpha R e₁ e₂ holds.
+
+  ≈α→Alpha : Closed e₁ → e₁ ≈α e₂ → Alpha R e₁ e₂
+  ≈α→Alpha cl p = Alpha-≡→Alpha [] cl p
+
+  Alpha-≡→Alpha :
+    ∀ xs →
+    Closed′ (List.map proj₁ xs) e₁ →
+    Alpha (_≡_ [ xs ]ʳ) e₁ e₂ →
+    Alpha (R   [ xs ]ʳ) e₁ e₂
+  Alpha-≡→Alpha xs cl (apply p q) = apply
+    (Alpha-≡→Alpha xs (_≃_.to Closed′-apply≃ cl .proj₁) p)
+    (Alpha-≡→Alpha xs (_≃_.to Closed′-apply≃ cl .proj₂) q)
+  Alpha-≡→Alpha xs cl (lambda p) = lambda
+    (Alpha-binders-≡→Alpha-binders xs (_≃_.to Closed′-lambda≃ cl) p)
+  Alpha-≡→Alpha xs cl (case p q) = case
+    (Alpha-≡→Alpha xs (_≃_.to Closed′-case≃ cl .proj₁) p)
+    (Alpha-Br-⋆-≡→Alpha-Br-⋆ xs (_≃_.to Closed′-case≃ cl .proj₂) q)
+  Alpha-≡→Alpha xs cl (rec p) = rec
+    (Alpha-binders-≡→Alpha-binders xs (_≃_.to Closed′-rec≃ cl) p)
+  Alpha-≡→Alpha xs cl (var {x₁ = x₁} {x₂ = x₂} p) = var
+    (≡-[]ʳ→[]ʳ xs (_≃_.to Closed′-var≃ cl) p)
+  Alpha-≡→Alpha xs cl (const p) = const
+    (Alpha-⋆-≡→Alpha-⋆ xs (_≃_.to Closed′-const≃ cl) p)
+
+  Alpha-Br-≡→Alpha-Br :
+    ∀ xs →
+    Closed′-Br (List.map proj₁ xs) b₁ →
+    Alpha-Br (_≡_ [ xs ]ʳ) b₁ b₂ →
+    Alpha-Br (R   [ xs ]ʳ) b₁ b₂
+  Alpha-Br-≡→Alpha-Br xs cl (branch p) = branch
+    (Alpha-binders-≡→Alpha-binders xs cl p)
+
+  Alpha-binders-≡→Alpha-binders :
+    ∀ xs →
+    Closed′ (ys₁ ++ List.map proj₁ xs) e₁ →
+    Alpha-binders (_≡_ [ xs ]ʳ) ys₁ e₁ ys₂ e₂ →
+    Alpha-binders (R   [ xs ]ʳ) ys₁ e₁ ys₂ e₂
+  Alpha-binders-≡→Alpha-binders xs cl (nil p) = nil
+    (Alpha-≡→Alpha xs cl p)
+  Alpha-binders-≡→Alpha-binders
+    xs cl (cons {xs₁ = xs₁} {xs₂ = xs₂} p) = cons
+    (Alpha-binders-≡→Alpha-binders (_ ∷ xs) (Closed′-++-∷ xs₁ cl) p)
+
+  Alpha-⋆-≡→Alpha-⋆ :
+    ∀ xs →
+    All (Closed′ (List.map proj₁ xs)) es₁ →
+    Alpha-⋆ (Alpha (_≡_ [ xs ]ʳ)) es₁ es₂ →
+    Alpha-⋆ (Alpha (R   [ xs ]ʳ)) es₁ es₂
+  Alpha-⋆-≡→Alpha-⋆ _ _ [] =
+    []
+  Alpha-⋆-≡→Alpha-⋆ xs cl (p ∷ ps) =
+    Alpha-≡→Alpha xs (All.head cl) p ∷
+    Alpha-⋆-≡→Alpha-⋆ xs (All.tail cl) ps
+
+  Alpha-Br-⋆-≡→Alpha-Br-⋆ :
+    ∀ xs →
+    All (Closed′-Br (List.map proj₁ xs)) bs₁ →
+    Alpha-⋆ (Alpha-Br (_≡_ [ xs ]ʳ)) bs₁ bs₂ →
+    Alpha-⋆ (Alpha-Br (R   [ xs ]ʳ)) bs₁ bs₂
+  Alpha-Br-⋆-≡→Alpha-Br-⋆ _ _ [] =
+    []
+  Alpha-Br-⋆-≡→Alpha-Br-⋆ xs cl (p ∷ ps) =
+    Alpha-Br-≡→Alpha-Br xs (All.head cl) p ∷
+    Alpha-Br-⋆-≡→Alpha-Br-⋆ xs (All.tail cl) ps
 
 ------------------------------------------------------------------------
 -- Several things respect α-equivalence
