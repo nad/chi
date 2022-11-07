@@ -24,6 +24,7 @@ open import H-level.Closure equality-with-J
 open import H-level.Truncation.Propositional equality-with-paths as T
   using (∥_∥)
 open import List equality-with-J using (_++_; foldr)
+open import List.All equality-with-J using (All)
 
 open import Chi           atoms
 open import Propositional atoms
@@ -255,7 +256,7 @@ Closed′-case≃ {xs = xs} {e = e} {bs = bs} =
      ∀ x → ¬ x ∈ ys ++ xs → ¬ x ∈FV e)             □
 
 Closed′-const≃ :
-  Closed′ xs (const c es) ≃ (∀ e → e ∈ es → Closed′ xs e)
+  Closed′ xs (const c es) ≃ All (Closed′ xs) es
 Closed′-const≃ {xs = xs} {c = c} {es = es} =
   Closed′ xs (const c es)                        ↔⟨⟩
   (∀ x → ¬ x ∈ xs → ¬ x ∈FV const c es)          ↝⟨ (∀-cong ext λ _ → ∀-cong ext λ _ → ¬-cong ext ∈const) ⟩
@@ -410,7 +411,7 @@ Closed′-closed-under-case = curry $ _≃_.from Closed′-case≃
 
 Closed′-closed-under-const :
   ∀ {xs c es} →
-  (∀ e → e ∈ es → Closed′ xs e) →
+  All (Closed′ xs) es →
   Closed′ xs (const c es)
 Closed′-closed-under-const = _≃_.from Closed′-const≃
 
@@ -836,7 +837,7 @@ mutual
                (case-body x∈e b∈bs (¬[x∈ys⊎x∈xs] ∘ inj₁))))
           (closed′?-B⋆ bs xs)
 
-  closed′?-⋆ : ∀ es xs → Dec (∀ e → e ∈ es → Closed′ xs e)
+  closed′?-⋆ : ∀ es xs → Dec (All (Closed′ xs) es)
   closed′?-⋆ []       xs = yes (λ _ ())
   closed′?-⋆ (e ∷ es) xs with closed′? e xs
   closed′?-⋆ (e ∷ es) xs | no  ¬cl-e = no (λ cl →
