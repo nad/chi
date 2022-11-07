@@ -65,7 +65,7 @@ mutual
       Alpha R (apply e₁₁ e₂₁) (apply e₁₂ e₂₂)
 
     lambda :
-      Alpha (R [ x₁ ∼ x₂ ]) e₁ e₂ →
+      Alpha-binders R (x₁ ∷ []) e₁ (x₂ ∷ []) e₂ →
       Alpha R (lambda x₁ e₁) (lambda x₂ e₂)
 
     case :
@@ -74,7 +74,7 @@ mutual
       Alpha R (case e₁ bs₁) (case e₂ bs₂)
 
     rec :
-      Alpha (R [ x₁ ∼ x₂ ]) e₁ e₂ →
+      Alpha-binders R (x₁ ∷ []) e₁ (x₂ ∷ []) e₂ →
       Alpha R (rec x₁ e₁) (rec x₂ e₂)
 
     var : R x₁ x₂ → Alpha R (var x₁) (var x₂)
@@ -84,12 +84,18 @@ mutual
       Alpha R (const c es₁) (const c es₂)
 
   data Alpha-Br (R : Var → Var → Type) : Br → Br → Type where
+    branch :
+      Alpha-binders R xs₁ e₁ xs₂ e₂ →
+      Alpha-Br R (branch c xs₁ e₁) (branch c xs₂ e₂)
+
+  data Alpha-binders (R : Var → Var → Type) :
+         List Var → Exp → List Var → Exp → Type where
     nil :
       Alpha R e₁ e₂ →
-      Alpha-Br R (branch c [] e₁) (branch c [] e₂)
+      Alpha-binders R [] e₁ [] e₂
     cons :
-      Alpha-Br (R [ x₁ ∼ x₂ ]) (branch c xs₁ e₁) (branch c xs₂ e₂) →
-      Alpha-Br R (branch c (x₁ ∷ xs₁) e₁) (branch c (x₂ ∷ xs₂) e₂)
+      Alpha-binders (R [ x₁ ∼ x₂ ]) xs₁ e₁ xs₂ e₂ →
+      Alpha-binders R (x₁ ∷ xs₁) e₁ (x₂ ∷ xs₂) e₂
 
 -- The α-equivalence relation.
 
@@ -126,9 +132,9 @@ mutual
     apply (refl-Alpha e₁ λ x x∈e₁ → r x (apply-left  x∈e₁))
           (refl-Alpha e₂ λ x x∈e₂ → r x (apply-right x∈e₂))
 
-  refl-Alpha {R = R} (lambda x e) r =
-    lambda (refl-Alpha e λ y y∈e → [≢→[∼]]→[∼] R λ y≢x →
-              r y (lambda y≢x y∈e))
+  refl-Alpha (lambda x e) r =
+    lambda (refl-Alpha-binders (x ∷ []) e
+              (λ y y∉[x] y∈e → r y (lambda (y∉[x] ∘ inj₁) y∈e)))
 
   refl-Alpha (case e bs) r =
     case
@@ -137,9 +143,9 @@ mutual
       (refl-Alpha-B⋆ bs λ x ∈bs x∉xs x∈ →
          r x (case-body x∈ ∈bs x∉xs))
 
-  refl-Alpha {R = R} (rec x e) r =
-    rec (refl-Alpha e λ y y∈e → [≢→[∼]]→[∼] R λ y≢x →
-           r y (rec y≢x y∈e))
+  refl-Alpha (rec x e) r =
+    rec (refl-Alpha-binders (x ∷ []) e
+           (λ y y∉[x] → r y ∘ rec (y∉[x] ∘ inj₁)))
 
   refl-Alpha (var x) r =
     var (r x (var refl))
@@ -152,11 +158,18 @@ mutual
     ∀ c xs e →
     (∀ x → ¬ x ∈ xs → x ∈FV e → R x x) →
     Alpha-Br R (branch c xs e) (branch c xs e)
-  refl-Alpha-B c [] e r =
+  refl-Alpha-B _ xs e r =
+    branch (refl-Alpha-binders xs e r)
+
+  refl-Alpha-binders :
+    ∀ xs e →
+    (∀ x → ¬ x ∈ xs → x ∈FV e → R x x) →
+    Alpha-binders R xs e xs e
+  refl-Alpha-binders [] e r =
     nil (refl-Alpha e λ x x∈e →
            r x (λ ()) x∈e)
-  refl-Alpha-B {R = R} c (x ∷ xs) e r =
-    cons (refl-Alpha-B c xs e λ y y∉xs y∈e → [≢→[∼]]→[∼] R λ y≢x →
+  refl-Alpha-binders {R = R} (x ∷ xs) e r =
+    cons (refl-Alpha-binders xs e λ y y∉xs y∈e → [≢→[∼]]→[∼] R λ y≢x →
             r y [ y≢x , y∉xs ] y∈e)
 
   refl-Alpha-⋆ :
@@ -228,11 +241,11 @@ mutual
 
   map-Alpha r (var Rx₁x₂) = var (r Rx₁x₂)
 
-  map-Alpha {R₁ = R₁} r (lambda e₁≈e₂) =
-    lambda (map-Alpha (map-[∼] R₁ r) e₁≈e₂)
+  map-Alpha r (lambda e₁≈e₂) =
+    lambda (map-Alpha-binders r e₁≈e₂)
 
-  map-Alpha {R₁ = R₁} r (rec e₁≈e₂) =
-    rec (map-Alpha (map-[∼] R₁ r) e₁≈e₂)
+  map-Alpha r (rec e₁≈e₂) =
+    rec (map-Alpha-binders r e₁≈e₂)
 
   map-Alpha r (apply e₁₁≈e₁₂ e₂₁≈e₂₂) =
     apply (map-Alpha r e₁₁≈e₁₂) (map-Alpha r e₂₁≈e₂₂)
@@ -247,10 +260,16 @@ mutual
   map-Alpha-Br :
     (∀ {x₁ x₂} → R₁ x₁ x₂ → R₂ x₁ x₂) →
     Alpha-Br R₁ b₁ b₂ → Alpha-Br R₂ b₁ b₂
-  map-Alpha-Br r (nil e₁≈e₂) =
+  map-Alpha-Br r (branch bs₁≈bs₂) =
+    branch (map-Alpha-binders r bs₁≈bs₂)
+
+  map-Alpha-binders :
+    (∀ {x₁ x₂} → R₁ x₁ x₂ → R₂ x₁ x₂) →
+    Alpha-binders R₁ xs₁ e₁ xs₂ e₂ → Alpha-binders R₂ xs₁ e₁ xs₂ e₂
+  map-Alpha-binders r (nil e₁≈e₂) =
     nil (map-Alpha r e₁≈e₂)
-  map-Alpha-Br {R₁ = R₁} r (cons b₁≈b₂) =
-    cons (map-Alpha-Br (map-[∼] R₁ r) b₁≈b₂)
+  map-Alpha-binders {R₁ = R₁} r (cons b₁≈b₂) =
+    cons (map-Alpha-binders (map-[∼] R₁ r) b₁≈b₂)
 
   map-Alpha-⋆ :
     (∀ {x₁ x₂} → R₁ x₁ x₂ → R₂ x₁ x₂) →
@@ -288,11 +307,11 @@ mutual
 
   sym-Alpha (var Rx₁x₂) = var Rx₁x₂
 
-  sym-Alpha {R = R} (lambda e₁≈e₂) =
-    lambda (map-Alpha (sym-[∼] R) (sym-Alpha e₁≈e₂))
+  sym-Alpha (lambda e₁≈e₂) =
+    lambda (sym-Alpha-binders e₁≈e₂)
 
-  sym-Alpha {R = R} (rec e₁≈e₂) =
-    rec (map-Alpha (sym-[∼] R) (sym-Alpha e₁≈e₂))
+  sym-Alpha (rec e₁≈e₂) =
+    rec (sym-Alpha-binders e₁≈e₂)
 
   sym-Alpha (apply e₁₁≈e₁₂ e₂₁≈e₂₂) =
     apply (sym-Alpha e₁₁≈e₁₂) (sym-Alpha e₂₁≈e₂₂)
@@ -306,10 +325,15 @@ mutual
 
   sym-Alpha-Br :
     Alpha-Br R b₁ b₂ → Alpha-Br (flip R) b₂ b₁
-  sym-Alpha-Br (nil e₁≈e₂) =
+  sym-Alpha-Br (branch bs₁≈bs₂) =
+    branch (sym-Alpha-binders bs₁≈bs₂)
+
+  sym-Alpha-binders :
+    Alpha-binders R xs₁ e₁ xs₂ e₂ → Alpha-binders (flip R) xs₂ e₂ xs₁ e₁
+  sym-Alpha-binders (nil e₁≈e₂) =
     nil (sym-Alpha e₁≈e₂)
-  sym-Alpha-Br {R = R} (cons b₁≈b₂) =
-    cons (map-Alpha-Br (sym-[∼] R) (sym-Alpha-Br b₁≈b₂))
+  sym-Alpha-binders {R = R} (cons b₁≈b₂) =
+    cons (map-Alpha-binders (sym-[∼] R) (sym-Alpha-binders b₁≈b₂))
 
   sym-Alpha-⋆ :
     Alpha-⋆ (Alpha R) es₁ es₂ → Alpha-⋆ (Alpha (flip R)) es₂ es₁
@@ -344,19 +368,15 @@ mutual
   Alpha-∈ {R = R} (var Ry₁y₂) (var x₁≡y₁) =
     _ , subst (flip R _) (sym x₁≡y₁) Ry₁y₂ , var refl
 
-  Alpha-∈ (lambda e₁≈e₂) (lambda x₁≢y₁ x₁∈)
-    with Alpha-∈ e₁≈e₂ x₁∈
-  … | x₂ , inj₂ (_ , y₂≢x₂ , Rx₁x₂) , x₂∈ =
-    x₂ , Rx₁x₂ , lambda (y₂≢x₂ ∘ sym) x₂∈
-  … | _ , inj₁ (y₁≡x₁ , _) , _ =
-    ⊥-elim $ x₁≢y₁ (sym y₁≡x₁)
+  Alpha-∈ (lambda e₁≈e₂) (lambda x₁≢y₁ x₁∈) =
+    let (x₂ , x₁Rx₂ , x₂∈e₂ , x₂∉[x₃]) =
+          Alpha-binders-∈ e₁≈e₂ x₁∈ [ x₁≢y₁ , id ]
+    in x₂ , x₁Rx₂ , lambda (x₂∉[x₃] ∘ inj₁) x₂∈e₂
 
-  Alpha-∈ (rec e₁≈e₂) (rec x₁≢y₁ x₁∈)
-    with Alpha-∈ e₁≈e₂ x₁∈
-  … | x₂ , inj₂ (_ , y₂≢x₂ , Rx₁x₂) , x₂∈ =
-    x₂ , Rx₁x₂ , rec (y₂≢x₂ ∘ sym) x₂∈
-  … | _ , inj₁ (y₁≡x₁ , _) , _ =
-    ⊥-elim $ x₁≢y₁ (sym y₁≡x₁)
+  Alpha-∈ (rec e₁≈e₂) (rec x₁≢y₁ x₁∈) =
+    let (x₂ , x₁Rx₂ , x₂∈e₂ , x₂∉[x₃]) =
+          Alpha-binders-∈ e₁≈e₂ x₁∈ [ x₁≢y₁ , id ]
+    in x₂ , x₁Rx₂ , rec (x₂∉[x₃] ∘ inj₁) x₂∈e₂
 
   Alpha-∈ (apply e₁₁≈e₁₂ e₂₁≈e₂₂) (apply-left x₁∈) =
     Σ-map id (Σ-map id apply-left) $ Alpha-∈ e₁₁≈e₁₂ x₁∈
@@ -380,11 +400,17 @@ mutual
     Alpha-Br R (branch c₁ xs₁ e₁) (branch c₂ xs₂ e₂) →
     x₁ ∈FV e₁ → ¬ x₁ ∈ xs₁ →
     ∃ λ x₂ → R x₁ x₂ × x₂ ∈FV e₂ × ¬ x₂ ∈ xs₂
-  Alpha-Br-∈ (nil e₁≈e₂) x₁∈ _ =
+  Alpha-Br-∈ (branch bs₁≈bs₂) = Alpha-binders-∈ bs₁≈bs₂
+
+  Alpha-binders-∈ :
+    Alpha-binders R xs₁ e₁ xs₂ e₂ →
+    x₁ ∈FV e₁ → ¬ x₁ ∈ xs₁ →
+    ∃ λ x₂ → R x₁ x₂ × x₂ ∈FV e₂ × ¬ x₂ ∈ xs₂
+  Alpha-binders-∈ (nil e₁≈e₂) x₁∈ _ =
     Σ-map id (Σ-map id (_, λ ())) $
     Alpha-∈ e₁≈e₂ x₁∈
-  Alpha-Br-∈ (cons {x₁ = y₁} {x₂ = y₂} bs₁≈bs₂) x₁∈ x₁∉
-    with Alpha-Br-∈ bs₁≈bs₂ x₁∈ (x₁∉ ∘ inj₂)
+  Alpha-binders-∈ (cons {x₁ = y₁} {x₂ = y₂} bs₁≈bs₂) x₁∈ x₁∉
+    with Alpha-binders-∈ bs₁≈bs₂ x₁∈ (x₁∉ ∘ inj₂)
   … | x₂ , inj₂ (_ , y₂≢x₂ , Rx₁x₂) , x₂∈ , x₂∉ =
     x₂ , Rx₁x₂ , x₂∈ , [ y₂≢x₂ ∘ sym , x₂∉ ]
   … | _ , inj₁ (y₁≡x₁ , _) , _ =
@@ -453,20 +479,22 @@ mutual
   e′ = var x¹
 
   e¹≈e² : Alpha (_≡_ [ z ∼ z ]) e¹ e²
-  e¹≈e² =
-    lambda (var (inj₂ ( V.distinct-codes→distinct-names (λ ())
-                      , V.distinct-codes→distinct-names (λ ())
-                      , inj₁ (refl , refl)
-                      )))
+  e¹≈e² = lambda (cons (nil (var (inj₂
+    ( V.distinct-codes→distinct-names (λ ())
+    , V.distinct-codes→distinct-names (λ ())
+    , inj₁ (refl , refl)
+    )))))
 
   e′≈e′ : e′ ≈α e′
   e′≈e′ = refl-α
 
   not-equal : ¬ e¹ [ z ← e′ ] ≈α e² [ z ← e′ ]
   not-equal _ with z V.≟ x¹ | z V.≟ x² | z V.≟ z
-  not-equal (lambda (var (inj₁ (_ , x²≡x¹)))) | no _ | no _ | yes _ =
+  not-equal (lambda (cons (nil (var (inj₁ (_ , x²≡x¹))))))
+    | no _ | no _ | yes _ =
     from-⊎ (1 Nat.≟ 0) (V.name-injective x²≡x¹)
-  not-equal (lambda (var (inj₂ (x¹≢x¹ , _)))) | no _ | no _ | yes _ =
+  not-equal (lambda (cons (nil (var (inj₂ (x¹≢x¹ , _))))))
+    | no _ | no _ | yes _ =
     x¹≢x¹ refl
   not-equal _ | yes z≡x¹ | _ | _ =
     from-⊎ (2 Nat.≟ 0) (V.name-injective z≡x¹)

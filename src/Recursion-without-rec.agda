@@ -110,13 +110,13 @@ f≈αf :
   z₁ ≢ v-x → z₁ ≢ v-y → z₂ ≢ v-x → z₂ ≢ v-y →
   Alpha R (f z₁) (f z₂)
 f≈αf {z₁ = z₁} {z₂ = z₂} {R = R} z₁≢x z₁≢y z₂≢x z₂≢y =
-  lambda (
-  lambda (
+  lambda (cons (nil (
+  lambda (cons (nil (
   apply (var y∼y₁) (
-  lambda (
+  lambda (cons (nil (
   apply (
   apply (var x∼x) (var x∼x)) (
-  var y∼y₂)))))
+  var y∼y₂)))))))))))
   where
   x∼x : (R [ v-x ∼ v-x ] [ v-y ∼ v-y ] [ z₁ ∼ z₂ ]) v-x v-x
   x∼x = inj₂ (z₁≢x , z₂≢x , inj₂ ((λ ()) , (λ ()) , inj₁ (refl , refl)))
@@ -277,8 +277,9 @@ plain-rec-subst {e′ = e′} {y = y} {e = e} x cl-e′ =
            (apply (F z¹)
               (lambda y ((if x V.≟ y then e else e [ x ← e′ ])
                            [ y ← apply (var y) id ]))))
-    id                                                              ≈⟨ apply (lambda (apply (F≈αF z¹≢x z¹≢y z²≢x z²≢y)
-                                                                                        (refl-Alpha _ lemma₂)))
+    id                                                              ≈⟨ apply (lambda (cons (nil (
+                                                                              apply (F≈αF z¹≢x z¹≢y z²≢x z²≢y)
+                                                                                (refl-Alpha _ lemma₂)))))
                                                                          refl-α ⟩α∎
   apply (lambda z²
            (apply (F z²)
