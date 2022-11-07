@@ -11,7 +11,8 @@ open import Equality.Propositional.Cubical
 open import Logical-equivalence using (_⇔_)
 open import Prelude hiding (const; swap)
 
-open import Bag-equivalence equality-with-J as B using (_∈_)
+open import Bag-equivalence equality-with-J as B
+  using (_∈_; _∼[_]_; bag; subset)
 open import Bijection equality-with-J as Bijection using (_↔_)
 open import Erased.Cubical equality-with-paths as E using (Erased)
 open import Equivalence equality-with-J as Eq using (_≃_)
@@ -41,7 +42,7 @@ private
     e e₁ e₂ e′ e″ : Exp
     es            : List Exp
     x y           : Var
-    xs xs′        : A
+    xs xs′ ys     : A
 
 private
 
@@ -331,6 +332,35 @@ mutual
 
 Closed→Closed′ : ∀ {xs e} → Closed e → Closed′ xs e
 Closed→Closed′ cl x _ = cl x (λ ())
+
+-- If xs is bag equivalent to ys, then Closed′ xs e and Closed′ ys e
+-- are equivalent.
+
+Closed′-≃ : xs ∼[ bag ] ys → Closed′ xs e ≃ Closed′ ys e
+Closed′-≃ {xs = xs} {ys = ys} {e = e} xs≈ys =
+  (∀ x → ¬ x ∈ xs → ¬ x ∈FV e)  ↝⟨ (∀-cong ext λ _ → →-cong₁ ext $ ¬-cong ext (xs≈ys _)) ⟩□
+  (∀ x → ¬ x ∈ ys → ¬ x ∈FV e)  □
+
+-- If xs is a "subset" of ys and Closed′ xs e holds, then Closed′ ys e
+-- holds.
+
+Closed′-⊆ : xs ∼[ subset ] ys → Closed′ xs e → Closed′ ys e
+Closed′-⊆ {xs = xs} {ys = ys} {e = e} xs⊆ys =
+  (∀ x → ¬ x ∈ xs → ¬ x ∈FV e)  →⟨ (∀-cong _ λ _ → →-cong-→ (→-cong-→ (xs⊆ys _) id) id) ⟩□
+  (∀ x → ¬ x ∈ ys → ¬ x ∈FV e)  □
+
+-- An instance of Closed′-⊆.
+
+Closed′-++-∷ :
+  ∀ {x} xs {ys e} →
+  Closed′ (x ∷ xs ++ ys) e → Closed′ (xs ++ x ∷ ys) e
+Closed′-++-∷ {x = x} xs {ys = ys} = Closed′-⊆ λ z →
+  z ∈ x ∷ xs ++ ys         ↔⟨ F.id ⊎-cong B.Any-++ _ _ _ ⟩
+  z ≡ x ⊎ z ∈ xs ⊎ z ∈ ys  ↔⟨ inverse ⊎-assoc F.∘
+                              (⊎-comm ⊎-cong F.id) F.∘
+                              ⊎-assoc ⟩
+  z ∈ xs ⊎ z ≡ x ⊎ z ∈ ys  ↔⟨ inverse (B.Any-++ _ _ _) ⟩□
+  z ∈ xs ++ x ∷ ys         □
 
 -- If a variable is free in e [ x ← e′ ], then it is either free in e′,
 -- or it is distinct from x and free in e.
