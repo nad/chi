@@ -25,7 +25,7 @@ open import H-level.Closure equality-with-J
 open import H-level.Truncation.Propositional equality-with-paths as T
   using (∥_∥)
 open import List equality-with-J using (_++_; foldr)
-open import List.All equality-with-J using (All)
+open import List.All equality-with-J as All using (All)
 
 open import Chi           atoms
 open import Propositional atoms
@@ -457,6 +457,23 @@ Closed′-closed-under-subst cl-e cl-e′ y y∉xs =
   [ uncurry (λ y∈e y≢x → cl-e y [ y≢x , y∉xs ] y∈e)
   , cl-e′ y y∉xs
   ] ∘ subst-∈FV _ _
+
+Closed′-closed-under-[←]↦ :
+  ∀ {e xs es e′ ys} →
+  e [ xs ← es ]↦ e′ →
+  Closed′ (xs ++ ys) e →
+  All (Closed′ ys) es →
+  Closed′ ys e′
+Closed′-closed-under-[←]↦ {e = e} {ys = ys} [] cl =
+  All (Closed′ ys) []  →⟨ (λ _ → cl) ⟩□
+  Closed′ ys e         □
+Closed′-closed-under-[←]↦
+  {ys = ys} (∷_ {x = x} {xs = xs} {e′ = e} {es′ = es} {e″ = e′} p) cl =
+  All (Closed′ ys) (e ∷ es)                 →⟨ All.All-∷ _ ⟩
+  Closed′ ys e × All (Closed′ ys) es        →⟨ Σ-map id (All.map₁ λ _ → Closed′-⊆ λ _ → inj₂) ⟩
+  Closed′ ys e × All (Closed′ (x ∷ ys)) es  →⟨ Σ-map id (Closed′-closed-under-[←]↦ p (Closed′-++-∷ xs cl)) ⟩
+  Closed′ ys e × Closed′ (x ∷ ys) e′        →⟨ uncurry $ flip Closed′-closed-under-subst ⟩□
+  Closed′ ys (e′ [ x ← e ])                 □
 
 ------------------------------------------------------------------------
 -- Computing free or fresh variables
