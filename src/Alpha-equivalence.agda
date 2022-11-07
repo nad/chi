@@ -335,6 +335,10 @@ sym-α = map-Alpha sym ∘ sym-Alpha
 
 mutual
 
+  α-∈ : e₁ ≈α e₂ → x ∈FV e₁ → x ∈FV e₂
+  α-∈ e₁≈e₂ x∈ with Alpha-∈ e₁≈e₂ x∈
+  … | x′ , x≡x′ , x′∈ = subst (_∈FV _) (sym x≡x′) x′∈
+
   Alpha-∈ :
     Alpha R e₁ e₂ → x₁ ∈FV e₁ → ∃ λ x₂ → R x₁ x₂ × x₂ ∈FV e₂
   Alpha-∈ {R = R} (var Ry₁y₂) (var x₁≡y₁) =
@@ -417,10 +421,6 @@ mutual
     (Σ-map id $ Σ-map id $ Σ-map id $ Σ-map id $ Σ-map id $ Σ-map id $
      Σ-map inj₂ id) $
     Alpha-Br-⋆-∈ bs₁≈bs₂ x₁∈ ∈bs₁ x₁∉
-
-α-∈ : e₁ ≈α e₂ → x ∈FV e₁ → x ∈FV e₂
-α-∈ e₁≈e₂ x∈ with Alpha-∈ e₁≈e₂ x∈
-… | x′ , x≡x′ , x′∈ = subst (_∈FV _) (sym x≡x′) x′∈
 
 -- The predicate Closed′ respects α-equivalence.
 
