@@ -7,13 +7,15 @@ open import Atom
 module Alpha-equivalence (atoms : χ-atoms) where
 
 open import Equality.Propositional
-open import Prelude hiding (const)
+open import Logical-equivalence using (_⇔_)
+open import Prelude hiding (const; module List)
 
 open import Bag-equivalence equality-with-J using (_∈_)
+import List equality-with-J as List
 import Nat equality-with-J as Nat
 
 open import Chi            atoms
-open import Free-variables atoms
+open import Free-variables atoms hiding (swap)
 
 open χ-atoms atoms
 
@@ -26,7 +28,7 @@ private
     e e₁ e₂ e₃ e₁₁ e₁₂ e₂₁ e₂₂ : Exp
     es₁ es₂                    : List Exp
     R R₁ R₂                    : A → A → Type
-    x x₁ x₁′ x₂ x₂′ y          : A
+    x x₁ x₁′ x₂ x₂′ y y₁ y₂    : A
     xs xs₁ xs₂                 : List A
 
 ------------------------------------------------------------------------
@@ -103,6 +105,48 @@ infix 4 _≈α_
 
 _≈α_ : Exp → Exp → Type
 _≈α_ = Alpha _≡_
+
+------------------------------------------------------------------------
+-- The functions _[_]ˡ and _[_]ʳ
+
+-- Two variants of _[_∼_] for lists.
+
+infix 5 _[_]ˡ _[_]ʳ
+
+_[_]ˡ : (Var → Var → Type) → List (Var × Var) → Var → Var → Type
+R [ xs ]ˡ = List.foldl (λ R (x , y) → R [ x ∼ y ]) R xs
+
+_[_]ʳ : (Var → Var → Type) → List (Var × Var) → Var → Var → Type
+R [ xs ]ʳ = List.foldr (λ (x , y) R → R [ x ∼ y ]) R xs
+
+_ : R [ (x₁ , y₁) ∷ (x₂ , y₂) ∷ [] ]ˡ ≡ R [ x₁ ∼ y₁ ] [ x₂ ∼ y₂ ]
+_ = refl
+
+_ : R [ (x₁ , y₁) ∷ (x₂ , y₂) ∷ [] ]ʳ ≡ R [ x₂ ∼ y₂ ] [ x₁ ∼ y₁ ]
+_ = refl
+
+-- An alternative characterisation (up to logical equivalence) of
+-- Alpha-binders for lists of equal length.
+
+Alpha-binders⇔ :
+  ∀ xs →
+  Alpha-binders R (List.map proj₁ xs) e₁ (List.map proj₂ xs) e₂ ⇔
+  Alpha (R [ xs ]ˡ) e₁ e₂
+Alpha-binders⇔ xs = record { to = to xs; from = from xs }
+  where
+  to :
+    ∀ xs →
+    Alpha-binders R (List.map proj₁ xs) e₁ (List.map proj₂ xs) e₂ →
+    Alpha (R [ xs ]ˡ) e₁ e₂
+  to []       (nil p)  = p
+  to (_ ∷ xs) (cons p) = to xs p
+
+  from :
+    ∀ xs →
+    Alpha (R [ xs ]ˡ) e₁ e₂ →
+    Alpha-binders R (List.map proj₁ xs) e₁ (List.map proj₂ xs) e₂
+  from []       p = nil p
+  from (_ ∷ xs) p = cons (from xs p)
 
 ------------------------------------------------------------------------
 -- Some properties related to reflexivity
@@ -231,6 +275,29 @@ map-[∼] :
   (R₂ [ x₁ ∼ x₂ ]) x₁′ x₂′
 map-[∼] _ r = ⊎-map id (Σ-map id (Σ-map id r))
 
+-- A kind of map function for _[_]ˡ.
+
+map-[]ˡ :
+  ∀ xs → (∀ {x₁ x₂} → R₁ x₁ x₂ → R₂ x₁ x₂) →
+  (R₁ [ xs ]ˡ) x₁ x₂ →
+  (R₂ [ xs ]ˡ) x₁ x₂
+map-[]ˡ []       r = r
+map-[]ˡ {R₁ = R₁} {R₂ = R₂} {x₁ = x₁} {x₂ = x₂} ((y₁ , y₂) ∷ xs) r =
+  (R₁ [ y₁ ∼ y₂ ] [ xs ]ˡ) x₁ x₂  →⟨ map-[]ˡ xs (map-[∼] _ (λ {x₁ = x₁} {x₂ = x₂} → r {x₁ = x₁} {x₂ = x₂})) ⟩□
+  (R₂ [ y₁ ∼ y₂ ] [ xs ]ˡ) x₁ x₂  □
+
+-- A kind of map function for _[_]ʳ.
+
+map-[]ʳ :
+  ∀ xs → (∀ {x₁ x₂} → R₁ x₁ x₂ → R₂ x₁ x₂) →
+  (R₁ [ xs ]ʳ) x₁ x₂ →
+  (R₂ [ xs ]ʳ) x₁ x₂
+map-[]ʳ [] r =
+  r
+map-[]ʳ {R₁ = R₁} {R₂ = R₂} {x₁ = x₁} {x₂ = x₂} ((y₁ , y₂) ∷ xs) r =
+  (R₁ [ xs ]ʳ [ y₁ ∼ y₂ ]) x₁ x₂  →⟨ map-[∼] _ (λ {x₁ = x₁} {x₂ = x₂} → map-[]ʳ {x₁ = x₁} {x₂ = x₂} xs r) ⟩□
+  (R₂ [ xs ]ʳ [ y₁ ∼ y₂ ]) x₁ x₂  □
+
 -- A kind of map function for Alpha.
 
 mutual
@@ -295,9 +362,35 @@ sym-[∼] :
   (R [ x₁ ∼ x₂ ]) x₁′ x₂′ →
   (flip R [ x₂ ∼ x₁ ]) x₂′ x₁′
 sym-[∼] _ =
-  ⊎-map Prelude.swap
+  ⊎-map swap
         (λ (x₁≢x₁′ , x₂≢x₂′ , R₁x₁′x₂′) →
            x₂≢x₂′ , x₁≢x₁′ , R₁x₁′x₂′)
+
+-- A kind of symmetry holds for _[_]ˡ.
+
+sym-[]ˡ :
+  ∀ xs →
+  (R [ xs ]ˡ) x₁ x₂ →
+  (flip R [ List.map swap xs ]ˡ) x₂ x₁
+sym-[]ˡ [] =
+  id
+sym-[]ˡ {R = R} {x₁ = x₁} {x₂ = x₂} ((y₁ , y₂) ∷ xs) =
+  (R [ y₁ ∼ y₂ ] [ xs ]ˡ) x₁ x₂                       →⟨ sym-[]ˡ xs ⟩
+  (flip (R [ y₁ ∼ y₂ ]) [ List.map swap xs ]ˡ) x₂ x₁  →⟨ map-[]ˡ (List.map swap xs) (sym-[∼] R) ⟩□
+  (flip R [ y₂ ∼ y₁ ] [ List.map swap xs ]ˡ) x₂ x₁    □
+
+-- A kind of symmetry holds for _[_]ʳ.
+
+sym-[]ʳ :
+  ∀ xs →
+  (R [ xs ]ʳ) x₁ x₂ →
+  (flip R [ List.map swap xs ]ʳ) x₂ x₁
+sym-[]ʳ [] =
+  id
+sym-[]ʳ {R = R} {x₁ = x₁} {x₂ = x₂} ((y₁ , y₂) ∷ xs) =
+  (R [ xs ]ʳ [ y₁ ∼ y₂ ]) x₁ x₂                     →⟨ sym-[∼] (R [ xs ]ʳ) ⟩
+  (flip (R [ xs ]ʳ) [ y₂ ∼ y₁ ]) x₂ x₁              →⟨ map-[∼] (flip (R [ xs ]ʳ)) (sym-[]ʳ xs) ⟩□
+  (flip R [ List.map swap xs ]ʳ [ y₂ ∼ y₁ ]) x₂ x₁  □
 
 -- A kind of symmetry holds for Alpha.
 
