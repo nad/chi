@@ -159,16 +159,15 @@ module _
              (Closed→Closed′ cl-p)
              (Closed→Closed′ $ proj₂ ⌜const-loop⌝))
           (λ where
-             (inj₁ refl)        →
+             _ (inj₁ refl) →
                Closed′-closed-under-apply
                  (Closed→Closed′ cl-p)
                  (cl-coded-arg e∈)
-             (inj₂ (inj₁ refl)) →
+             _ (inj₂ (inj₁ refl)) →
                not-closed $
                Closed′-closed-under-apply
                  (Closed→Closed′ cl-p)
-                 (cl-coded-arg e∉)
-             (inj₂ (inj₂ ())))
+                 (cl-coded-arg e∉))
 
       coded-arg⇓⌜arg⌝ :
         (e p : Closed-exp) →

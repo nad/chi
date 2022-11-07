@@ -126,8 +126,8 @@ pointwise-equal-Bool =
     Closed′-closed-under-case
       (Closed′-closed-under-var (inj₁ refl))
       (λ where
-        (inj₁ refl) → and-closed (test-closed true) (test-closed false)
-        (inj₂ ()))
+         _ (inj₁ refl) →
+           and-closed (test-closed true) (test-closed false))
     where
     variables = v-f ∷ v-g ∷ v-p ∷ []
 

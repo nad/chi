@@ -73,9 +73,9 @@ abstract
     Closed′-closed-under-case
       (from-⊎ $ closed′? (var v-xs) (v-xs ∷ v-map ∷ []))
       (λ where
-         (inj₁ refl) →
+         _ (inj₁ refl) →
            from-⊎ $ closed′? (const c-nil []) (v-xs ∷ v-map ∷ [])
-         (inj₂ (inj₁ refl)) →
+         _ (inj₂ (inj₁ refl)) →
            Closed′-closed-under-const λ where
              .(apply f (var v-x)) (inj₁ refl) →
                Closed′-closed-under-apply

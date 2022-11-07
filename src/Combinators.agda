@@ -389,9 +389,8 @@ if-then-else-closed c-cl t-cl f-cl =
   Closed′-closed-under-case
     c-cl
     λ where
-      (inj₁ refl)        → t-cl
-      (inj₂ (inj₁ refl)) → f-cl
-      (inj₂ (inj₂ ()))
+      _ (inj₁ refl)        → t-cl
+      _ (inj₂ (inj₁ refl)) → f-cl
 
 if-then-else-correct :
   ∀ {A : Type} ⦃ cA : Rep A Consts ⦄ {e₁ e₂ e₃}
@@ -503,11 +502,11 @@ decode-Bool-closed cl-e =
   Closed′-closed-under-case
     cl-e
     λ where
-      (inj₁ refl) → equal-ℕ-closed
-                      (Closed′-closed-under-var
-                         (from-⊎ (V.member v-c (v-c ∷ v-es ∷ _))))
-                      (Closed→Closed′ (rep-closed c-true))
-      (inj₂ ())
+      _ (inj₁ refl) →
+        equal-ℕ-closed
+          (Closed′-closed-under-var
+             (from-⊎ (V.member v-c (v-c ∷ v-es ∷ _))))
+          (Closed→Closed′ (rep-closed c-true))
 
 decode-Bool-correct :
   ∀ {e} (b : Bool) →
