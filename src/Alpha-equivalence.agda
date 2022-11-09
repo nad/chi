@@ -27,15 +27,15 @@ open χ-atoms atoms
 
 private
   variable
-    A                          : Type
-    b₁ b₂                      : Br
-    bs₁ bs₂                    : List Br
-    c c₁ c₂                    : Const
-    e e₁ e₂ e₃ e₁₁ e₁₂ e₂₁ e₂₂ : Exp
-    es₁ es₂                    : List Exp
-    R R₁ R₂                    : A → A → Type
-    x x₁ x₁′ x₂ x₂′ y y₁ y₂    : A
-    xs xs₁ xs₂ ys₁ ys₂         : List A
+    A                             : Type
+    b₁ b₂                         : Br
+    bs₁ bs₂                       : List Br
+    c c₁ c₂                       : Const
+    e e₁ e₂ e₃ e₁₁ e₁₂ e₂₁ e₂₂    : Exp
+    es₁ es₂                       : List Exp
+    R R₁ R₂                       : A → A → Type
+    x x₁ x₁′ x₂ x₂′ y y₁ y₂ z₁ z₂ : A
+    xs xs₁ xs₂ ys₁ ys₂            : List A
 
 ------------------------------------------------------------------------
 -- The definition of α-equivalence
@@ -450,6 +450,95 @@ mutual
 
 sym-α : e₁ ≈α e₂ → e₂ ≈α e₁
 sym-α = map-Alpha sym ∘ sym-Alpha
+
+------------------------------------------------------------------------
+-- Some lemmas related to _[_∼_]
+
+-- If x₁ is not equal to y₁ and x₂ is equal to y₂, then
+-- R [ x₁ ∼ x₂ ] [ y₁ ∼ y₂ ] does not hold for x₁ and any value.
+
+≢≡→¬[∼][∼] :
+  ∀ R → x₁ ≢ y₁ → x₂ ≡ y₂ →
+  ¬ (R [ x₁ ∼ x₂ ] [ y₁ ∼ y₂ ]) x₁ z₂
+≢≡→¬[∼][∼]
+  {x₁ = x₁} {y₁ = y₁} {x₂ = x₂} {y₂ = y₂} {z₂ = z₂} R x₁≢y₁ x₂≡y₂ =
+
+  (R [ x₁ ∼ x₂ ] [ y₁ ∼ y₂ ]) x₁ z₂  →⟨ [ ⊥-elim ∘ x₁≢y₁ ∘ sym ∘ proj₁
+                                        , proj₂
+                                        ] ⟩
+  y₂ ≢ z₂ × (R [ x₁ ∼ x₂ ]) x₁ z₂    →⟨ (∃-cong λ _ →
+                                         [ proj₂
+                                         , ⊥-elim ∘ (_$ refl) ∘ proj₁
+                                         ]) ⟩
+  y₂ ≢ z₂ × x₂ ≡ z₂                  →⟨ proj₁ ∘ (×-cong₁ λ x₂≡z₂ → _∘ flip trans x₂≡z₂) ⟩
+  y₂ ≢ x₂                            →⟨ _$ sym x₂≡y₂ ⟩□
+  ⊥                                  □
+
+-- If x₁ is equal to y₁ and x₂ is not equal to y₂, then
+-- R [ x₁ ∼ x₂ ] [ y₁ ∼ y₂ ] does not hold for any value and x₂.
+
+≡≢→¬[∼][∼] :
+  ∀ R → x₁ ≡ y₁ → x₂ ≢ y₂ →
+  ¬ (R [ x₁ ∼ x₂ ] [ y₁ ∼ y₂ ]) z₁ x₂
+≡≢→¬[∼][∼]
+  {x₁ = x₁} {y₁ = y₁} {x₂ = x₂} {y₂ = y₂} {z₁ = z₁} R x₁≡y₁ x₂≢y₂ =
+
+  (R [ x₁ ∼ x₂ ] [ y₁ ∼ y₂ ]) z₁ x₂         →⟨ sym-[∼] (R [ x₁ ∼ x₂ ]) ⟩
+  (flip (R [ x₁ ∼ x₂ ]) [ y₂ ∼ y₁ ]) x₂ z₁  →⟨ map-[∼] (flip (R [ x₁ ∼ x₂ ])) (sym-[∼] R) ⟩
+  (flip R [ x₂ ∼ x₁ ] [ y₂ ∼ y₁ ]) x₂ z₁    →⟨ ≢≡→¬[∼][∼] (flip R) x₂≢y₂ x₁≡y₁ ⟩□
+  ⊥                                         □
+
+-- If x₁ is not equal to y₁ and x₂ is not equal to y₂, then
+-- (R [ x₁ ∼ x₂ ] [ y₁ ∼ y₂ ]) z₁ z₂ implies
+-- (R [ y₁ ∼ y₂ ] [ x₁ ∼ x₂ ]) z₁ z₂.
+
+swap-[∼] :
+  ∀ R → x₁ ≢ y₁ → x₂ ≢ y₂ →
+  (R [ x₁ ∼ x₂ ] [ y₁ ∼ y₂ ]) z₁ z₂ →
+  (R [ y₁ ∼ y₂ ] [ x₁ ∼ x₂ ]) z₁ z₂
+swap-[∼]
+  {x₁ = x₁} {y₁ = y₁} {x₂ = x₂} {y₂ = y₂} {z₁ = z₁} {z₂ = z₂}
+  R x₁≢y₁ x₂≢y₂ =
+  y₁ ≡ z₁ × y₂ ≡ z₂ ⊎
+  y₁ ≢ z₁ × y₂ ≢ z₂ ×
+  (x₁ ≡ z₁ × x₂ ≡ z₂ ⊎
+   x₁ ≢ z₁ × x₂ ≢ z₂ × R z₁ z₂)  →⟨ [ (λ (y₁≡z₁ , y₂≡z₂) →
+                                         inj₂ ( x₁≢y₁ ∘ flip trans (sym y₁≡z₁)
+                                              , x₂≢y₂ ∘ flip trans (sym y₂≡z₂)
+                                              , inj₁ (y₁≡z₁ , y₂≡z₂)
+                                              ))
+                                    , (uncurry λ y₁≢z₁ → uncurry λ y₂≢z₂ →
+                                       ⊎-map id λ (x₁≢z₁ , x₂≢z₂ , z₁Rz₂) →
+                                       x₁≢z₁ , x₂≢z₂ , inj₂ (y₁≢z₁ , y₂≢z₂ , z₁Rz₂))
+                                    ] ⟩□
+  x₁ ≡ z₁ × x₂ ≡ z₂ ⊎
+  x₁ ≢ z₁ × x₂ ≢ z₂ ×
+  (y₁ ≡ z₁ × y₂ ≡ z₂ ⊎
+   y₁ ≢ z₁ × y₂ ≢ z₂ × R z₁ z₂)  □
+
+-- If x₁ is equal to y₁ or x₂ is equal to y₂, then
+-- (R [ x₁ ∼ x₂ ] [ y₁ ∼ y₂ ]) z₁ z₂ implies (R [ y₁ ∼ y₂ ]) z₁ z₂.
+
+drop-[∼] :
+  ∀ R → x₁ ≡ y₁ ⊎ x₂ ≡ y₂ →
+  (R [ x₁ ∼ x₂ ] [ y₁ ∼ y₂ ]) z₁ z₂ →
+  (R [ y₁ ∼ y₂ ]) z₁ z₂
+drop-[∼]
+  {x₁ = x₁} {y₁ = y₁} {x₂ = x₂} {y₂ = y₂} {z₁ = z₁} {z₂ = z₂}
+  R x₁≡y₁⊎x₂≡y₂ =
+  y₁ ≡ z₁ × y₂ ≡ z₂ ⊎
+  y₁ ≢ z₁ × y₂ ≢ z₂ ×
+  (x₁ ≡ z₁ × x₂ ≡ z₂ ⊎
+   x₁ ≢ z₁ × x₂ ≢ z₂ × R z₁ z₂)  →⟨ (⊎-map id $ uncurry λ y₁≢z₁ → uncurry λ y₂≢z₂ →
+                                     [ (λ (x₁≡z₁ , x₂≡z₂) → ⊥-elim $
+                                          [ (λ x₁≡y₁ → y₁≢z₁ $ trans (sym x₁≡y₁) x₁≡z₁)
+                                          , (λ x₂≡y₂ → y₂≢z₂ $ trans (sym x₂≡y₂) x₂≡z₂)
+                                          ] x₁≡y₁⊎x₂≡y₂)
+                                     , (λ (_ , _ , z₁Rz₂) →
+                                          y₁≢z₁ , y₂≢z₂ , z₁Rz₂)
+                                     ]) ⟩□
+  y₁ ≡ z₁ × y₂ ≡ z₂ ⊎
+  y₁ ≢ z₁ × y₂ ≢ z₂ × R z₁ z₂    □
 
 ------------------------------------------------------------------------
 -- A kind of weakening property
