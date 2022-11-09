@@ -958,21 +958,48 @@ mutual
   subst-∉-⋆ x (e ∷ es) x∉ = cong₂ _∷_ (subst-∉ x e (λ x∈ → x∉ (_ , inj₁ refl , x∈)))
                                       (subst-∉-⋆ x es (x∉ ∘ Σ-map id (Σ-map inj₂ id)))
 
+  subst-∉-B :
+    ¬ (x ∈FV e × ¬ x ∈ xs) →
+    branch c xs e [ x ← e′ ]B ≡ branch c xs e
+  subst-∉-B {x = x} {e = e} {xs = xs} {c = c} {e′ = e′} x∉
+    with V.member x xs
+  … | yes _ =
+    branch c xs e  ∎
+  … | no x∉xs =
+    branch c xs (e [ x ← e′ ])  ≡⟨ cong (branch _ _) $ subst-∉ x e (→-cong-→ (_, x∉xs) id x∉) ⟩∎
+    branch c xs e               ∎
+
   subst-∉-B⋆ :
     ∀ x bs e′ →
     ¬ (∃ λ c → ∃ λ xs → ∃ λ e →
          branch c xs e ∈ bs × x ∈FV e × ¬ x ∈ xs) →
     bs [ x ← e′ ]B⋆ ≡ bs
-  subst-∉-B⋆ x []                   _ x∉ = refl
-  subst-∉-B⋆ x (branch c xs e ∷ bs) _ x∉
-    with V.member x xs
-       | subst-∉-B⋆ x bs _
-           (x∉ ∘ Σ-map id (Σ-map id (Σ-map id (Σ-map inj₂ id))))
-  ... | yes x∈xs | eq = cong₂ _∷_ refl eq
-  ... | no  x∉xs | eq = cong₂ (λ e bs → branch c xs e ∷ bs)
-                              (subst-∉ x e λ x∈e →
-                                 x∉ (_ , _ , _ , inj₁ refl , x∈e , x∉xs))
-                              eq
+  subst-∉-B⋆ x []                  _ x∉ = refl
+  subst-∉-B⋆ x (branch c xs e ∷ bs) _ x∉ = cong₂ _∷_
+    (subst-∉-B (x∉ ∘ (c ,_) ∘ (xs ,_) ∘ (e ,_) ∘ (inj₁ refl ,_)))
+    (subst-∉-B⋆ _ bs _
+       (x∉ ∘ Σ-map id (Σ-map id (Σ-map id (Σ-map inj₂ id)))))
+
+-- If it is not the case that x is both free in e and not a member of
+-- xs, then ⟨ xs , e ⟩[ x ← e′ ] is equal to e.
+
+⟨,⟩[←]-∉ :
+  ∀ xs →
+  ¬ (x ∈FV e × ¬ x ∈ xs) →
+  ⟨ xs , e ⟩[ x ← e′ ] ≡ e
+⟨,⟩[←]-∉ {x = x} {e = e} {e′ = e′} xs hyp =
+  ⟨ xs , e ⟩[ x ← e′ ]                       ≡⟨ ⟨,⟩[←]≡ xs ⟩
+  if V.member x xs then e else e [ x ← e′ ]  ≡⟨ lemma (V.member x xs) ⟩∎
+  e                                          ∎
+  where
+  lemma :
+    (b : Dec (x ∈ xs)) →
+    if b then e else e [ x ← e′ ] ≡ e
+  lemma (yes _)   = refl
+  lemma (no x∉xs) =         $⟨ hyp ⟩
+    ¬ (x ∈FV e × ¬ x ∈ xs)  →⟨ →-cong-→ (_, x∉xs) id ⟩
+    ¬ x ∈FV e               →⟨ subst-∉ _ _ ⟩□
+    e [ x ← e′ ] ≡ e        □
 
 -- If e is closed, then nothing happens when a term is substituted for
 -- x in e.
