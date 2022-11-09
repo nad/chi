@@ -55,7 +55,7 @@ import Propositional
 
 import Compatibility
 
--- Some substitution lemmas.
+-- Some lemmas and definitions related to substitution.
 
 import Substitution
 

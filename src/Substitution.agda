@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- Some substitution lemmas
+-- Some lemmas and definitions related to substitution
 ------------------------------------------------------------------------
 
 open import Atom
@@ -10,6 +10,7 @@ open import Equality.Propositional
 open import Prelude hiding (const)
 
 open import Bag-equivalence equality-with-J using (_∈_)
+open import Sum equality-with-J
 
 open import Chi atoms
 
@@ -123,3 +124,27 @@ mutual
     ∀ bs → bs [ x ← e′ ]B⋆ [ x ← e″ ]B⋆ ≡ bs [ x ← e′ [ x ← e″ ] ]B⋆
   fusion-B⋆ []       = refl
   fusion-B⋆ (b ∷ bs) = cong₂ _∷_ (fusion-B b) (fusion-B⋆ bs)
+
+-- The expression ⟨ ys , e ⟩[ x ← e′ ] is e if x is a member of ys,
+-- and otherwise e [ x ← e′ ].
+
+⟨_,_⟩[_←_] : List Var → Exp → Var → Exp → Exp
+⟨ []     , e ⟩[ x ← e′ ] = e [ x ← e′ ]
+⟨ y ∷ ys , e ⟩[ x ← e′ ] =
+  if x V.≟ y then e else ⟨ ys , e ⟩[ x ← e′ ]
+
+⟨,⟩[←]≡ :
+  ∀ ys →
+  ⟨ ys , e ⟩[ x ← e′ ] ≡
+  if V.member x ys then e else e [ x ← e′ ]
+⟨,⟩[←]≡ [] =
+  refl
+⟨,⟩[←]≡ {e = e} {x = x} {e′ = e′} (y ∷ ys) with x V.≟ y
+… | yes _   = refl
+… | no  x≢y =
+  ⟨ ys , e ⟩[ x ← e′ ]                           ≡⟨ ⟨,⟩[←]≡ ys ⟩
+
+  if V.member x ys then e else e [ x ← e′ ]      ≡⟨ sym $ if-⊎-map-then-else (V.member x ys) ⟩∎
+
+  if case V.member x ys of ⊎-map inj₂ [ x≢y ,_]
+  then e else e [ x ← e′ ]                       ∎
