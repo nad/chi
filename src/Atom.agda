@@ -49,11 +49,12 @@ record Atoms : Type₁ where
 
   member : (x : Name) (xs : List Name) → Dec (x ∈ xs)
   member x []       = no (λ ())
-  member x (y ∷ xs) with x ≟ y
-  ... | yes x≡y = yes (inj₁ x≡y)
-  ... | no  x≢y with member x xs
-  ...   | yes x∈xs = yes (inj₂ x∈xs)
-  ...   | no  x∉xs = no [ x≢y , x∉xs ]
+  member x (y ∷ xs) =
+    case x ≟ y of λ where
+      (yes x≡y) → yes (inj₁ x≡y)
+      (no  x≢y) → case member x xs of ⊎-map
+        (λ x∈xs → inj₂ x∈xs)
+        (λ x∉xs → [ x≢y , x∉xs ])
 
   -- Conversions.
 
