@@ -19,23 +19,25 @@ open import H-level.Truncation.Propositional equality-with-paths as T
 open import List equality-with-J as List using (_++_)
 open import List.All equality-with-J as All using (All)
 import Nat equality-with-J as Nat
+open import Sum equality-with-J
 
 open import Chi            atoms
 open import Free-variables atoms hiding (swap)
+open import Substitution   atoms
 
 open χ-atoms atoms
 
 private
   variable
-    A                             : Type
-    b₁ b₂                         : Br
-    bs₁ bs₂                       : List Br
-    c c₁ c₂                       : Const
-    e e₁ e₂ e₃ e₁₁ e₁₂ e₂₁ e₂₂    : Exp
-    es₁ es₂                       : List Exp
-    R R₁ R₂                       : A → A → Type
-    x x₁ x₁′ x₂ x₂′ y y₁ y₂ z₁ z₂ : A
-    xs xs₁ xs₂ ys₁ ys₂            : List A
+    A                                     : Type
+    b₁ b₂                                 : Br
+    bs₁ bs₂                               : List Br
+    c c₁ c₂                               : Const
+    e e₁ e₁′ e₂′ e₂ e₃ e₁₁ e₁₂ e₂₁ e₂₂ v₁ : Exp
+    es₁ es₂ vs₁                           : List Exp
+    R R₁ R₂                               : A → A → Type
+    x x₁ x₁′ x₂ x₂′ y y₁ y₂ z₁ z₂         : A
+    xs xs₁ xs₂ ys₁ ys₂                    : List A
 
 ------------------------------------------------------------------------
 -- The definition of α-equivalence
@@ -790,6 +792,42 @@ mutual
 α-closed : e₁ ≈α e₂ → Closed e₁ → Closed e₂
 α-closed = α-closed′
 
+-- If Alpha-binders (R [ x₁ ∼ x₂ ] [ y₁ ∼ y₂ ]) xs₁ e₁ xs₂ e₂ holds,
+-- x₁ is not equal to y₁, and x₂ is equal to y₂, then
+-- ⟨ xs₁ , e₁ ⟩[ x₁ ← e₁′ ] ≡ e₁ is equal to e₁.
+
+α∼∼≢≡→⟨,⟩[←]≡ :
+  Alpha-binders (R [ x₁ ∼ x₂ ] [ y₁ ∼ y₂ ]) xs₁ e₁ xs₂ e₂ →
+  x₁ ≢ y₁ → x₂ ≡ y₂ →
+  ⟨ xs₁ , e₁ ⟩[ x₁ ← e₁′ ] ≡ e₁
+α∼∼≢≡→⟨,⟩[←]≡
+  {R = R} {x₁ = x₁} {x₂ = x₂} {y₁ = y₁} {y₂ = y₂}
+  {xs₁ = xs₁} {e₁ = e₁} {xs₂ = xs₂} {e₂ = e₂} {e₁′ = e₁′}
+  e₁≈e₂ x₁≢y₁ x₂≡y₂ = ⟨,⟩[←]-∉ xs₁
+
+  (x₁ ∈FV e₁ × ¬ x₁ ∈ xs₁                                                 →⟨ uncurry (Alpha-binders-∈ e₁≈e₂) ⟩
+   (∃ λ z₂ → (R [ x₁ ∼ x₂ ] [ y₁ ∼ y₂ ]) x₁ z₂ × z₂ ∈FV e₂ × ¬ z₂ ∈ xs₂)  →⟨ Σ-map id proj₁ ⟩
+   (∃ λ z₂ → (R [ x₁ ∼ x₂ ] [ y₁ ∼ y₂ ]) x₁ z₂)                           →⟨ ≢≡→¬[∼][∼] R x₁≢y₁ x₂≡y₂ ∘ proj₂ ⟩□
+   ⊥                                                                      □)
+
+-- If Alpha-binders (R [ x₁ ∼ x₂ ] [ y₁ ∼ y₂ ]) xs₁ e₁ xs₂ e₂ holds,
+-- x₁ is equal to y₁, and x₂ is not equal to y₂, then
+-- ⟨ xs₂ , e₂ ⟩[ x₂ ← e₂′ ] ≡ e₂ is equal to e₂.
+
+α∼∼≡≢→⟨,⟩[←]≡ :
+  Alpha-binders (R [ x₁ ∼ x₂ ] [ y₁ ∼ y₂ ]) xs₁ e₁ xs₂ e₂ →
+  x₁ ≡ y₁ → x₂ ≢ y₂ →
+  ⟨ xs₂ , e₂ ⟩[ x₂ ← e₂′ ] ≡ e₂
+α∼∼≡≢→⟨,⟩[←]≡
+  {R = R} {x₁ = x₁} {x₂ = x₂} {y₁ = y₁} {y₂ = y₂}
+  {xs₁ = xs₁} {e₁ = e₁} {xs₂ = xs₂} {e₂ = e₂} {e₂′ = e₂′}
+  e₁≈e₂ x₁≡y₁ x₂≢y₂ = ⟨,⟩[←]-∉ xs₂
+
+  (x₂ ∈FV e₂ × ¬ x₂ ∈ xs₂                                                 →⟨ uncurry (Alpha-binders-∈ (sym-Alpha-binders e₁≈e₂)) ⟩
+   (∃ λ z₁ → (R [ x₁ ∼ x₂ ] [ y₁ ∼ y₂ ]) z₁ x₂ × z₁ ∈FV e₁ × ¬ z₁ ∈ xs₁)  →⟨ Σ-map id proj₁ ⟩
+   (∃ λ z₁ → (R [ x₁ ∼ x₂ ] [ y₁ ∼ y₂ ]) z₁ x₂)                           →⟨ ≡≢→¬[∼][∼] R x₁≡y₁ x₂≢y₂ ∘ proj₂ ⟩□
+   ⊥                                                                      □)
+
 -- Substitution does not necessarily respect α-equivalence.
 
 ¬-subst-α :
@@ -833,5 +871,285 @@ mutual
     from-⊎ (2 Nat.≟ 1) (V.name-injective z≡x²)
   not-equal _ | _ | _ | no z≢z = z≢z refl
 
--- TODO: Does substitution of closed terms respect α-equivalence? Does
--- the semantics respect α-equivalence for closed terms?
+-- However, substitution of closed terms respects α-equivalence.
+
+mutual
+
+  subst-α :
+    Closed e₁′ →
+    Alpha (_≡_ [ x₁ ∼ x₂ ]) e₁ e₂ → e₁′ ≈α e₂′ →
+    e₁ [ x₁ ← e₁′ ] ≈α e₂ [ x₂ ← e₂′ ]
+  subst-α = subst-Alpha
+
+  subst-Alpha :
+    Closed e₁′ →
+    Alpha (R [ x₁ ∼ x₂ ]) e₁ e₂ →
+    e₁′ ≈α e₂′ →
+    Alpha R (e₁ [ x₁ ← e₁′ ]) (e₂ [ x₂ ← e₂′ ])
+  subst-Alpha {x₁ = x₁} {x₂ = x₂}
+              cl (var {x₁ = y₁} {x₂ = y₂} y₁≈y₂) e₁′≈e₂′
+    with x₁ V.≟ y₁ | x₂ V.≟ y₂ | y₁≈y₂
+  … | yes _     | yes _     | _                    = ≈α→Alpha cl e₁′≈e₂′
+  … | no _      | no _      | inj₂ (_ , _ , y₁Ry₂) = var y₁Ry₂
+  … | _         | no x₂≢y₂  | inj₁ (_ , x₂≡y₂)     = ⊥-elim $ x₂≢y₂ x₂≡y₂
+  … | no x₁≢y₁  | _         | inj₁ (x₁≡y₁ , _)     = ⊥-elim $ x₁≢y₁ x₁≡y₁
+  … | yes x₁≡y₁ | _         | inj₂ (x₁≢y₁ , _)     = ⊥-elim $ x₁≢y₁ x₁≡y₁
+  … | _         | yes x₂≡y₂ | inj₂ (_ , x₂≢y₂ , _) = ⊥-elim $ x₂≢y₂ x₂≡y₂
+
+  subst-Alpha cl (lambda e₁≈e₂) e₁′≈e₂′ =
+    lambda (subst-Alpha-binders cl e₁≈e₂ e₁′≈e₂′)
+
+  subst-Alpha cl (apply e₁₁≈e₁₂ e₂₁≈e₂₂) e₁′≈e₂′ =
+    apply
+      (subst-Alpha cl e₁₁≈e₁₂ e₁′≈e₂′)
+      (subst-Alpha cl e₂₁≈e₂₂ e₁′≈e₂′)
+
+  subst-Alpha cl (case e₁≈e₂ bs₁≈bs₂) e₁′≈e₂′ =
+    case
+      (subst-Alpha cl e₁≈e₂ e₁′≈e₂′)
+      (subst-Alpha-Br-⋆ cl bs₁≈bs₂ e₁′≈e₂′)
+
+  subst-Alpha cl (rec e₁≈e₂) e₁′≈e₂′ =
+    rec (subst-Alpha-binders cl e₁≈e₂ e₁′≈e₂′)
+
+  subst-Alpha cl (const es₁≈es₂) e₁′≈e₂′ =
+    const (subst-Alpha-⋆ cl es₁≈es₂ e₁′≈e₂′)
+
+  subst-Alpha-Br :
+    Closed e₁′ →
+    Alpha-Br (R [ x₁ ∼ x₂ ]) b₁ b₂ →
+    e₁′ ≈α e₂′ →
+    Alpha-Br R (b₁ [ x₁ ← e₁′ ]B) (b₂ [ x₂ ← e₂′ ]B)
+  subst-Alpha-Br
+    {e₁′ = e₁′} {R = R} {x₁ = x₁} {x₂ = x₂} {e₂′ = e₂′} cl
+    (branch {xs₁ = xs₁} {e₁ = e₁} {xs₂ = xs₂} {e₂ = e₂} {c = c} p)
+    e₁′≈e₂′ =                                                $⟨ p ⟩
+
+    Alpha-binders (R [ x₁ ∼ x₂ ]) xs₁ e₁ xs₂ e₂              →⟨ flip (subst-Alpha-binders cl) e₁′≈e₂′ ⟩
+
+    Alpha-binders R
+      xs₁ ⟨ xs₁ , e₁ ⟩[ x₁ ← e₁′ ]
+      xs₂ ⟨ xs₂ , e₂ ⟩[ x₂ ← e₂′ ]                           →⟨ subst id $ cong₂ (flip (Alpha-binders _ _) _)
+                                                                  (⟨,⟩[←]≡ xs₁)
+                                                                  (⟨,⟩[←]≡ xs₂) ⟩
+    Alpha-binders R
+      xs₁ (if V.member x₁ xs₁ then e₁ else e₁ [ x₁ ← e₁′ ])
+      xs₂ (if V.member x₂ xs₂ then e₂ else e₂ [ x₂ ← e₂′ ])  →⟨ branch ⟩
+
+    Alpha-Br R
+      (branch c xs₁ $
+       if V.member x₁ xs₁ then e₁ else e₁ [ x₁ ← e₁′ ])
+      (branch c xs₂ $
+       if V.member x₂ xs₂ then e₂ else e₂ [ x₂ ← e₂′ ])      →⟨ subst id $ cong₂ (Alpha-Br _)
+                                                                  (if-then-else-commutes (branch _ _) (V.member x₁ xs₁))
+                                                                  (if-then-else-commutes (branch _ _) (V.member x₂ xs₂)) ⟩□
+    Alpha-Br R
+      (if V.member x₁ xs₁
+       then branch c xs₁ e₁
+       else branch c xs₁ (e₁ [ x₁ ← e₁′ ]))
+      (if V.member x₂ xs₂
+       then branch c xs₂ e₂
+       else branch c xs₂ (e₂ [ x₂ ← e₂′ ]))                  □
+
+  subst-Alpha-binders :
+    Closed e₁′ →
+    Alpha-binders (R [ x₁ ∼ x₂ ]) xs₁ e₁ xs₂ e₂ →
+    e₁′ ≈α e₂′ →
+    Alpha-binders R
+      xs₁ ⟨ xs₁ , e₁ ⟩[ x₁ ← e₁′ ] xs₂ ⟨ xs₂ , e₂ ⟩[ x₂ ← e₂′ ]
+  subst-Alpha-binders cl (nil p) e₁′≈e₂′ =
+    nil (subst-Alpha cl p e₁′≈e₂′)
+
+  subst-Alpha-binders
+    {e₁′ = e₁′} {R = R} {x₁ = x₁} {x₂ = x₂} {e₂′ = e₂′} cl
+    (cons {x₁ = y₁} {x₂ = y₂}
+       {xs₁ = xs₁} {e₁ = e₁} {xs₂ = xs₂} {e₂ = e₂} p)
+    e₁′≈e₂′ =
+    cons (if-≟-then-else-subst-Alpha-binders cl p e₁′≈e₂′)
+
+  if-≟-then-else-subst-Alpha-binders :
+    Closed e₁′ →
+    Alpha-binders (R [ x₁ ∼ x₂ ] [ y₁ ∼ y₂ ]) xs₁ e₁ xs₂ e₂ →
+    e₁′ ≈α e₂′ →
+    Alpha-binders (R [ y₁ ∼ y₂ ])
+      xs₁ (if x₁ V.≟ y₁ then e₁ else ⟨ xs₁ , e₁ ⟩[ x₁ ← e₁′ ])
+      xs₂ (if x₂ V.≟ y₂ then e₂ else ⟨ xs₂ , e₂ ⟩[ x₂ ← e₂′ ])
+  if-≟-then-else-subst-Alpha-binders
+    {e₁′ = e₁′} {R = R} {x₁ = x₁} {x₂ = x₂} {y₁ = y₁} {y₂ = y₂}
+    {xs₁ = xs₁} {e₁ = e₁} {xs₂ = xs₂} {e₂ = e₂} {e₂′ = e₂′}
+    cl e₁≈e₂ e₁′≈e₂′
+    with x₁ V.≟ y₁ | x₂ V.≟ y₂
+  … | yes x₁≡y₁ | yes x₂≡y₂ =                                $⟨ e₁≈e₂ ⟩
+    Alpha-binders (R [ x₁ ∼ x₂ ] [ y₁ ∼ y₂ ]) xs₁ e₁ xs₂ e₂  →⟨ map-Alpha-binders (drop-[∼] R (inj₁ x₁≡y₁)) ⟩□
+    Alpha-binders (R [ y₁ ∼ y₂ ]) xs₁ e₁ xs₂ e₂              □
+
+  … | no x₁≢y₁ | no x₂≢y₂ =                                  $⟨ e₁≈e₂ ⟩
+
+    Alpha-binders (R [ x₁ ∼ x₂ ] [ y₁ ∼ y₂ ]) xs₁ e₁ xs₂ e₂  →⟨ map-Alpha-binders (swap-[∼] R x₁≢y₁ x₂≢y₂) ⟩
+
+    Alpha-binders (R [ y₁ ∼ y₂ ] [ x₁ ∼ x₂ ]) xs₁ e₁ xs₂ e₂  →⟨ flip (subst-Alpha-binders cl) e₁′≈e₂′ ⟩□
+
+    Alpha-binders (R [ y₁ ∼ y₂ ])
+      xs₁ ⟨ xs₁ , e₁ ⟩[ x₁ ← e₁′ ]
+      xs₂ ⟨ xs₂ , e₂ ⟩[ x₂ ← e₂′ ]                           □
+
+  … | yes x₁≡y₁ | no x₂≢y₂ =                                           $⟨ e₁≈e₂ ⟩
+    Alpha-binders (R [ x₁ ∼ x₂ ] [ y₁ ∼ y₂ ]) xs₁ e₁ xs₂ e₂            →⟨ map-Alpha-binders (drop-[∼] R (inj₁ x₁≡y₁)) ⟩
+    Alpha-binders (R [ y₁ ∼ y₂ ]) xs₁ e₁ xs₂ e₂                        →⟨ subst (Alpha-binders _ _ _ _) $ sym $
+                                                                          α∼∼≡≢→⟨,⟩[←]≡ e₁≈e₂ x₁≡y₁ x₂≢y₂ ⟩
+    Alpha-binders (R [ y₁ ∼ y₂ ]) xs₁ e₁ xs₂ ⟨ xs₂ , e₂ ⟩[ x₂ ← e₂′ ]  □
+
+  … | no x₁≢y₁ | yes x₂≡y₂ =                                           $⟨ e₁≈e₂ ⟩
+    Alpha-binders (R [ x₁ ∼ x₂ ] [ y₁ ∼ y₂ ]) xs₁ e₁ xs₂ e₂            →⟨ map-Alpha-binders (drop-[∼] R (inj₂ x₂≡y₂)) ⟩
+    Alpha-binders (R [ y₁ ∼ y₂ ]) xs₁ e₁ xs₂ e₂                        →⟨ subst (λ e → Alpha-binders _ _ e _ _) $ sym $
+                                                                          α∼∼≢≡→⟨,⟩[←]≡ e₁≈e₂ x₁≢y₁ x₂≡y₂ ⟩
+    Alpha-binders (R [ y₁ ∼ y₂ ]) xs₁ ⟨ xs₁ , e₁ ⟩[ x₁ ← e₁′ ] xs₂ e₂  □
+
+  subst-Alpha-⋆ :
+    Closed e₁′ →
+    Alpha-⋆ (Alpha (R [ x₁ ∼ x₂ ])) es₁ es₂ →
+    e₁′ ≈α e₂′ →
+    Alpha-⋆ (Alpha R) (es₁ [ x₁ ← e₁′ ]⋆) (es₂ [ x₂ ← e₂′ ]⋆)
+  subst-Alpha-⋆ _ [] _ =
+    []
+
+  subst-Alpha-⋆ cl (p ∷ ps) e₁′≈e₂′ =
+    subst-Alpha cl p e₁′≈e₂′ ∷
+    subst-Alpha-⋆ cl ps e₁′≈e₂′
+
+  subst-Alpha-Br-⋆ :
+    Closed e₁′ →
+    Alpha-⋆ (Alpha-Br (R [ x₁ ∼ x₂ ])) bs₁ bs₂ →
+    e₁′ ≈α e₂′ →
+    Alpha-⋆ (Alpha-Br R) (bs₁ [ x₁ ← e₁′ ]B⋆) (bs₂ [ x₂ ← e₂′ ]B⋆)
+  subst-Alpha-Br-⋆ _ [] _ =
+    []
+
+  subst-Alpha-Br-⋆ cl (p ∷ ps) e₁′≈e₂′ =
+    subst-Alpha-Br cl p e₁′≈e₂′ ∷
+    subst-Alpha-Br-⋆ cl ps e₁′≈e₂′
+
+-- The predicate Lookup respects α-equivalence (in a certain sense).
+
+Lookup-α :
+  Alpha-⋆ (Alpha-Br R) bs₁ bs₂ →
+  Lookup c bs₁ xs₁ e₁ →
+  ∃ λ xs₂ → ∃ λ e₂ →
+    Lookup c bs₂ xs₂ e₂ ×
+    Alpha-binders R xs₁ e₁ xs₂ e₂
+Lookup-α (branch p ∷ _) here =
+  _ , _ , here , p
+Lookup-α
+  {R = R} {c = c} {xs₁ = xs₁} {e₁ = e₁}
+  (_∷_ {xs₁ = bs₁} {xs₂ = bs₂}
+     (branch {xs₂ = xs′} {e₂ = e′} {c = c′} _)
+     bs₁≈bs₂)
+  (there c≢c′ p) =
+                                               $⟨ Lookup-α bs₁≈bs₂ p ⟩
+  (∃ λ xs₂ → ∃ λ e₂ →
+   Lookup c bs₂ xs₂ e₂ ×
+   Alpha-binders R xs₁ e₁ xs₂ e₂)              →⟨ Σ-map id (Σ-map id (Σ-map (there c≢c′) id)) ⟩□
+
+  (∃ λ xs₂ → ∃ λ e₂ →
+   Lookup c (branch c′ xs′ e′ ∷ bs₂) xs₂ e₂ ×
+   Alpha-binders R xs₁ e₁ xs₂ e₂)              □
+
+-- The predicate _[_←_]↦_ respects α-equivalence (in a certain sense)
+-- for sufficiently closed things.
+
+[←]↦-α :
+  All Closed es₁ →
+  Alpha-binders R xs₁ e₁ xs₂ e₂ →
+  Alpha-⋆ _≈α_ es₁ es₂ →
+  e₁ [ xs₁ ← es₁ ]↦ e →
+  ∃ λ e′ → e₂ [ xs₂ ← es₂ ]↦ e′ × Alpha R e e′
+[←]↦-α _ (nil p) [] [] =
+  _ , [] , p
+[←]↦-α
+  {R = R} cl
+  (cons {x₁ = x₁} {x₂ = x₂} {xs₁ = xs₁} {e₁ = e} {xs₂ = xs₂} {e₂ = e′}
+     p)
+  (_∷_ {x₁ = e₁} {x₂ = e₂} {xs₂ = es₂} e₁≈e₂ es₁≈es₂)
+  (∷_ {e″ = e″} q) =                                                  $⟨ [←]↦-α (All.tail cl) p es₁≈es₂ q ⟩
+
+  (∃ λ e‴ → e′ [ xs₂ ← es₂ ]↦ e‴ × Alpha (R [ x₁ ∼ x₂ ]) e″ e‴)       →⟨ (λ (e‴ , p , q) →
+                                                                              e‴ [ x₂ ← e₂ ]
+                                                                            , ∷ p
+                                                                            , subst-Alpha (All.head cl) q e₁≈e₂) ⟩□
+  (∃ λ e‴ →
+       e′ [ x₂ ∷ xs₂ ← e₂ ∷ es₂ ]↦ e‴ × Alpha R (e″ [ x₁ ← e₁ ]) e‴)  □
+
+-- The semantics respects α-equivalence (for closed terms).
+
+mutual
+
+  ⇓-α : Closed e₁ → e₁ ⇓ v₁ → e₁ ≈α e₂ → ∃ λ v₂ → e₂ ⇓ v₂ × v₁ ≈α v₂
+  ⇓-α cl (apply {e = e₁} {v₂ = v₂₁} e₁₁⇓ e₂₁⇓ e₁⇓)
+    (apply e₁₁≈e₁₂ e₂₁≈e₂₂)
+    with ⇓-α (λ _ ∉ → cl _ ∉ ∘ apply-left)  e₁₁⇓ e₁₁≈e₁₂
+       | ⇓-α (λ _ ∉ → cl _ ∉ ∘ apply-right) e₂₁⇓ e₂₁≈e₂₂
+  … | lambda x₂ e₂ , e₁₂⇓ , lambda {x₁ = x₁} (cons (nil ≈v₁₂))
+    | v₂₂ , e₂₂⇓ , ≈v₂₂ =
+    case ⇓-α cl-e₁ e₁⇓ e₁≈e₂ of λ
+      (_ , e₂⇓ , v₁≈v₂) →
+        _ , apply e₁₂⇓ e₂₂⇓ e₂⇓ , v₁≈v₂
+    where
+    cl-e₁ : Closed (e₁ [ x₁ ← v₂₁ ])
+    cl-e₁ = Closed′-closed-under-subst
+      (λ _ x∉ x∈e₁ →
+         closed⇓closed e₁₁⇓ (λ _ ∉ → cl _ ∉ ∘ apply-left)
+           _ (λ ()) (lambda (x∉ ∘ inj₁) x∈e₁))
+      (closed⇓closed e₂₁⇓ λ _ ∉ → cl _ ∉ ∘ apply-right)
+
+    e₁≈e₂ : e₁ [ x₁ ← v₂₁ ] ≈α e₂ [ x₂ ← v₂₂ ]
+    e₁≈e₂ = subst-α
+      (closed⇓closed e₂₁⇓ (λ _ ∉ → cl _ ∉ ∘ apply-right))
+      ≈v₁₂ ≈v₂₂
+
+  ⇓-α cl (case {e = e₁} {bs = bs₁} {c = c} {es = vs₁} {xs = xs₁}
+               {e′ = e′₁} {e″ = e″₁} e₁⇓ l₁ s₁ e″₁⇓)
+    (case e₁≈e₂ bs₁≈bs₂) =
+    case ⇓-α (λ _ ∉ → cl _ ∉ ∘ case-head) e₁⇓ e₁≈e₂ of λ where
+      (const c vs₂ , e₂⇓ , const vs₁≈vs₂) →
+        case Lookup-α bs₁≈bs₂ l₁ of λ
+          (xs₂ , e′₂ , l₂ , b₁≈b₂) →
+            case [←]↦-α cl-vs₁ b₁≈b₂ vs₁≈vs₂ s₁ of λ
+              (e″₂ , s₂ , e″₁≈e″₂) →
+                Σ-map id (Σ-map (case e₂⇓ l₂ s₂) id)
+                  (⇓-α cl-e″₁ e″₁⇓ e″₁≈e″₂)
+    where
+    cl-vs₁ =                $⟨ cl ⟩
+      Closed (case e₁ bs₁)  →⟨ (λ cl → _≃_.to Closed′-case≃ cl .proj₁) ⟩
+      Closed e₁             →⟨ closed⇓closed e₁⇓ ⟩
+      Closed (const c vs₁)  →⟨ _≃_.to Closed′-const≃ ⟩□
+      All Closed vs₁        □
+
+    cl-e″₁ =                   $⟨ cl ⟩
+      Closed (case e₁ bs₁)     →⟨ (λ cl → _≃_.to Closed′-case≃ cl .proj₂ _ (Lookup→branch∈ l₁)) ⟩
+      Closed′ (xs₁ ++ []) e′₁  →⟨ flip (Closed′-closed-under-[←]↦ s₁) cl-vs₁ ⟩□
+      Closed e″₁               □
+
+  ⇓-α cl (rec e₁⇓)
+    rec-x₁-e₁≈rec-x₂-e₂@(rec {x₁ = x₁} {e₁ = e₁} (cons (nil e₁≈e₂))) =
+    Σ-map id (Σ-map rec id) $
+    ⇓-α cl′ e₁⇓ (subst-α cl e₁≈e₂ rec-x₁-e₁≈rec-x₂-e₂)
+    where
+    cl′ : Closed (e₁ [ x₁ ← rec x₁ e₁ ])
+    cl′ = Closed′-closed-under-subst (_≃_.to Closed′-rec≃ cl) cl
+
+  ⇓-α _ lambda (lambda e₁≈e₂) =
+    _ , lambda , lambda e₁≈e₂
+
+  ⇓-α cl (const es₁⇓) (const es₁≈es₂) =
+    Σ-map (const _) (Σ-map const const) $
+    ⇓⋆-α (_≃_.to Closed′-const≃ cl) es₁⇓ es₁≈es₂
+
+  ⇓⋆-α :
+    All Closed es₁ →
+    es₁ ⇓⋆ vs₁ → Alpha-⋆ _≈α_ es₁ es₂ →
+    ∃ λ vs₂ → es₂ ⇓⋆ vs₂ × Alpha-⋆ _≈α_ vs₁ vs₂
+  ⇓⋆-α _  []           []                = _ , [] , []
+  ⇓⋆-α cl (e₁⇓ ∷ es₁⇓) (e₁≈e₂ ∷ es₁≈es₂) =
+    Σ-zip _∷_ (Σ-zip _∷_ _∷_)
+      (⇓-α (All.head cl) e₁⇓ e₁≈e₂)
+      (⇓⋆-α (All.tail cl) es₁⇓ es₁≈es₂)
