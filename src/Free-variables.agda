@@ -1021,6 +1021,13 @@ substs-closed e cl ((y , e′) ∷ ps) =
 ------------------------------------------------------------------------
 -- Evaluation and free variables
 
+-- A lemma used below: if Lookup c bs xs e holds then branch c xs e is
+-- one of the branches in bs.
+
+Lookup→branch∈ : Lookup c bs xs e → branch c xs e ∈ bs
+Lookup→branch∈ here        = inj₁ refl
+Lookup→branch∈ (there _ p) = inj₂ (Lookup→branch∈ p)
+
 -- If a value contains a free variable, then every term that evaluates
 -- to this value also contains the given free variable.
 
@@ -1047,25 +1054,25 @@ mutual
     (case {e = e} {bs = bs} {c = c} {es = es} {xs = xs} {e′ = e′} {e″ = e″} p₁ p₂ p₃ p₄) =
 
     x ∈FV w                                                   ↝⟨ ⇓-does-not-introduce-variables p₄ ⟩
-    x ∈FV e″                                                  ↝⟨ lemma₁ p₃ ⟩
+    x ∈FV e″                                                  ↝⟨ lemma p₃ ⟩
     (x ∈FV e′ × ¬ x ∈ xs) ⊎ ∃ (λ e″₁ → e″₁ ∈ es × x ∈FV e″₁)  ↝⟨ ⊎-map id (λ { (_ , ps , p) → const p ps }) ⟩
-    (x ∈FV e′ × ¬ x ∈ xs) ⊎ x ∈FV const c es                  ↝⟨ ⊎-map (λ p → lemma₂ p₂ , p) (⇓-does-not-introduce-variables p₁) ⟩
+    (x ∈FV e′ × ¬ x ∈ xs) ⊎ x ∈FV const c es                  ↝⟨ ⊎-map (λ p → Lookup→branch∈ p₂ , p) (⇓-does-not-introduce-variables p₁) ⟩
     (branch c xs e′ ∈ bs × x ∈FV e′ × ¬ x ∈ xs) ⊎ x ∈FV e     ↝⟨ [ (λ { (ps , p , q) → case-body p ps q }) , case-head ] ⟩
     x ∈FV case e bs                                           □
 
     where
-    lemma₁ : ∀ {e e′ x xs es} →
-             e [ xs ← es ]↦ e′ → x ∈FV e′ →
-             (x ∈FV e × ¬ x ∈ xs) ⊎ ∃ λ e″ → e″ ∈ es × x ∈FV e″
-    lemma₁ {e′ = e′} {x} [] =
+    lemma : ∀ {e e′ x xs es} →
+            e [ xs ← es ]↦ e′ → x ∈FV e′ →
+            (x ∈FV e × ¬ x ∈ xs) ⊎ ∃ λ e″ → e″ ∈ es × x ∈FV e″
+    lemma {e′ = e′} {x} [] =
       x ∈FV e′                 ↝⟨ (λ p → inj₁ (p , (λ ()))) ⟩□
       x ∈FV e′ × ¬ x ∈ [] ⊎ _  □
-    lemma₁ {e} {x = x}
-           (∷_ {x = y} {xs = ys} {e′ = e′} {es′ = es′} {e″ = e″} p) =
+    lemma {e} {x = x}
+          (∷_ {x = y} {xs = ys} {e′ = e′} {es′ = es′} {e″ = e″} p) =
 
       x ∈FV e″ [ y ← e′ ]                                           ↝⟨ subst-∈FV _ _ ⟩
 
-      x ∈FV e″ × x ≢ y ⊎ x ∈FV e′                                   ↝⟨ ⊎-map (Σ-map (lemma₁ p) id) id ⟩
+      x ∈FV e″ × x ≢ y ⊎ x ∈FV e′                                   ↝⟨ ⊎-map (Σ-map (lemma p) id) id ⟩
 
       (x ∈FV e × ¬ x ∈ ys ⊎ ∃ λ e‴ → e‴ ∈ es′ × x ∈FV e‴) × x ≢ y
         ⊎
@@ -1075,10 +1082,6 @@ mutual
                                                                        , (λ p → inj₂ (_ , inj₁ refl , p))
                                                                        ] ⟩□
       x ∈FV e × ¬ x ∈ y ∷ ys ⊎ (∃ λ e″ → e″ ∈ e′ ∷ es′ × x ∈FV e″)  □
-
-    lemma₂ : ∀ {c bs xs e} → Lookup c bs xs e → branch c xs e ∈ bs
-    lemma₂ here        = inj₁ refl
-    lemma₂ (there _ p) = inj₂ (lemma₂ p)
 
   ⇓⋆-does-not-introduce-variables :
     ∀ {x es vs} →
