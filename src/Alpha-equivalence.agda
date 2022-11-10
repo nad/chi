@@ -295,7 +295,7 @@ mutual
     case
       (refl-Alpha e λ x x∈e →
          r x (case-head x∈e))
-      (refl-Alpha-B⋆ bs λ x ∈bs x∉xs x∈ →
+      (refl-Alpha-Br-⋆ bs λ x ∈bs x∉xs x∈ →
          r x (case-body x∈ ∈bs x∉xs))
 
   refl-Alpha (rec x e) r =
@@ -311,11 +311,11 @@ mutual
       (refl-Alpha-⋆ es λ x e e∈es x∈e →
          r x (const x∈e e∈es))
 
-  refl-Alpha-B :
+  refl-Alpha-Br :
     ∀ c xs e →
     (∀ x → ¬ x ∈ xs → x ∈FV e → R x x) →
     Alpha-Br R (branch c xs e) (branch c xs e)
-  refl-Alpha-B _ xs e r =
+  refl-Alpha-Br _ xs e r =
     branch refl (refl-Alpha-binders xs e r)
 
   refl-Alpha-binders :
@@ -337,14 +337,14 @@ mutual
     refl-Alpha e (λ x x∈e → r x e (inj₁ refl) x∈e) ∷
     refl-Alpha-⋆ es (λ x e e∈es x∈e → r x e (inj₂ e∈es) x∈e)
 
-  refl-Alpha-B⋆ :
+  refl-Alpha-Br-⋆ :
     ∀ bs →
     (∀ x {c xs e} → branch c xs e ∈ bs → ¬ x ∈ xs → x ∈FV e → R x x) →
     Alpha-⋆ (Alpha-Br R) bs bs
-  refl-Alpha-B⋆ []                   r = []
-  refl-Alpha-B⋆ (branch c xs e ∷ bs) r =
-    refl-Alpha-B c xs e (λ x x∉xs x∈e → r x (inj₁ refl) x∉xs x∈e) ∷
-    refl-Alpha-B⋆ bs (λ x ∈bs x∉xs x∈ → r x (inj₂ ∈bs) x∉xs x∈)
+  refl-Alpha-Br-⋆ []                   r = []
+  refl-Alpha-Br-⋆ (branch c xs e ∷ bs) r =
+    refl-Alpha-Br c xs e (λ x x∉xs x∈e → r x (inj₁ refl) x∉xs x∈e) ∷
+    refl-Alpha-Br-⋆ bs (λ x ∈bs x∉xs x∈ → r x (inj₂ ∈bs) x∉xs x∈)
 
 -- The α-equivalence relation is reflexive.
 
