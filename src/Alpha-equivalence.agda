@@ -11,18 +11,23 @@ open import Logical-equivalence using (_⇔_)
 open import Prelude hiding (const; module List)
 
 open import Bag-equivalence equality-with-J using (_∈_)
-open import Equivalence equality-with-J using (_≃_)
+open import Equivalence equality-with-J as Eq using (_≃_)
 open import Equivalence-relation equality-with-J
+open import Equality.Path.Isomorphisms.Univalence equality-with-paths
 open import Function-universe equality-with-J as F hiding (id; _∘_)
+open import H-level equality-with-J
 open import H-level.Closure equality-with-J
 open import H-level.Truncation.Propositional equality-with-paths as T
   using (∥_∥)
 open import List equality-with-J as List using (_++_)
 open import List.All equality-with-J as All using (All)
 import Nat equality-with-J as Nat
+open import Quotient.Erased equality-with-paths as Q using (_/ᴱ_)
 open import Sum equality-with-J
+open import Univalence-axiom equality-with-J
 
 open import Chi            atoms
+open import Deterministic  atoms
 open import Free-variables atoms hiding (swap)
 open import Propositional  atoms
 open import Substitution   atoms
@@ -31,15 +36,15 @@ open χ-atoms atoms
 
 private
   variable
-    A                                     : Type
-    b b₁ b₂ b₃                            : Br
-    bs₁ bs₂ bs₃                           : List Br
-    c c₁ c₂                               : Const
-    e e₁ e₁′ e₂′ e₂ e₃ e₁₁ e₁₂ e₂₁ e₂₂ v₁ : Exp
-    es₁ es₂ es₃ vs₁                       : List Exp
-    R R₁ R₂ R₃                            : A → A → Type
-    x x₁ x₁′ x₂ x₂′ x₃ y y₁ y₂ y₃ z₁ z₂   : A
-    xs xs₁ xs₂ xs₃ ys₁ ys₂                : List A
+    A                                           : Type
+    b b₁ b₂ b₃                                  : Br
+    bs₁ bs₂ bs₃                                 : List Br
+    c c₁ c₂                                     : Const
+    e′ e₁ e₁′ e₂′ e₂ e₃ e₁₁ e₁₂ e₂₁ e₂₂ v₁      : Exp
+    es₁ es₂ es₃ vs₁                             : List Exp
+    R R₁ R₂ R₃                                  : A → A → Type
+    e p q v x x₁ x₁′ x₂ x₂′ x₃ y y₁ y₂ y₃ z₁ z₂ : A
+    xs xs₁ xs₂ xs₃ ys₁ ys₂                      : List A
 
 ------------------------------------------------------------------------
 -- The definition of α-equivalence
@@ -1074,7 +1079,7 @@ mutual
      e₁′ ≈α e₂′ →
      e₁ [ x₁ ← e₁′ ] ≈α e₂ [ x₂ ← e₂′ ])
 ¬-subst-α subst-α =
-  not-equal (subst-α e¹≈e² e′≈e′)
+  not-equal (subst-α e¹≈e² e³≈e³)
   where
   x¹ = V.name 0
   x² = V.name 1
@@ -1083,7 +1088,7 @@ mutual
   e¹ = lambda x¹ (var z)
   e² = lambda x² (var z)
 
-  e′ = var x¹
+  e³ = var x¹
 
   e¹≈e² : Alpha (_≡_ [ z ∼ z ]) e¹ e²
   e¹≈e² = lambda (cons (nil (var (inj₂
@@ -1092,10 +1097,10 @@ mutual
     , inj₁ (refl , refl)
     )))))
 
-  e′≈e′ : e′ ≈α e′
-  e′≈e′ = refl-α
+  e³≈e³ : e³ ≈α e³
+  e³≈e³ = refl-α
 
-  not-equal : ¬ e¹ [ z ← e′ ] ≈α e² [ z ← e′ ]
+  not-equal : ¬ e¹ [ z ← e³ ] ≈α e² [ z ← e³ ]
   not-equal _ with z V.≟ x¹ | z V.≟ x² | z V.≟ z
   not-equal (lambda (cons (nil (var (inj₁ (_ , x²≡x¹))))))
     | no _ | no _ | yes _ =
@@ -1391,3 +1396,213 @@ mutual
     Σ-zip _∷_ (Σ-zip _∷_ _,_)
       (⇓-α (All.head cl) e₁⇓ e₁≈e₂)
       (⇓⋆-α (All.tail cl) es₁⇓ es₁≈es₂)
+
+------------------------------------------------------------------------
+-- Expressions quotiented by α-equivalence
+
+-- Closed expressions quotiented by α-equivalence.
+
+Closed-exp/α : Type
+Closed-exp/α = Closed-exp /ᴱ (_≈α_ on proj₁)
+
+-- Expressions with one free variable, quotiented by α-equivalence.
+
+Almost-closed-exp/α : Type
+Almost-closed-exp/α =
+  (∃ λ (x : Var) → ∃ λ (e : Exp) → Closed′ (x ∷ []) e)
+    /ᴱ
+  (λ (x₁ , e₁ , _) (x₂ , e₂ , _) →
+     Alpha (_≡_ [ x₁ ∼ x₂ ]) e₁ e₂)
+
+-- Expressions with free variables taken from a given list, quotiented
+-- by α-equivalence.
+
+Exp/α : Type
+Exp/α =
+  (∃ λ (xs : List Var) → ∃ λ (e : Exp) → Closed′ xs e)
+    /ᴱ
+  (λ (xs₁ , e₁ , _) (xs₂ , e₂ , _) →
+     Alpha-binders _≡_ xs₁ e₁ xs₂ e₂)
+
+-- Closed branches quotiented by α-equivalence.
+
+Closed-br/α : Type
+Closed-br/α = ∃ Closed-Br /ᴱ (Alpha-Br _≡_ on proj₁)
+
+-- Some "constructors" for Closed-exp/α.
+
+apply/α : Closed-exp/α → Closed-exp/α → Closed-exp/α
+apply/α = Q./ᴱ-zip
+  (Σ-zip apply Closed′-closed-under-apply)
+  refl-α
+  refl-α
+  apply
+
+lambda/α : Almost-closed-exp/α → Closed-exp/α
+lambda/α =
+  (λ (x , e , cl) → lambda x e , Closed′-closed-under-lambda cl)
+    Q./ᴱ-map
+  (λ (x₁ , e₁ , _) (x₂ , e₂ , _) →
+     Alpha (_≡_ [ x₁ ∼ x₂ ]) e₁ e₂  →⟨ Alpha.lambda ∘ cons ∘ nil ⟩□
+     lambda x₁ e₁ ≈α lambda x₂ e₂   □)
+
+case/α : Closed-exp/α → List Closed-br/α → Closed-exp/α
+case/α e =
+  List Closed-br/α                                     ↔⟨ inverse $ Q.List/ᴱ refl-α-Br ⟩
+  List (∃ Closed-Br) /ᴱ Listᴾ (Alpha-Br _≡_ on proj₁)  →⟨ Q./ᴱ-zip
+                                                            case′
+                                                            refl-α
+                                                            (Listᴾ-preserves-reflexivity refl-α-Br)
+                                                            (λ {u = e₁} {v = e₂} → curry (lemma e₁ e₂ _ _))
+                                                            e ⟩□
+  Closed-exp/α                                         □
+  where
+  case′ : Closed-exp → List (∃ Closed-Br) → Closed-exp
+  case′ (e , cl) =
+    List (∃ Closed-Br)                       →⟨ All.List-Σ _ ⟩
+    (∃ λ (bs : List Br) → All Closed-Br bs)  →⟨ Σ-map (case e) (Closed′-closed-under-case cl) ⟩□
+    Closed-exp                               □
+
+  lemma : ∀ _ _ _ _ _ → _
+  lemma e₁ e₂ bs₁ bs₂ =
+    (_≈α_ on proj₁) e₁ e₂ × Listᴾ (Alpha-Br _≡_ on proj₁) bs₁ bs₂  ↔⟨ (∃-cong λ _ → inverse All.Listᴾ-List-Σ) ⟩
+
+    (_≈α_ on proj₁) e₁ e₂ ×
+    Listᴾ (Alpha-Br _≡_)
+      (All.List-Σ _ bs₁ .proj₁) (All.List-Σ _ bs₂ .proj₁)          →⟨ uncurry case ⟩□
+
+    (_≈α_ on proj₁) (case′ e₁ bs₁) (case′ e₂ bs₂)                  □
+
+rec/α : Almost-closed-exp/α → Closed-exp/α
+rec/α =
+  (λ (x , e , cl) → rec x e , Closed′-closed-under-rec cl)
+    Q./ᴱ-map
+  (λ (x₁ , e₁ , _) (x₂ , e₂ , _) →
+     Alpha (_≡_ [ x₁ ∼ x₂ ]) e₁ e₂  →⟨ Alpha.rec ∘ cons ∘ nil ⟩□
+     rec x₁ e₁ ≈α rec x₂ e₂         □)
+
+const/α : Const → List Closed-exp/α → Closed-exp/α
+const/α c =
+  List Closed-exp/α                         ↔⟨ inverse $ Q.List/ᴱ refl-α ⟩
+  List Closed-exp /ᴱ Listᴾ (_≈α_ on proj₁)  →⟨ const′ Q./ᴱ-map lemma ⟩□
+  Closed-exp/α                              □
+  where
+  const′ : List Closed-exp → Closed-exp
+  const′ =
+    List Closed-exp                        →⟨ All.List-Σ _ ⟩
+    (∃ λ (es : List Exp) → All Closed es)  →⟨ Σ-map (const c) Closed′-closed-under-const ⟩□
+    Closed-exp                             □
+
+  lemma = λ es₁ es₂ →
+    Listᴾ (_≈α_ on proj₁) es₁ es₂                                   ↔⟨ inverse All.Listᴾ-List-Σ ⟩
+    Listᴾ _≈α_ (All.List-Σ _ es₁ .proj₁) (All.List-Σ _ es₂ .proj₁)  →⟨ const refl ⟩□
+    (_≈α_ on proj₁) (const′ es₁) (const′ es₂)                       □
+
+-- A "constructor" for Closed-br/α.
+
+branch/α : Const → Exp/α → Closed-br/α
+branch/α c =
+  (λ (xs , e , cl) →
+     branch c xs e , Closed′-Br-closed-under-branch c [] cl)
+    Q./ᴱ-map
+  (λ (xs₁ , e₁ , cl₁) (xs₂ , e₂ , cl₂) →
+     Alpha-binders _≡_ xs₁ e₁ xs₂ e₂                   →⟨ branch refl ⟩□
+     Alpha-Br _≡_ (branch c xs₁ e₁) (branch c xs₂ e₂)  □)
+
+-- Substitution, stated for Almost-closed-exp/α and Closed-exp/α.
+
+_[_] : Almost-closed-exp/α → Closed-exp/α → Closed-exp/α
+_[_] = Q./ᴱ-zip
+  (λ (x , e , cl) (e′ , cl′) →
+     e [ x ← e′ ] , Closed′-closed-under-subst cl cl′)
+  (refl-Alpha _ λ _ _ → [≢→[∼]]→[∼] _≡_ λ _ → refl)
+  refl-α
+  (λ {(x₁ , e₁ , _)} {(x₂ , e₂ , _)} {(e₁′ , cl-e₁′)} {(e₂′ , _)} →
+     curry (
+       Alpha (_≡_ [ x₁ ∼ x₂ ]) e₁ e₂ × e₁′ ≈α e₂′  →⟨ uncurry (subst-α cl-e₁′) ⟩□
+       e₁ [ x₁ ← e₁′ ] ≈α e₂ [ x₂ ← e₂′ ]          □))
+
+-- The function _[_] computes in a certain way.
+
+_ : Q.[ x , e , p ] [ Q.[ e′ , q ] ] ≡
+    Q.[ e [ x ← e′ ] , Closed′-closed-under-subst p q ]
+_ = refl
+
+private
+
+  -- Helper functions used to define _⇓α_ and ⇓α-propositional.
+
+  ∃⇓≈α-propositional : Is-proposition (∃ λ v′ → e ⇓ v′ × v ≈α v′)
+  ∃⇓≈α-propositional (_ , e⇓v′₁ , _) (_ , e⇓v′₂ , _) =
+    Σ-≡,≡→≡
+      (⇓-deterministic e⇓v′₁ e⇓v′₂)
+      (×-closure 1 ⇓-propositional ≈α-propositional _ _)
+
+  Semantics′ : Closed-exp → Closed-exp/α → Proposition lzero
+  Semantics′ (e , _) = Q.rec λ where
+    .Q.[]ʳ (v , _) →
+      (∃ λ v′ → e ⇓ v′ × v ≈α v′) , ∃⇓≈α-propositional
+    .Q.is-setʳ →
+      ∃-H-level-H-level-1+ ext abstract-univ 1
+    .Q.[]-respects-relationʳ {x = v₁ , _} {y = v₂ , _} →
+      v₁ ≈α v₂                                               →⟨ (λ v₁≈v₂ →
+                                                                   ∃-cong λ _ → ∃-cong λ _ →
+                                                                   record { to   = trans-α (sym-α v₁≈v₂)
+                                                                          ; from = trans-α v₁≈v₂
+                                                                          }) ⟩
+
+      (∃ λ v → e ⇓ v × v₁ ≈α v) ⇔ (∃ λ v → e ⇓ v × v₂ ≈α v)  ↔⟨ ⇔↔≡ ext abstract-univ ∃⇓≈α-propositional ∃⇓≈α-propositional ⟩
+
+      (∃ λ v → e ⇓ v × v₁ ≈α v) ≡ (∃ λ v → e ⇓ v × v₂ ≈α v)  ↔⟨ ignore-propositional-component
+                                                                  (H-level-propositional ext 1) ⟩□
+      ((∃ λ v → e ⇓ v × v₁ ≈α v) , ∃⇓≈α-propositional) ≡
+      ((∃ λ v → e ⇓ v × v₂ ≈α v) , ∃⇓≈α-propositional)       □
+
+  Semantics : Closed-exp/α → Closed-exp/α → Proposition lzero
+  Semantics = Q.rec λ where
+    .Q.[]ʳ →
+      Semantics′
+    .Q.is-setʳ →
+      Π-closure ext 2 λ _ →
+      ∃-H-level-H-level-1+ ext abstract-univ 1
+    .Q.[]-respects-relationʳ {x = e₁ , cl-e₁} {y = e₂ , cl-e₂} e₁≈e₂ →
+      ⟨ext⟩ $ Q.elim-prop λ @0 where
+        .Q.Elim-prop.is-propositionʳ _ →
+          ∃-H-level-H-level-1+ ext abstract-univ 1
+        .Q.Elim-prop.[]ʳ (v , _) →                                     $⟨ e₁≈e₂ ⟩
+
+          e₁ ≈α e₂                                                     →⟨ (λ e₁≈e₂ → record
+                                                                             { to   = λ (v′ , e₁⇓v′ , v≈v′) →
+                                                                                        Σ-map id (Σ-map id (trans-α v≈v′)) $
+                                                                                        ⇓-α cl-e₁ e₁⇓v′ e₁≈e₂
+                                                                             ; from = λ (v′ , e₂⇓v′ , v≈v′) →
+                                                                                        Σ-map id (Σ-map id (trans-α v≈v′)) $
+                                                                                        ⇓-α cl-e₂ e₂⇓v′ (sym-α e₁≈e₂)
+                                                                             }) ⟩
+
+          (∃ λ v′ → e₁ ⇓ v′ × v ≈α v′) ⇔ (∃ λ v′ → e₂ ⇓ v′ × v ≈α v′)  ↔⟨ ⇔↔≡ ext abstract-univ ∃⇓≈α-propositional ∃⇓≈α-propositional ⟩
+
+          (∃ λ v′ → e₁ ⇓ v′ × v ≈α v′) ≡ (∃ λ v′ → e₂ ⇓ v′ × v ≈α v′)  ↔⟨ ignore-propositional-component
+                                                                            (H-level-propositional ext 1) ⟩□
+          ((∃ λ v′ → e₁ ⇓ v′ × v ≈α v′) , ∃⇓≈α-propositional) ≡
+          ((∃ λ v′ → e₂ ⇓ v′ × v ≈α v′) , ∃⇓≈α-propositional)          □
+
+-- The semantics, stated for Closed-exp/α.
+
+infix 4 _⇓α_
+
+record _⇓α_ (e v : Closed-exp/α) : Type where
+  constructor wrap
+  field
+    unwrap : Semantics e v .proj₁
+
+-- The relation _⇓α_ is pointwise propositional.
+
+⇓α-propositional : Is-proposition (e ⇓α v)
+⇓α-propositional {e = e} {v = v} (wrap p) (wrap q) =
+  cong wrap $ Semantics e v .proj₂ p q
+
+-- A "computation rule" for _⇓α_.
+
+⇓α≃⇓ : (Q.[ e , p ] ⇓α Q.[ v , q ]) ≃ (∃ λ v′ → e ⇓ v′ × v ≈α v′)
+⇓α≃⇓ = Eq.↔→≃ _⇓α_.unwrap wrap (λ _ → refl) (λ _ → refl)
