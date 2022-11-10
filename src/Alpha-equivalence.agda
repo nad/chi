@@ -31,14 +31,14 @@ open χ-atoms atoms
 private
   variable
     A                                     : Type
-    b₁ b₂                                 : Br
-    bs₁ bs₂                               : List Br
+    b₁ b₂ b₃                              : Br
+    bs₁ bs₂ bs₃                           : List Br
     c c₁ c₂                               : Const
     e e₁ e₁′ e₂′ e₂ e₃ e₁₁ e₁₂ e₂₁ e₂₂ v₁ : Exp
-    es₁ es₂ vs₁                           : List Exp
-    R R₁ R₂                               : A → A → Type
-    x x₁ x₁′ x₂ x₂′ y y₁ y₂ z₁ z₂         : A
-    xs xs₁ xs₂ ys₁ ys₂                    : List A
+    es₁ es₂ es₃ vs₁                       : List Exp
+    R R₁ R₂ R₃                            : A → A → Type
+    x x₁ x₁′ x₂ x₂′ x₃ y y₁ y₂ y₃ z₁ z₂   : A
+    xs xs₁ xs₂ xs₃ ys₁ ys₂                : List A
 
 ------------------------------------------------------------------------
 -- The definition of α-equivalence
@@ -557,6 +557,128 @@ mutual
 
 sym-α : e₁ ≈α e₂ → e₂ ≈α e₁
 sym-α = map-Alpha sym ∘ sym-Alpha
+
+------------------------------------------------------------------------
+-- Transitivity
+
+-- A kind of transitivity holds for _[_∼_].
+
+trans-[∼] :
+  (∀ y₁ y₂ y₃ → R₁ y₁ y₂ → R₂ y₂ y₃ → R₃ y₁ y₃) →
+  (R₁ [ x₁ ∼ x₂ ]) y₁ y₂ →
+  (R₂ [ x₂ ∼ x₃ ]) y₂ y₃ →
+  (R₃ [ x₁ ∼ x₃ ]) y₁ y₃
+trans-[∼] _ (inj₁ (x₁≡y₁ , _)) (inj₁ (_ , x₃≡y₃)) =
+  inj₁ (x₁≡y₁ , x₃≡y₃)
+trans-[∼] r (inj₂ (x₁≢y₁ , _ , y₁R₁y₂)) (inj₂ (_ , x₃≢y₃ , y₂R₂y₃)) =
+  inj₂ (x₁≢y₁ , x₃≢y₃ , r _ _ _ y₁R₁y₂ y₂R₂y₃)
+trans-[∼] _ (inj₁ (_ , x₂≡y₂)) (inj₂ (x₂≢y₂ , _)) =
+  ⊥-elim $ x₂≢y₂ x₂≡y₂
+trans-[∼] _ (inj₂ (_ , x₂≢y₂ , _)) (inj₁ (x₂≡y₂ , _)) =
+  ⊥-elim $ x₂≢y₂ x₂≡y₂
+
+-- A kind of transitivity holds for _[_]ˡ.
+
+trans-[]ˡ :
+  (∀ y₁ y₂ y₃ → R₁ y₁ y₂ → R₂ y₂ y₃ → R₃ y₁ y₃) →
+  (xs : List (Var × Var × Var)) →
+  (R₁ [ List.map (λ (x₁ , x₂ , x₃) → x₁ , x₂) xs ]ˡ) y₁ y₂ →
+  (R₂ [ List.map (λ (x₁ , x₂ , x₃) → x₂ , x₃) xs ]ˡ) y₂ y₃ →
+  (R₃ [ List.map (λ (x₁ , x₂ , x₃) → x₁ , x₃) xs ]ˡ) y₁ y₃
+trans-[]ˡ r [] =
+  r _ _ _
+trans-[]ˡ
+  {R₁ = R₁} {R₂ = R₂} {R₃ = R₃} {y₁ = y₁} {y₂ = y₂} {y₃ = y₃}
+  r ((x₁ , x₂ , x₃) ∷ xs) = curry
+  ((R₁ [ x₁ ∼ x₂ ] [ List.map (λ (x₁ , x₂ , x₃) → x₁ , x₂) xs ]ˡ) y₁ y₂
+     ×
+   (R₂ [ x₂ ∼ x₃ ] [ List.map (λ (x₁ , x₂ , x₃) → x₂ , x₃) xs ]ˡ) y₂ y₃  →⟨ uncurry (trans-[]ˡ (λ _ _ _ → trans-[∼] r) xs) ⟩□
+
+   (R₃ [ x₁ ∼ x₃ ] [ List.map (λ (x₁ , x₂ , x₃) → x₁ , x₃) xs ]ˡ) y₁ y₃  □)
+
+-- A kind of transitivity holds for _[_]ʳ.
+
+trans-[]ʳ :
+  (∀ y₁ y₂ y₃ → R₁ y₁ y₂ → R₂ y₂ y₃ → R₃ y₁ y₃) →
+  (xs : List (Var × Var × Var)) →
+  (R₁ [ List.map (λ (x₁ , x₂ , x₃) → x₁ , x₂) xs ]ʳ) y₁ y₂ →
+  (R₂ [ List.map (λ (x₁ , x₂ , x₃) → x₂ , x₃) xs ]ʳ) y₂ y₃ →
+  (R₃ [ List.map (λ (x₁ , x₂ , x₃) → x₁ , x₃) xs ]ʳ) y₁ y₃
+trans-[]ʳ r [] =
+  r _ _ _
+trans-[]ʳ
+  {R₁ = R₁} {R₂ = R₂} {R₃ = R₃} {y₁ = y₁} {y₂ = y₂} {y₃ = y₃}
+  r ((x₁ , x₂ , x₃) ∷ xs) = curry
+  ((R₁ [ List.map (λ (x₁ , x₂ , x₃) → x₁ , x₂) xs ]ʳ [ x₁ ∼ x₂ ]) y₁ y₂
+     ×
+   (R₂ [ List.map (λ (x₁ , x₂ , x₃) → x₂ , x₃) xs ]ʳ [ x₂ ∼ x₃ ]) y₂ y₃  →⟨ (uncurry $ trans-[∼] λ y₁ y₂ y₃ →
+                                                                             trans-[]ʳ {y₁ = y₁} {y₂ = y₂} {y₃ = y₃} r xs) ⟩□
+   (R₃ [ List.map (λ (x₁ , x₂ , x₃) → x₁ , x₃) xs ]ʳ [ x₁ ∼ x₃ ]) y₁ y₃  □)
+
+-- A kind of transitivity holds for Alpha.
+
+mutual
+
+  trans-Alpha :
+    (∀ y₁ y₂ y₃ → R₁ y₁ y₂ → R₂ y₂ y₃ → R₃ y₁ y₃) →
+    Alpha R₁ e₁ e₂ → Alpha R₂ e₂ e₃ → Alpha R₃ e₁ e₃
+
+  trans-Alpha r (var p) (var q) = var (r _ _ _ p q)
+
+  trans-Alpha r (lambda p) (lambda q) =
+    lambda (trans-Alpha-binders r p q)
+
+  trans-Alpha r (rec p) (rec q) =
+    rec (trans-Alpha-binders r p q)
+
+  trans-Alpha r (apply p₁ p₂) (apply q₁ q₂) =
+    apply (trans-Alpha r p₁ q₁) (trans-Alpha r p₂ q₂)
+
+  trans-Alpha r (const p ps) (const q qs) =
+    const (trans p q) (trans-Alpha-⋆ r ps qs)
+
+  trans-Alpha r (case p ps) (case q qs) =
+    case (trans-Alpha r p q)
+         (trans-Alpha-Br-⋆ r ps qs)
+
+  trans-Alpha-Br :
+    (∀ y₁ y₂ y₃ → R₁ y₁ y₂ → R₂ y₂ y₃ → R₃ y₁ y₃) →
+    Alpha-Br R₁ b₁ b₂ → Alpha-Br R₂ b₂ b₃ → Alpha-Br R₃ b₁ b₃
+  trans-Alpha-Br r (branch p₁ p₂) (branch q₁ q₂) =
+    branch (trans p₁ q₁) (trans-Alpha-binders r p₂ q₂)
+
+  trans-Alpha-binders :
+    (∀ y₁ y₂ y₃ → R₁ y₁ y₂ → R₂ y₂ y₃ → R₃ y₁ y₃) →
+    Alpha-binders R₁ xs₁ e₁ xs₂ e₂ →
+    Alpha-binders R₂ xs₂ e₂ xs₃ e₃ →
+    Alpha-binders R₃ xs₁ e₁ xs₃ e₃
+  trans-Alpha-binders r (nil p) (nil q) =
+    nil (trans-Alpha r p q)
+  trans-Alpha-binders r (cons p) (cons q) =
+    cons (trans-Alpha-binders (λ _ _ _ → trans-[∼] r) p q)
+
+  trans-Alpha-⋆ :
+    (∀ y₁ y₂ y₃ → R₁ y₁ y₂ → R₂ y₂ y₃ → R₃ y₁ y₃) →
+    Alpha-⋆ (Alpha R₁) es₁ es₂ →
+    Alpha-⋆ (Alpha R₂) es₂ es₃ →
+    Alpha-⋆ (Alpha R₃) es₁ es₃
+  trans-Alpha-⋆ _ []       []       = []
+  trans-Alpha-⋆ r (p ∷ ps) (q ∷ qs) =
+    trans-Alpha r p q ∷ trans-Alpha-⋆ r ps qs
+
+  trans-Alpha-Br-⋆ :
+    (∀ y₁ y₂ y₃ → R₁ y₁ y₂ → R₂ y₂ y₃ → R₃ y₁ y₃) →
+    Alpha-⋆ (Alpha-Br R₁) bs₁ bs₂ →
+    Alpha-⋆ (Alpha-Br R₂) bs₂ bs₃ →
+    Alpha-⋆ (Alpha-Br R₃) bs₁ bs₃
+  trans-Alpha-Br-⋆ _ []       []       = []
+  trans-Alpha-Br-⋆ r (p ∷ ps) (q ∷ qs) =
+    trans-Alpha-Br r p q ∷ trans-Alpha-Br-⋆ r ps qs
+
+-- The α-equivalence relation is transitive.
+
+trans-α : e₁ ≈α e₂ → e₂ ≈α e₃ → e₁ ≈α e₃
+trans-α = trans-Alpha (λ _ _ _ → trans)
 
 ------------------------------------------------------------------------
 -- Some lemmas related to _[_∼_]
