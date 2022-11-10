@@ -23,6 +23,7 @@ open import Sum equality-with-J
 
 open import Chi            atoms
 open import Free-variables atoms hiding (swap)
+open import Propositional  atoms
 open import Substitution   atoms
 
 open χ-atoms atoms
@@ -115,6 +116,106 @@ infix 4 _≈α_
 
 _≈α_ : Exp → Exp → Type
 _≈α_ = Alpha _≡_
+
+------------------------------------------------------------------------
+-- The α-equivalence relation is propositional
+
+-- If R is pointwise propositional, then R [ x₁ ∼ x₂ ] is pointwise
+-- propositional.
+
+[∼]-propositional :
+  (∀ x₁ x₂ → Is-proposition (R x₁ x₂)) →
+  Is-proposition ((R [ x₁ ∼ x₂ ]) y₁ y₂)
+[∼]-propositional r (inj₁ _) (inj₁ _) =
+  cong inj₁ $ ×-closure 1 V.Name-set V.Name-set _ _
+[∼]-propositional r (inj₂ _) (inj₂ _) =
+  cong inj₂ $
+  ×-closure 1
+    (¬-propositional ext)
+    (×-closure 1 (¬-propositional ext) (r _ _))
+    _ _
+[∼]-propositional r (inj₁ (x₁≡y₁ , _)) (inj₂ (x₁≢y₁ , _)) =
+  ⊥-elim $ x₁≢y₁ x₁≡y₁
+[∼]-propositional r (inj₂ (x₁≢y₁ , _)) (inj₁ (x₁≡y₁ , _)) =
+  ⊥-elim $ x₁≢y₁ x₁≡y₁
+
+-- If R is pointwise propositional, then Alpha-⋆ R is pointwise
+-- propositional.
+
+Alpha-⋆-propositional :
+  (∀ x₁ x₂ → Is-proposition (R x₁ x₂)) →
+  Is-proposition (Alpha-⋆ R es₁ es₂)
+Alpha-⋆-propositional r []       []       = refl
+Alpha-⋆-propositional r (p ∷ ps) (q ∷ qs) =
+  cong₂ _∷_
+    (r _ _ p q)
+    (Alpha-⋆-propositional r ps qs)
+
+-- The α-equivalence relation is pointwise propositional.
+
+mutual
+
+  ≈α-propositional : Is-proposition (e₁ ≈α e₂)
+  ≈α-propositional = Alpha-propositional (λ _ _ → V.Name-set)
+
+  Alpha-propositional :
+    (∀ x₁ x₂ → Is-proposition (R x₁ x₂)) →
+    Is-proposition (Alpha R e₁ e₂)
+  Alpha-propositional r (apply p₁ p₂) (apply q₁ q₂) =
+    cong₂ apply
+      (Alpha-propositional r p₁ q₁)
+      (Alpha-propositional r p₂ q₂)
+  Alpha-propositional r (lambda p) (lambda q) =
+    cong lambda (Alpha-binders-propositional r p q)
+  Alpha-propositional r (case p ps) (case q qs) =
+    cong₂ case
+      (Alpha-propositional r p q)
+      (Alpha-⋆-Alpha-Br-propositional r ps qs)
+  Alpha-propositional r (rec p) (rec q) =
+    cong rec (Alpha-binders-propositional r p q)
+  Alpha-propositional r (var p) (var q) =
+    cong var (r _ _ p q)
+  Alpha-propositional r (const p ps) (const q qs) =
+    cong₂ const
+      (C.Name-set p q)
+      (Alpha-⋆-Alpha-propositional r ps qs)
+
+  Alpha-Br-propositional :
+    (∀ x₁ x₂ → Is-proposition (R x₁ x₂)) →
+    Is-proposition (Alpha-Br R b₁ b₂)
+  Alpha-Br-propositional r (branch p₁ p₂) (branch q₁ q₂) =
+    cong₂ branch
+      (C.Name-set p₁ q₁)
+      (Alpha-binders-propositional r p₂ q₂)
+
+  Alpha-binders-propositional :
+    (∀ x₁ x₂ → Is-proposition (R x₁ x₂)) →
+    Is-proposition (Alpha-binders R xs₁ e₁ xs₂ e₂)
+  Alpha-binders-propositional r (nil p) (nil q) =
+    cong nil (Alpha-propositional r p q)
+  Alpha-binders-propositional r (cons p) (cons q) =
+    cong cons $
+    Alpha-binders-propositional
+      (λ _ _ → [∼]-propositional r)
+      p q
+
+  Alpha-⋆-Alpha-propositional :
+    (∀ x₁ x₂ → Is-proposition (R x₁ x₂)) →
+    Is-proposition (Alpha-⋆ (Alpha R) es₁ es₂)
+  Alpha-⋆-Alpha-propositional r []       []       = refl
+  Alpha-⋆-Alpha-propositional r (p ∷ ps) (q ∷ qs) =
+    cong₂ _∷_
+      (Alpha-propositional r p q)
+      (Alpha-⋆-Alpha-propositional r ps qs)
+
+  Alpha-⋆-Alpha-Br-propositional :
+    (∀ x₁ x₂ → Is-proposition (R x₁ x₂)) →
+    Is-proposition (Alpha-⋆ (Alpha-Br R) bs₁ bs₂)
+  Alpha-⋆-Alpha-Br-propositional r []       []       = refl
+  Alpha-⋆-Alpha-Br-propositional r (p ∷ ps) (q ∷ qs) =
+    cong₂ _∷_
+      (Alpha-Br-propositional r p q)
+      (Alpha-⋆-Alpha-Br-propositional r ps qs)
 
 ------------------------------------------------------------------------
 -- The functions _[_]ˡ and _[_]ʳ
