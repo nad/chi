@@ -5,6 +5,7 @@
 module Pointwise-equality where
 
 open import Equality.Propositional
+open import Logical-equivalence using (_⇔_)
 open import Prelude as P hiding (const; not; Decidable)
 open import Tactic.By.Propositional
 
@@ -437,7 +438,7 @@ not-pointwise-equal-ℕ
     ∀ p → Terminates p → apply halts ⌜ p ⌝ ⇓ ⌜ true ⌝
   true-lemma p p⇓ = lemma true p
     ((∀ n → terminates-in-Bool (p , n) ≡ false)  →⟨ (∀-cong _ λ _ → terminates-in-Bool-false) ⟩
-     (∀ n → ¬ p ⇓≤ n)                            →⟨ ¬⇓≤→¬⇓ ⟩
+     (∀ n → ¬ p ⇓≤ n)                            →⟨ _⇔_.from ¬⇓⇔¬⇓≤ ⟩
      ¬ Terminates p                              →⟨ _$ p⇓ ⟩
      ⊥                                           →⟨ ⊥-elim ⟩□
      false ≡ true                                □)
@@ -449,7 +450,7 @@ not-pointwise-equal-ℕ
     (λ _ → refl)
     (¬ (∀ n → terminates-in-Bool (p , n) ≡ false)   →⟨ →-cong-→ (∀-cong _ λ n → sym ∘ Bool.≢⇒not≡ _ _ ∘ (_∘ sym)) id ⟩
      ¬ (∀ n → ¬ terminates-in-Bool (p , n) ≡ true)  →⟨ →-cong-→ (∀-cong _ λ _ → →-cong-→ terminates-in-Bool-true id) id ⟩
-     ¬ (∀ n → ¬ p ⇓≤ n)                             →⟨ ¬¬⇓≤→¬¬⇓ ⟩
+     ¬ (∀ n → ¬ p ⇓≤ n)                             →⟨ _⇔_.from $ ¬-cong _ ¬⇓⇔¬⇓≤ ⟩
      ¬ ¬ Terminates p                               →⟨ _$ p⇑ ⟩
      ⊥                                              →⟨ ⊥-elim ⟩□
      true ≡ false                                   □)
