@@ -32,7 +32,7 @@ open χ-atoms atoms
 private
   variable
     A                                     : Type
-    b₁ b₂ b₃                              : Br
+    b b₁ b₂ b₃                            : Br
     bs₁ bs₂ bs₃                           : List Br
     c c₁ c₂                               : Const
     e e₁ e₁′ e₂′ e₂ e₃ e₁₁ e₁₂ e₂₁ e₂₂ v₁ : Exp
@@ -334,6 +334,12 @@ mutual
 refl-α : e ≈α e
 refl-α = refl-Alpha _ (λ _ _ → refl)
 
+-- The α-equivalence relation for branches is reflexive.
+
+refl-α-Br : Alpha-Br _≡_ b b
+refl-α-Br {b = branch _ _ _} =
+  refl-Alpha-Br _ _ _ (λ _ _ _ → refl)
+
 -- Equational reasoning combinators.
 
 infix  -1 finally-α _∎α
@@ -545,6 +551,11 @@ mutual
 sym-α : e₁ ≈α e₂ → e₂ ≈α e₁
 sym-α = map-Alpha sym ∘ sym-Alpha
 
+-- The α-equivalence relation for branches is symmetric.
+
+sym-α-Br : Alpha-Br _≡_ b₁ b₂ → Alpha-Br _≡_ b₂ b₁
+sym-α-Br = map-Alpha-Br sym ∘ sym-Alpha-Br
+
 ------------------------------------------------------------------------
 -- Transitivity
 
@@ -670,6 +681,12 @@ mutual
 
 trans-α : e₁ ≈α e₂ → e₂ ≈α e₃ → e₁ ≈α e₃
 trans-α = trans-Alpha (λ _ _ _ → trans)
+
+-- The α-equivalence relation for branches is transitive.
+
+trans-α-Br :
+  Alpha-Br _≡_ b₁ b₂ → Alpha-Br _≡_ b₂ b₃ → Alpha-Br _≡_ b₁ b₃
+trans-α-Br = trans-Alpha-Br (λ _ _ _ → trans)
 
 ------------------------------------------------------------------------
 -- Some lemmas related to _[_∼_]
