@@ -152,6 +152,133 @@ Closed-exp = ∃ Closed
   (λ { (const _ _) → refl })
 
 ------------------------------------------------------------------------
+-- Some properties
+
+-- Closed is propositional.
+
+Closed-propositional : ∀ {e} → Is-proposition (Closed e)
+Closed-propositional =
+  Π-closure ext 1 λ _ →
+  Π-closure ext 1 λ _ →
+  ¬-propositional ext
+
+-- Closed-exp is a set.
+
+Closed-exp-set : Is-set Closed-exp
+Closed-exp-set =
+  Σ-closure 2 Exp-set (λ _ → mono₁ 1 Closed-propositional)
+
+-- Two closed expressions are equal if the underlying expressions are
+-- equal.
+
+closed-equal-if-expressions-equal :
+  {e₁ e₂ : Closed-exp} → proj₁ e₁ ≡ proj₁ e₂ → e₁ ≡ e₂
+closed-equal-if-expressions-equal eq =
+  Σ-≡,≡→≡ eq (Closed-propositional _ _)
+
+-- Constructor applications are closed.
+
+mutual
+
+  const→closed : ∀ {e} → Constructor-application e → Closed e
+  const→closed (const c cs) x x∉[] (const x∈e e∈es) =
+    consts→closed cs e∈es x x∉[] x∈e
+
+  consts→closed : ∀ {e es} →
+                  Constructor-applications es → e ∈ es → Closed e
+  consts→closed []       ()
+  consts→closed (c ∷ cs) (inj₁ refl) = const→closed c
+  consts→closed (c ∷ cs) (inj₂ e∈es) = consts→closed cs e∈es
+
+-- Closed e implies Closed′ xs e, for any xs.
+
+Closed→Closed′ : ∀ {xs e} → Closed e → Closed′ xs e
+Closed→Closed′ cl x _ = cl x (λ ())
+
+-- If xs is bag equivalent to ys, then Closed′ xs e and Closed′ ys e
+-- are equivalent.
+
+Closed′-≃ : xs ∼[ bag ] ys → Closed′ xs e ≃ Closed′ ys e
+Closed′-≃ {xs = xs} {ys = ys} {e = e} xs≈ys =
+  (∀ x → ¬ x ∈ xs → ¬ x ∈FV e)  ↝⟨ (∀-cong ext λ _ → →-cong₁ ext $ ¬-cong ext (xs≈ys _)) ⟩□
+  (∀ x → ¬ x ∈ ys → ¬ x ∈FV e)  □
+
+-- If xs is a "subset" of ys and Closed′ xs e holds, then Closed′ ys e
+-- holds.
+
+Closed′-⊆ :
+  ∀ {xs ys e} →
+  xs ∼[ subset ] ys → Closed′ xs e → Closed′ ys e
+Closed′-⊆ {xs = xs} {ys = ys} {e = e} xs⊆ys =
+  (∀ x → ¬ x ∈ xs → ¬ x ∈FV e)  →⟨ (∀-cong _ λ x → →-cong-→ (→-cong-→ (xs⊆ys _) id) id) ⟩□
+  (∀ x → ¬ x ∈ ys → ¬ x ∈FV e)  □
+
+-- An instance of Closed′-⊆.
+
+Closed′-++-∷ :
+  ∀ {x} xs {ys e} →
+  Closed′ (x ∷ xs ++ ys) e → Closed′ (xs ++ x ∷ ys) e
+Closed′-++-∷ {x = x} xs {ys = ys} = Closed′-⊆ λ z →
+  z ∈ x ∷ xs ++ ys         ↔⟨ F.id ⊎-cong B.Any-++ _ _ _ ⟩
+  z ≡ x ⊎ z ∈ xs ⊎ z ∈ ys  ↔⟨ inverse ⊎-assoc F.∘
+                              (⊎-comm ⊎-cong F.id) F.∘
+                              ⊎-assoc ⟩
+  z ∈ xs ⊎ z ≡ x ⊎ z ∈ ys  ↔⟨ inverse (B.Any-++ _ _ _) ⟩□
+  z ∈ xs ++ x ∷ ys         □
+
+-- If a variable is free in e [ x ← e′ ], then it is either free in e′,
+-- or it is distinct from x and free in e.
+
+mutual
+
+  subst-∈FV : ∀ x e {x′ e′} →
+              x′ ∈FV e [ x ← e′ ] → x′ ∈FV e × x′ ≢ x ⊎ x′ ∈FV e′
+  subst-∈FV x (apply e₁ e₂) (apply-left  p)        = ⊎-map (Σ-map apply-left  id) id (subst-∈FV x e₁ p)
+  subst-∈FV x (apply e₁ e₂) (apply-right p)        = ⊎-map (Σ-map apply-right id) id (subst-∈FV x e₂ p)
+  subst-∈FV x (lambda y e)  (lambda x′≢y p)        with x V.≟ y
+  subst-∈FV x (lambda y e)  (lambda x′≢y p)        | yes x≡y = inj₁ (lambda x′≢y p , x′≢y ∘ flip trans x≡y)
+  subst-∈FV x (lambda y e)  (lambda x′≢y p)        | no  _   = ⊎-map (Σ-map (lambda x′≢y) id) id (subst-∈FV x e p)
+  subst-∈FV x (case e bs)   (case-head p)          = ⊎-map (Σ-map case-head id) id (subst-∈FV x e p)
+  subst-∈FV x (case e bs)   (case-body p ps x′∉xs) = ⊎-map (Σ-map (λ (p : ∃ λ _ → ∃ λ _ → ∃ λ _ → _ × _ × _) →
+                                                                     let _ , _ , _ , ps , p , ∉ = p in
+                                                                     case-body p ps ∉)
+                                                                  id)
+                                                           id
+                                                           (subst-∈FV-B⋆ bs p ps x′∉xs)
+  subst-∈FV x (rec y e)     p                      with x V.≟ y
+  subst-∈FV x (rec y e)     (rec x′≢y p)           | yes x≡y = inj₁ (rec x′≢y p , x′≢y ∘ flip trans x≡y)
+  subst-∈FV x (rec y e)     (rec x′≢y p)           | no  x≢y = ⊎-map (Σ-map (rec x′≢y) id) id (subst-∈FV x e p)
+  subst-∈FV x (var y)       p                      with x V.≟ y
+  subst-∈FV x (var y)       p                      | yes x≡y = inj₂ p
+  subst-∈FV x (var y)       (var x′≡y)             | no  x≢y = inj₁ (var x′≡y , x≢y ∘ flip trans x′≡y ∘ sym)
+  subst-∈FV x (const c es)  (const p ps)           = ⊎-map (Σ-map (λ { (_ , ps , p) → const p ps }) id) id
+                                                           (subst-∈FV-⋆ es p ps)
+
+  subst-∈FV-⋆ : ∀ {x x′ e e′} es →
+                x′ ∈FV e → e ∈ es [ x ← e′ ]⋆ →
+                (∃ λ e → e ∈ es × x′ ∈FV e) × x′ ≢ x ⊎ x′ ∈FV e′
+  subst-∈FV-⋆ []       p ()
+  subst-∈FV-⋆ (e ∷ es) p (inj₁ refl) = ⊎-map (Σ-map (λ p → _ , inj₁ refl , p) id) id (subst-∈FV _ e p)
+  subst-∈FV-⋆ (e ∷ es) p (inj₂ q)    = ⊎-map (Σ-map (Σ-map id (Σ-map inj₂ id)) id) id (subst-∈FV-⋆ es p q)
+
+  subst-∈FV-B⋆ : ∀ {x x′ e e′ c xs} bs →
+                 x′ ∈FV e → branch c xs e ∈ bs [ x ← e′ ]B⋆ → ¬ x′ ∈ xs →
+                 (∃ λ c → ∃ λ xs → ∃ λ e →
+                    branch c xs e ∈ bs × x′ ∈FV e × ¬ x′ ∈ xs) × x′ ≢ x
+                   ⊎
+                 x′ ∈FV e′
+  subst-∈FV-B⋆     []                   p ()
+  subst-∈FV-B⋆ {x} (branch c xs e ∷ bs) p (inj₁ eq)   q with V.member x xs
+  subst-∈FV-B⋆ {x} (branch c xs e ∷ bs) p (inj₁ refl) q | yes x∈xs = inj₁ ((c , xs , e , inj₁ refl , p , q) , λ x′≡x →
+                                                                       q (subst (_∈ _) (sym x′≡x) x∈xs))
+  subst-∈FV-B⋆ {x} (branch c xs e ∷ bs) p (inj₁ refl) q | no  x∉xs = ⊎-map (Σ-map (λ p → _ , _ , _ , inj₁ refl , p , q) id)
+                                                                           id
+                                                                           (subst-∈FV _ e p)
+  subst-∈FV-B⋆     (b             ∷ bs) p (inj₂ ps)   q =
+    ⊎-map (Σ-map (Σ-map _ (Σ-map _ (Σ-map _ (Σ-map inj₂ id)))) id) id
+      (subst-∈FV-B⋆ bs p ps q)
+
+------------------------------------------------------------------------
 -- Characterisation lemmas for Closed′
 
 Closed′-apply≃ :
@@ -294,131 +421,6 @@ Closed′-var≃ {xs = xs} {x = x} =
   (∀ y → y ≡ x → ∥ y ∈ xs ∥)        ↝⟨ (∀-cong ext λ _ → →-cong₁ ext ≡-comm) ⟩
   (∀ y → x ≡ y → ∥ y ∈ xs ∥)        ↝⟨ inverse $ ∀-intro _ ext ⟩□
   ∥ x ∈ xs ∥                        □
-
-------------------------------------------------------------------------
--- Some properties
-
--- Closed is propositional.
-
-Closed-propositional : ∀ {e} → Is-proposition (Closed e)
-Closed-propositional =
-  Π-closure ext 1 λ _ →
-  Π-closure ext 1 λ _ →
-  ¬-propositional ext
-
--- Closed-exp is a set.
-
-Closed-exp-set : Is-set Closed-exp
-Closed-exp-set =
-  Σ-closure 2 Exp-set (λ _ → mono₁ 1 Closed-propositional)
-
--- Two closed expressions are equal if the underlying expressions are
--- equal.
-
-closed-equal-if-expressions-equal :
-  {e₁ e₂ : Closed-exp} → proj₁ e₁ ≡ proj₁ e₂ → e₁ ≡ e₂
-closed-equal-if-expressions-equal eq =
-  Σ-≡,≡→≡ eq (Closed-propositional _ _)
-
--- Constructor applications are closed.
-
-mutual
-
-  const→closed : ∀ {e} → Constructor-application e → Closed e
-  const→closed (const c cs) x x∉[] (const x∈e e∈es) =
-    consts→closed cs e∈es x x∉[] x∈e
-
-  consts→closed : ∀ {e es} →
-                  Constructor-applications es → e ∈ es → Closed e
-  consts→closed []       ()
-  consts→closed (c ∷ cs) (inj₁ refl) = const→closed c
-  consts→closed (c ∷ cs) (inj₂ e∈es) = consts→closed cs e∈es
-
--- Closed e implies Closed′ xs e, for any xs.
-
-Closed→Closed′ : ∀ {xs e} → Closed e → Closed′ xs e
-Closed→Closed′ cl x _ = cl x (λ ())
-
--- If xs is bag equivalent to ys, then Closed′ xs e and Closed′ ys e
--- are equivalent.
-
-Closed′-≃ : xs ∼[ bag ] ys → Closed′ xs e ≃ Closed′ ys e
-Closed′-≃ {xs = xs} {ys = ys} {e = e} xs≈ys =
-  (∀ x → ¬ x ∈ xs → ¬ x ∈FV e)  ↝⟨ (∀-cong ext λ _ → →-cong₁ ext $ ¬-cong ext (xs≈ys _)) ⟩□
-  (∀ x → ¬ x ∈ ys → ¬ x ∈FV e)  □
-
--- If xs is a "subset" of ys and Closed′ xs e holds, then Closed′ ys e
--- holds.
-
-Closed′-⊆ : xs ∼[ subset ] ys → Closed′ xs e → Closed′ ys e
-Closed′-⊆ {xs = xs} {ys = ys} {e = e} xs⊆ys =
-  (∀ x → ¬ x ∈ xs → ¬ x ∈FV e)  →⟨ (∀-cong _ λ _ → →-cong-→ (→-cong-→ (xs⊆ys _) id) id) ⟩□
-  (∀ x → ¬ x ∈ ys → ¬ x ∈FV e)  □
-
--- An instance of Closed′-⊆.
-
-Closed′-++-∷ :
-  ∀ {x} xs {ys e} →
-  Closed′ (x ∷ xs ++ ys) e → Closed′ (xs ++ x ∷ ys) e
-Closed′-++-∷ {x = x} xs {ys = ys} = Closed′-⊆ λ z →
-  z ∈ x ∷ xs ++ ys         ↔⟨ F.id ⊎-cong B.Any-++ _ _ _ ⟩
-  z ≡ x ⊎ z ∈ xs ⊎ z ∈ ys  ↔⟨ inverse ⊎-assoc F.∘
-                              (⊎-comm ⊎-cong F.id) F.∘
-                              ⊎-assoc ⟩
-  z ∈ xs ⊎ z ≡ x ⊎ z ∈ ys  ↔⟨ inverse (B.Any-++ _ _ _) ⟩□
-  z ∈ xs ++ x ∷ ys         □
-
--- If a variable is free in e [ x ← e′ ], then it is either free in e′,
--- or it is distinct from x and free in e.
-
-mutual
-
-  subst-∈FV : ∀ x e {x′ e′} →
-              x′ ∈FV e [ x ← e′ ] → x′ ∈FV e × x′ ≢ x ⊎ x′ ∈FV e′
-  subst-∈FV x (apply e₁ e₂) (apply-left  p)        = ⊎-map (Σ-map apply-left  id) id (subst-∈FV x e₁ p)
-  subst-∈FV x (apply e₁ e₂) (apply-right p)        = ⊎-map (Σ-map apply-right id) id (subst-∈FV x e₂ p)
-  subst-∈FV x (lambda y e)  (lambda x′≢y p)        with x V.≟ y
-  subst-∈FV x (lambda y e)  (lambda x′≢y p)        | yes x≡y = inj₁ (lambda x′≢y p , x′≢y ∘ flip trans x≡y)
-  subst-∈FV x (lambda y e)  (lambda x′≢y p)        | no  _   = ⊎-map (Σ-map (lambda x′≢y) id) id (subst-∈FV x e p)
-  subst-∈FV x (case e bs)   (case-head p)          = ⊎-map (Σ-map case-head id) id (subst-∈FV x e p)
-  subst-∈FV x (case e bs)   (case-body p ps x′∉xs) = ⊎-map (Σ-map (λ (p : ∃ λ _ → ∃ λ _ → ∃ λ _ → _ × _ × _) →
-                                                                     let _ , _ , _ , ps , p , ∉ = p in
-                                                                     case-body p ps ∉)
-                                                                  id)
-                                                           id
-                                                           (subst-∈FV-B⋆ bs p ps x′∉xs)
-  subst-∈FV x (rec y e)     p                      with x V.≟ y
-  subst-∈FV x (rec y e)     (rec x′≢y p)           | yes x≡y = inj₁ (rec x′≢y p , x′≢y ∘ flip trans x≡y)
-  subst-∈FV x (rec y e)     (rec x′≢y p)           | no  x≢y = ⊎-map (Σ-map (rec x′≢y) id) id (subst-∈FV x e p)
-  subst-∈FV x (var y)       p                      with x V.≟ y
-  subst-∈FV x (var y)       p                      | yes x≡y = inj₂ p
-  subst-∈FV x (var y)       (var x′≡y)             | no  x≢y = inj₁ (var x′≡y , x≢y ∘ flip trans x′≡y ∘ sym)
-  subst-∈FV x (const c es)  (const p ps)           = ⊎-map (Σ-map (λ { (_ , ps , p) → const p ps }) id) id
-                                                           (subst-∈FV-⋆ es p ps)
-
-  subst-∈FV-⋆ : ∀ {x x′ e e′} es →
-                x′ ∈FV e → e ∈ es [ x ← e′ ]⋆ →
-                (∃ λ e → e ∈ es × x′ ∈FV e) × x′ ≢ x ⊎ x′ ∈FV e′
-  subst-∈FV-⋆ []       p ()
-  subst-∈FV-⋆ (e ∷ es) p (inj₁ refl) = ⊎-map (Σ-map (λ p → _ , inj₁ refl , p) id) id (subst-∈FV _ e p)
-  subst-∈FV-⋆ (e ∷ es) p (inj₂ q)    = ⊎-map (Σ-map (Σ-map id (Σ-map inj₂ id)) id) id (subst-∈FV-⋆ es p q)
-
-  subst-∈FV-B⋆ : ∀ {x x′ e e′ c xs} bs →
-                 x′ ∈FV e → branch c xs e ∈ bs [ x ← e′ ]B⋆ → ¬ x′ ∈ xs →
-                 (∃ λ c → ∃ λ xs → ∃ λ e →
-                    branch c xs e ∈ bs × x′ ∈FV e × ¬ x′ ∈ xs) × x′ ≢ x
-                   ⊎
-                 x′ ∈FV e′
-  subst-∈FV-B⋆     []                   p ()
-  subst-∈FV-B⋆ {x} (branch c xs e ∷ bs) p (inj₁ eq)   q with V.member x xs
-  subst-∈FV-B⋆ {x} (branch c xs e ∷ bs) p (inj₁ refl) q | yes x∈xs = inj₁ ((c , xs , e , inj₁ refl , p , q) , λ x′≡x →
-                                                                       q (subst (_∈ _) (sym x′≡x) x∈xs))
-  subst-∈FV-B⋆ {x} (branch c xs e ∷ bs) p (inj₁ refl) q | no  x∉xs = ⊎-map (Σ-map (λ p → _ , _ , _ , inj₁ refl , p , q) id)
-                                                                           id
-                                                                           (subst-∈FV _ e p)
-  subst-∈FV-B⋆     (b             ∷ bs) p (inj₂ ps)   q =
-    ⊎-map (Σ-map (Σ-map _ (Σ-map _ (Σ-map _ (Σ-map inj₂ id)))) id) id
-      (subst-∈FV-B⋆ bs p ps q)
 
 ------------------------------------------------------------------------
 -- Various closure properties (or similar properties) for Closed′
