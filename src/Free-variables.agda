@@ -422,8 +422,17 @@ Closed′-var≃ {xs = xs} {x = x} =
   (∀ y → x ≡ y → ∥ y ∈ xs ∥)        ↝⟨ inverse $ ∀-intro _ ext ⟩□
   ∥ x ∈ xs ∥                        □
 
+Closed′-Br-branch≃ :
+  ∀ c xs →
+  Closed′-Br xs (branch c ys e) ≃ Closed′ (xs ++ ys) e
+Closed′-Br-branch≃ {ys = ys} {e = e} c xs =
+  Closed′-Br xs (branch c ys e)  ↔⟨⟩
+  Closed′ (ys ++ xs) e           ↝⟨ Closed′-≃ (B.++-comm ys _) ⟩□
+  Closed′ (xs ++ ys) e           □
+
 ------------------------------------------------------------------------
--- Various closure properties (or similar properties) for Closed′
+-- Various closure properties (or similar properties) for Closed′ and
+-- Closed′-Br
 
 Closed′-closed-under-apply :
   ∀ {xs e₁ e₂} →
@@ -455,6 +464,13 @@ Closed′-closed-under-const = _≃_.from Closed′-const≃
 
 Closed′-closed-under-var : ∀ {x xs} → x ∈ xs → Closed′ xs (var x)
 Closed′-closed-under-var = _≃_.from Closed′-var≃ ∘ T.∣_∣
+
+Closed′-Br-closed-under-branch :
+  ∀ c xs →
+  Closed′ (xs ++ ys) e →
+  Closed′-Br xs (branch c ys e)
+Closed′-Br-closed-under-branch c xs =
+  _≃_.from (Closed′-Br-branch≃ c xs)
 
 Closed′-closed-under-subst :
   ∀ {x xs e e′} →
