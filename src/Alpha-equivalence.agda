@@ -12,6 +12,7 @@ open import Prelude hiding (const; module List)
 
 open import Bag-equivalence equality-with-J using (_∈_)
 open import Equivalence equality-with-J using (_≃_)
+open import Equivalence-relation equality-with-J
 open import Function-universe equality-with-J as F hiding (id; _∘_)
 open import H-level.Closure equality-with-J
 open import H-level.Truncation.Propositional equality-with-paths as T
@@ -55,16 +56,6 @@ _[_∼_] : (Var → Var → Type) → Var → Var → (Var → Var → Type)
     ⊎
   x ≢ x′ × y ≢ y′ × R x′ y′
 
--- Alpha-⋆ lifts a binary relation to lists.
-
-infixr 5 _∷_
-
-data Alpha-⋆ (R : A → A → Type) : List A → List A → Type where
-  []  : Alpha-⋆ R [] []
-  _∷_ : R x₁ x₂ →
-        Alpha-⋆ R xs₁ xs₂ →
-        Alpha-⋆ R (x₁ ∷ xs₁) (x₂ ∷ xs₂)
-
 -- Alpha R is α-equivalence up to R: free variables are related if
 -- they are related by R.
 
@@ -81,7 +72,7 @@ mutual
 
     case :
       Alpha R e₁ e₂ →
-      Alpha-⋆ (Alpha-Br R) bs₁ bs₂ →
+      Listᴾ (Alpha-Br R) bs₁ bs₂ →
       Alpha R (case e₁ bs₁) (case e₂ bs₂)
 
     rec :
@@ -92,7 +83,7 @@ mutual
 
     const :
       c₁ ≡ c₂ →
-      Alpha-⋆ (Alpha R) es₁ es₂ →
+      Listᴾ (Alpha R) es₁ es₂ →
       Alpha R (const c₁ es₁) (const c₂ es₂)
 
   data Alpha-Br (R : Var → Var → Type) : Br → Br → Type where
@@ -139,18 +130,6 @@ _≈α_ = Alpha _≡_
 [∼]-propositional r (inj₂ (x₁≢y₁ , _)) (inj₁ (x₁≡y₁ , _)) =
   ⊥-elim $ x₁≢y₁ x₁≡y₁
 
--- If R is pointwise propositional, then Alpha-⋆ R is pointwise
--- propositional.
-
-Alpha-⋆-propositional :
-  (∀ x₁ x₂ → Is-proposition (R x₁ x₂)) →
-  Is-proposition (Alpha-⋆ R es₁ es₂)
-Alpha-⋆-propositional r []       []       = refl
-Alpha-⋆-propositional r (p ∷ ps) (q ∷ qs) =
-  cong₂ _∷_
-    (r _ _ p q)
-    (Alpha-⋆-propositional r ps qs)
-
 -- The α-equivalence relation is pointwise propositional.
 
 mutual
@@ -170,7 +149,7 @@ mutual
   Alpha-propositional r (case p ps) (case q qs) =
     cong₂ case
       (Alpha-propositional r p q)
-      (Alpha-⋆-Alpha-Br-propositional r ps qs)
+      (Listᴾ-Alpha-Br-propositional r ps qs)
   Alpha-propositional r (rec p) (rec q) =
     cong rec (Alpha-binders-propositional r p q)
   Alpha-propositional r (var p) (var q) =
@@ -178,7 +157,7 @@ mutual
   Alpha-propositional r (const p ps) (const q qs) =
     cong₂ const
       (C.Name-set p q)
-      (Alpha-⋆-Alpha-propositional r ps qs)
+      (Listᴾ-Alpha-propositional r ps qs)
 
   Alpha-Br-propositional :
     (∀ x₁ x₂ → Is-proposition (R x₁ x₂)) →
@@ -199,23 +178,27 @@ mutual
       (λ _ _ → [∼]-propositional r)
       p q
 
-  Alpha-⋆-Alpha-propositional :
+  Listᴾ-Alpha-propositional :
     (∀ x₁ x₂ → Is-proposition (R x₁ x₂)) →
-    Is-proposition (Alpha-⋆ (Alpha R) es₁ es₂)
-  Alpha-⋆-Alpha-propositional r []       []       = refl
-  Alpha-⋆-Alpha-propositional r (p ∷ ps) (q ∷ qs) =
-    cong₂ _∷_
+    Is-proposition (Listᴾ (Alpha R) es₁ es₂)
+  Listᴾ-Alpha-propositional {es₁ = []} {es₂ = []} _ _ _ =
+    refl
+  Listᴾ-Alpha-propositional
+    {es₁ = _ ∷ _} {es₂ = _ ∷ _} r (p , ps) (q , qs) =
+    cong₂ _,_
       (Alpha-propositional r p q)
-      (Alpha-⋆-Alpha-propositional r ps qs)
+      (Listᴾ-Alpha-propositional r ps qs)
 
-  Alpha-⋆-Alpha-Br-propositional :
+  Listᴾ-Alpha-Br-propositional :
     (∀ x₁ x₂ → Is-proposition (R x₁ x₂)) →
-    Is-proposition (Alpha-⋆ (Alpha-Br R) bs₁ bs₂)
-  Alpha-⋆-Alpha-Br-propositional r []       []       = refl
-  Alpha-⋆-Alpha-Br-propositional r (p ∷ ps) (q ∷ qs) =
-    cong₂ _∷_
+    Is-proposition (Listᴾ (Alpha-Br R) bs₁ bs₂)
+  Listᴾ-Alpha-Br-propositional {bs₁ = []} {bs₂ = []} _ _ _ =
+    refl
+  Listᴾ-Alpha-Br-propositional
+    {bs₁ = _ ∷ _} {bs₂ = _ ∷ _} r (p , ps) (q , qs) =
+    cong₂ _,_
       (Alpha-Br-propositional r p q)
-      (Alpha-⋆-Alpha-Br-propositional r ps qs)
+      (Listᴾ-Alpha-Br-propositional r ps qs)
 
 ------------------------------------------------------------------------
 -- The functions _[_]ˡ and _[_]ʳ
@@ -331,19 +314,19 @@ mutual
 
   refl-Alpha-⋆ :
     ∀ es → (∀ x e → e ∈ es → x ∈FV e → R x x) →
-    Alpha-⋆ (Alpha R) es es
-  refl-Alpha-⋆ []       _ = []
+    Listᴾ (Alpha R) es es
+  refl-Alpha-⋆ []       _ = _
   refl-Alpha-⋆ (e ∷ es) r =
-    refl-Alpha e (λ x x∈e → r x e (inj₁ refl) x∈e) ∷
+    refl-Alpha e (λ x x∈e → r x e (inj₁ refl) x∈e) ,
     refl-Alpha-⋆ es (λ x e e∈es x∈e → r x e (inj₂ e∈es) x∈e)
 
   refl-Alpha-Br-⋆ :
     ∀ bs →
     (∀ x {c xs e} → branch c xs e ∈ bs → ¬ x ∈ xs → x ∈FV e → R x x) →
-    Alpha-⋆ (Alpha-Br R) bs bs
-  refl-Alpha-Br-⋆ []                   r = []
+    Listᴾ (Alpha-Br R) bs bs
+  refl-Alpha-Br-⋆ []                   r = _
   refl-Alpha-Br-⋆ (branch c xs e ∷ bs) r =
-    refl-Alpha-Br c xs e (λ x x∉xs x∈e → r x (inj₁ refl) x∉xs x∈e) ∷
+    refl-Alpha-Br c xs e (λ x x∉xs x∈e → r x (inj₁ refl) x∉xs x∈e) ,
     refl-Alpha-Br-⋆ bs (λ x ∈bs x∉xs x∈ → r x (inj₂ ∈bs) x∉xs x∈)
 
 -- The α-equivalence relation is reflexive.
@@ -453,17 +436,19 @@ mutual
 
   map-Alpha-⋆ :
     (∀ {x₁ x₂} → R₁ x₁ x₂ → R₂ x₁ x₂) →
-    Alpha-⋆ (Alpha R₁) es₁ es₂ → Alpha-⋆ (Alpha R₂) es₁ es₂
-  map-Alpha-⋆ _ []                = []
-  map-Alpha-⋆ r (e₁≈e₂ ∷ es₁≈es₂) =
-    map-Alpha r e₁≈e₂ ∷ map-Alpha-⋆ r es₁≈es₂
+    Listᴾ (Alpha R₁) es₁ es₂ → Listᴾ (Alpha R₂) es₁ es₂
+  map-Alpha-⋆ {es₁ = []} {es₂ = []} _ _ =
+    _
+  map-Alpha-⋆ {es₁ = _ ∷ _} {es₂ = _ ∷ _} r (e₁≈e₂ , es₁≈es₂) =
+    map-Alpha r e₁≈e₂ , map-Alpha-⋆ r es₁≈es₂
 
   map-Alpha-Br-⋆ :
     (∀ {x₁ x₂} → R₁ x₁ x₂ → R₂ x₁ x₂) →
-    Alpha-⋆ (Alpha-Br R₁) bs₁ bs₂ → Alpha-⋆ (Alpha-Br R₂) bs₁ bs₂
-  map-Alpha-Br-⋆ _ []                = []
-  map-Alpha-Br-⋆ r (b₁≈b₂ ∷ bs₁≈bs₂) =
-    map-Alpha-Br r b₁≈b₂ ∷ map-Alpha-Br-⋆ r bs₁≈bs₂
+    Listᴾ (Alpha-Br R₁) bs₁ bs₂ → Listᴾ (Alpha-Br R₂) bs₁ bs₂
+  map-Alpha-Br-⋆ {bs₁ = []} {bs₂ = []} _ _ =
+    _
+  map-Alpha-Br-⋆ {bs₁ = _ ∷ _} {bs₂ = _ ∷ _} r (b₁≈b₂ , bs₁≈bs₂) =
+    map-Alpha-Br r b₁≈b₂ , map-Alpha-Br-⋆ r bs₁≈bs₂
 
 ------------------------------------------------------------------------
 -- Symmetry
@@ -542,16 +527,18 @@ mutual
     cons (map-Alpha-binders (sym-[∼] R) (sym-Alpha-binders b₁≈b₂))
 
   sym-Alpha-⋆ :
-    Alpha-⋆ (Alpha R) es₁ es₂ → Alpha-⋆ (Alpha (flip R)) es₂ es₁
-  sym-Alpha-⋆ []                = []
-  sym-Alpha-⋆ (e₁≈e₂ ∷ es₁≈es₂) =
-    sym-Alpha e₁≈e₂ ∷ sym-Alpha-⋆ es₁≈es₂
+    Listᴾ (Alpha R) es₁ es₂ → Listᴾ (Alpha (flip R)) es₂ es₁
+  sym-Alpha-⋆ {es₁ = []} {es₂ = []} _ =
+    _
+  sym-Alpha-⋆ {es₁ = _ ∷ _} {es₂ = _ ∷ _} (e₁≈e₂ , es₁≈es₂) =
+    sym-Alpha e₁≈e₂ , sym-Alpha-⋆ es₁≈es₂
 
   sym-Alpha-Br-⋆ :
-    Alpha-⋆ (Alpha-Br R) bs₁ bs₂ → Alpha-⋆ (Alpha-Br (flip R)) bs₂ bs₁
-  sym-Alpha-Br-⋆ []                = []
-  sym-Alpha-Br-⋆ (b₁≈b₂ ∷ bs₁≈bs₂) =
-    sym-Alpha-Br b₁≈b₂ ∷ sym-Alpha-Br-⋆ bs₁≈bs₂
+    Listᴾ (Alpha-Br R) bs₁ bs₂ → Listᴾ (Alpha-Br (flip R)) bs₂ bs₁
+  sym-Alpha-Br-⋆ {bs₁ = []} {bs₂ = []} _ =
+    _
+  sym-Alpha-Br-⋆ {bs₁ = _ ∷ _} {bs₂ = _ ∷ _} (b₁≈b₂ , bs₁≈bs₂) =
+    sym-Alpha-Br b₁≈b₂ , sym-Alpha-Br-⋆ bs₁≈bs₂
 
 -- The α-equivalence relation is symmetric.
 
@@ -659,21 +646,25 @@ mutual
 
   trans-Alpha-⋆ :
     (∀ y₁ y₂ y₃ → R₁ y₁ y₂ → R₂ y₂ y₃ → R₃ y₁ y₃) →
-    Alpha-⋆ (Alpha R₁) es₁ es₂ →
-    Alpha-⋆ (Alpha R₂) es₂ es₃ →
-    Alpha-⋆ (Alpha R₃) es₁ es₃
-  trans-Alpha-⋆ _ []       []       = []
-  trans-Alpha-⋆ r (p ∷ ps) (q ∷ qs) =
-    trans-Alpha r p q ∷ trans-Alpha-⋆ r ps qs
+    Listᴾ (Alpha R₁) es₁ es₂ →
+    Listᴾ (Alpha R₂) es₂ es₃ →
+    Listᴾ (Alpha R₃) es₁ es₃
+  trans-Alpha-⋆ {es₁ = []} {es₂ = []} {es₃ = []} _ _ _ =
+    _
+  trans-Alpha-⋆
+    {es₁ = _ ∷ _} {es₂ = _ ∷ _} {es₃ = _ ∷ _} r (p , ps) (q , qs) =
+    trans-Alpha r p q , trans-Alpha-⋆ r ps qs
 
   trans-Alpha-Br-⋆ :
     (∀ y₁ y₂ y₃ → R₁ y₁ y₂ → R₂ y₂ y₃ → R₃ y₁ y₃) →
-    Alpha-⋆ (Alpha-Br R₁) bs₁ bs₂ →
-    Alpha-⋆ (Alpha-Br R₂) bs₂ bs₃ →
-    Alpha-⋆ (Alpha-Br R₃) bs₁ bs₃
-  trans-Alpha-Br-⋆ _ []       []       = []
-  trans-Alpha-Br-⋆ r (p ∷ ps) (q ∷ qs) =
-    trans-Alpha-Br r p q ∷ trans-Alpha-Br-⋆ r ps qs
+    Listᴾ (Alpha-Br R₁) bs₁ bs₂ →
+    Listᴾ (Alpha-Br R₂) bs₂ bs₃ →
+    Listᴾ (Alpha-Br R₃) bs₁ bs₃
+  trans-Alpha-Br-⋆ {bs₁ = []} {bs₂ = []} {bs₃ = []} _ _ _ =
+    _
+  trans-Alpha-Br-⋆
+    {bs₁ = _ ∷ _} {bs₂ = _ ∷ _} {bs₃ = _ ∷ _} r (p , ps) (q , qs) =
+    trans-Alpha-Br r p q , trans-Alpha-Br-⋆ r ps qs
 
 -- The α-equivalence relation is transitive.
 
@@ -893,23 +884,23 @@ mutual
   Alpha-⋆-≡→Alpha-⋆ :
     ∀ xs →
     All (Closed′ (List.map proj₁ xs)) es₁ →
-    Alpha-⋆ (Alpha (_≡_ [ xs ]ʳ)) es₁ es₂ →
-    Alpha-⋆ (Alpha (R   [ xs ]ʳ)) es₁ es₂
-  Alpha-⋆-≡→Alpha-⋆ _ _ [] =
-    []
-  Alpha-⋆-≡→Alpha-⋆ xs cl (p ∷ ps) =
-    Alpha-≡→Alpha xs (All.head cl) p ∷
+    Listᴾ (Alpha (_≡_ [ xs ]ʳ)) es₁ es₂ →
+    Listᴾ (Alpha (R   [ xs ]ʳ)) es₁ es₂
+  Alpha-⋆-≡→Alpha-⋆ {es₁ = []} {es₂ = []} _ _ _ =
+    _
+  Alpha-⋆-≡→Alpha-⋆ {es₁ = _ ∷ _} {es₂ = _ ∷ _} xs cl (p , ps) =
+    Alpha-≡→Alpha xs (All.head cl) p ,
     Alpha-⋆-≡→Alpha-⋆ xs (All.tail cl) ps
 
   Alpha-Br-⋆-≡→Alpha-Br-⋆ :
     ∀ xs →
     All (Closed′-Br (List.map proj₁ xs)) bs₁ →
-    Alpha-⋆ (Alpha-Br (_≡_ [ xs ]ʳ)) bs₁ bs₂ →
-    Alpha-⋆ (Alpha-Br (R   [ xs ]ʳ)) bs₁ bs₂
-  Alpha-Br-⋆-≡→Alpha-Br-⋆ _ _ [] =
-    []
-  Alpha-Br-⋆-≡→Alpha-Br-⋆ xs cl (p ∷ ps) =
-    Alpha-Br-≡→Alpha-Br xs (All.head cl) p ∷
+    Listᴾ (Alpha-Br (_≡_ [ xs ]ʳ)) bs₁ bs₂ →
+    Listᴾ (Alpha-Br (R   [ xs ]ʳ)) bs₁ bs₂
+  Alpha-Br-⋆-≡→Alpha-Br-⋆ {bs₁ = []} {bs₂ = []} _ _ _ =
+    _
+  Alpha-Br-⋆-≡→Alpha-Br-⋆ {bs₁ = _ ∷ _} {bs₂ = _ ∷ _} xs cl (p , ps) =
+    Alpha-Br-≡→Alpha-Br xs (All.head cl) p ,
     Alpha-Br-⋆-≡→Alpha-Br-⋆ xs (All.tail cl) ps
 
 ------------------------------------------------------------------------
@@ -977,24 +968,26 @@ mutual
     ⊥-elim $ x₁∉ (inj₁ (sym y₁≡x₁))
 
   Alpha-⋆-∈ :
-    Alpha-⋆ (Alpha R) es₁ es₂ →
+    Listᴾ (Alpha R) es₁ es₂ →
     x₁ ∈FV e₁ → e₁ ∈ es₁ →
     ∃ λ x₂ → R x₁ x₂ × ∃ λ e₂ → x₂ ∈FV e₂ × e₂ ∈ es₂
-  Alpha-⋆-∈ (e₁≈e₂ ∷ es₁≈es₂) x₁∈ (inj₁ ≡e₁) =
+  Alpha-⋆-∈
+    {es₁ = _ ∷ _} {es₂ = _ ∷ _} (e₁≈e₂ , es₁≈es₂) x₁∈ (inj₁ ≡e₁) =
     Σ-map id (Σ-map id λ x₂∈ → _ , x₂∈ , inj₁ refl) $
     Alpha-∈ e₁≈e₂ (subst (_ ∈FV_) ≡e₁ x₁∈)
-  Alpha-⋆-∈ (e₁≈e₂ ∷ es₁≈es₂) x₁∈ (inj₂ ∈es₁) =
+  Alpha-⋆-∈
+    {es₁ = _ ∷ _} {es₂ = _ ∷ _} (e₁≈e₂ , es₁≈es₂) x₁∈ (inj₂ ∈es₁) =
     Σ-map id (Σ-map id (Σ-map id (Σ-map id inj₂))) $
     Alpha-⋆-∈ es₁≈es₂ x₁∈ ∈es₁
 
   Alpha-Br-⋆-∈ :
-    Alpha-⋆ (Alpha-Br R) bs₁ bs₂ →
+    Listᴾ (Alpha-Br R) bs₁ bs₂ →
     x₁ ∈FV e₁ → branch c₁ xs₁ e₁ ∈ bs₁ → ¬ x₁ ∈ xs₁ →
     ∃ λ x₂ → R x₁ x₂ × ∃ λ c₂ → ∃ λ xs₂ → ∃ λ e₂ →
       x₂ ∈FV e₂ × branch c₂ xs₂ e₂ ∈ bs₂ × ¬ x₂ ∈ xs₂
   Alpha-Br-⋆-∈
-    (_∷_ {x₁ = branch _ _ _} {x₂ = branch _ _ _} b₁≈b₂ bs₁≈bs₂)
-    x₁∈ (inj₁ ≡b₁) x₁∉
+    {bs₁ = branch _ _ _ ∷ _} {bs₂ = branch _ _ _ ∷ _}
+    (b₁≈b₂ , bs₁≈bs₂) x₁∈ (inj₁ ≡b₁) x₁∉
     with
       Alpha-Br-∈
         b₁≈b₂
@@ -1003,7 +996,8 @@ mutual
          subst (_ ∈_) (cong (λ { (branch _ xs _) → xs }) (sym ≡b₁)))
   … | x₂ , Rx₁x₂ , x₂∈ , x₂∉ =
     x₂ , Rx₁x₂ , _ , _ , _ , x₂∈ , inj₁ refl , x₂∉
-  Alpha-Br-⋆-∈ (b₁≈b₂ ∷ bs₁≈bs₂) x₁∈ (inj₂ ∈bs₁) x₁∉ =
+  Alpha-Br-⋆-∈
+    {bs₁ = _ ∷ _} {bs₂ = _ ∷ _} (b₁≈b₂ , bs₁≈bs₂) x₁∈ (inj₂ ∈bs₁) x₁∉ =
     (Σ-map id $ Σ-map id $ Σ-map id $ Σ-map id $ Σ-map id $ Σ-map id $
      Σ-map inj₂ id) $
     Alpha-Br-⋆-∈ bs₁≈bs₂ x₁∈ ∈bs₁ x₁∉
@@ -1236,43 +1230,41 @@ mutual
 
   subst-Alpha-⋆ :
     Closed e₁′ →
-    Alpha-⋆ (Alpha (R [ x₁ ∼ x₂ ])) es₁ es₂ →
+    Listᴾ (Alpha (R [ x₁ ∼ x₂ ])) es₁ es₂ →
     e₁′ ≈α e₂′ →
-    Alpha-⋆ (Alpha R) (es₁ [ x₁ ← e₁′ ]⋆) (es₂ [ x₂ ← e₂′ ]⋆)
-  subst-Alpha-⋆ _ [] _ =
-    []
+    Listᴾ (Alpha R) (es₁ [ x₁ ← e₁′ ]⋆) (es₂ [ x₂ ← e₂′ ]⋆)
+  subst-Alpha-⋆ {es₁ = []} {es₂ = []} _ _ _ =
+    _
 
-  subst-Alpha-⋆ cl (p ∷ ps) e₁′≈e₂′ =
-    subst-Alpha cl p e₁′≈e₂′ ∷
+  subst-Alpha-⋆ {es₁ = _ ∷ _} {es₂ = _ ∷ _} cl (p , ps) e₁′≈e₂′ =
+    subst-Alpha cl p e₁′≈e₂′ ,
     subst-Alpha-⋆ cl ps e₁′≈e₂′
 
   subst-Alpha-Br-⋆ :
     Closed e₁′ →
-    Alpha-⋆ (Alpha-Br (R [ x₁ ∼ x₂ ])) bs₁ bs₂ →
+    Listᴾ (Alpha-Br (R [ x₁ ∼ x₂ ])) bs₁ bs₂ →
     e₁′ ≈α e₂′ →
-    Alpha-⋆ (Alpha-Br R) (bs₁ [ x₁ ← e₁′ ]B⋆) (bs₂ [ x₂ ← e₂′ ]B⋆)
-  subst-Alpha-Br-⋆ _ [] _ =
-    []
+    Listᴾ (Alpha-Br R) (bs₁ [ x₁ ← e₁′ ]B⋆) (bs₂ [ x₂ ← e₂′ ]B⋆)
+  subst-Alpha-Br-⋆ {bs₁ = []} {bs₂ = []} _ _ _ =
+    _
 
-  subst-Alpha-Br-⋆ cl (p ∷ ps) e₁′≈e₂′ =
-    subst-Alpha-Br cl p e₁′≈e₂′ ∷
+  subst-Alpha-Br-⋆ {bs₁ = _ ∷ _} {bs₂ = _ ∷ _} cl (p , ps) e₁′≈e₂′ =
+    subst-Alpha-Br cl p e₁′≈e₂′ ,
     subst-Alpha-Br-⋆ cl ps e₁′≈e₂′
 
 -- The predicate Lookup respects α-equivalence (in a certain sense).
 
 Lookup-α :
-  Alpha-⋆ (Alpha-Br R) bs₁ bs₂ →
+  Listᴾ (Alpha-Br R) bs₁ bs₂ →
   Lookup c bs₁ xs₁ e₁ →
   ∃ λ xs₂ → ∃ λ e₂ →
     Lookup c bs₂ xs₂ e₂ ×
     Alpha-binders R xs₁ e₁ xs₂ e₂
-Lookup-α (branch refl p ∷ _) here =
+Lookup-α {bs₁ = _ ∷ _} {bs₂ = _ ∷ _} (branch refl p , _) here =
   _ , _ , here , p
 Lookup-α
-  {R = R} {c = c} {xs₁ = xs₁} {e₁ = e₁}
-  (_∷_ {xs₁ = bs₁} {xs₂ = bs₂}
-     (branch {c₂ = c′} {xs₂ = xs′} {e₂ = e′} refl _)
-     bs₁≈bs₂)
+  {R = R} {bs₁ = _ ∷ bs₁} {bs₂ = _ ∷ bs₂} {c = c} {xs₁ = xs₁} {e₁ = e₁}
+  (branch {c₂ = c′} {xs₂ = xs′} {e₂ = e′} refl _ , bs₁≈bs₂)
   (there c≢c′ p) =
                                                $⟨ Lookup-α bs₁≈bs₂ p ⟩
   (∃ λ xs₂ → ∃ λ e₂ →
@@ -1289,17 +1281,16 @@ Lookup-α
 [←]↦-α :
   All Closed es₁ →
   Alpha-binders R xs₁ e₁ xs₂ e₂ →
-  Alpha-⋆ _≈α_ es₁ es₂ →
+  Listᴾ _≈α_ es₁ es₂ →
   e₁ [ xs₁ ← es₁ ]↦ e →
   ∃ λ e′ → e₂ [ xs₂ ← es₂ ]↦ e′ × Alpha R e e′
-[←]↦-α _ (nil p) [] [] =
+[←]↦-α {es₂ = []} _ (nil p) _ [] =
   _ , [] , p
 [←]↦-α
-  {R = R} cl
+  {es₁ = e₁ ∷ _} {R = R} {es₂ = e₂ ∷ es₂} cl
   (cons {x₁ = x₁} {x₂ = x₂} {xs₁ = xs₁} {e₁ = e} {xs₂ = xs₂} {e₂ = e′}
      p)
-  (_∷_ {x₁ = e₁} {x₂ = e₂} {xs₂ = es₂} e₁≈e₂ es₁≈es₂)
-  (∷_ {e″ = e″} q) =                                                  $⟨ [←]↦-α (All.tail cl) p es₁≈es₂ q ⟩
+  (e₁≈e₂ , es₁≈es₂) (∷_ {e″ = e″} q) =                                $⟨ [←]↦-α (All.tail cl) p es₁≈es₂ q ⟩
 
   (∃ λ e‴ → e′ [ xs₂ ← es₂ ]↦ e‴ × Alpha (R [ x₁ ∼ x₂ ]) e″ e‴)       →⟨ (λ (e‴ , p , q) →
                                                                               e‴ [ x₂ ← e₂ ]
@@ -1375,10 +1366,11 @@ mutual
 
   ⇓⋆-α :
     All Closed es₁ →
-    es₁ ⇓⋆ vs₁ → Alpha-⋆ _≈α_ es₁ es₂ →
-    ∃ λ vs₂ → es₂ ⇓⋆ vs₂ × Alpha-⋆ _≈α_ vs₁ vs₂
-  ⇓⋆-α _  []           []                = _ , [] , []
-  ⇓⋆-α cl (e₁⇓ ∷ es₁⇓) (e₁≈e₂ ∷ es₁≈es₂) =
-    Σ-zip _∷_ (Σ-zip _∷_ _∷_)
+    es₁ ⇓⋆ vs₁ → Listᴾ _≈α_ es₁ es₂ →
+    ∃ λ vs₂ → es₂ ⇓⋆ vs₂ × Listᴾ _≈α_ vs₁ vs₂
+  ⇓⋆-α {es₁ = []} {es₂ = []} _ [] _ =
+    _ , [] , _
+  ⇓⋆-α {es₁ = _ ∷ _} {es₂ = _ ∷ _} cl (e₁⇓ ∷ es₁⇓) (e₁≈e₂ , es₁≈es₂) =
+    Σ-zip _∷_ (Σ-zip _∷_ _,_)
       (⇓-α (All.head cl) e₁⇓ e₁≈e₂)
       (⇓⋆-α (All.tail cl) es₁⇓ es₁≈es₂)
