@@ -188,7 +188,7 @@ invariant univ P a₁ a₂ = subst P (prop a₁ a₂)
     mono₁ 0 $ _⇔_.from contractible⇔↔⊤ $ from-equivalence $
     χ-atoms≃⊤ univ
 
--- If a property holds for χ-ℕ-atoms, then it holds for any choice of
+-- If a predicate holds for χ-ℕ-atoms, then it holds for any choice of
 -- atoms (assuming univalence).
 
 one-can-restrict-attention-to-χ-ℕ-atoms :
