@@ -11,13 +11,14 @@ open import Prelude
 open import Bag-equivalence equality-with-J
 open import Bijection equality-with-J as Bijection using (_↔_)
 open import Equality.Decidable-UIP equality-with-J
+open import Equality.Path.Isomorphisms.Univalence equality-with-paths
 open import Equivalence equality-with-J as Eq using (_≃_)
 import Erased.Cubical equality-with-paths as E
 open import Finite-subset.Listed equality-with-paths as S
   using (Finite-subset-of)
 open import Finite-subset.Listed.Membership.Erased equality-with-paths
   as SM using (_∉_)
-open import Function-universe equality-with-J hiding (id)
+open import Function-universe equality-with-J hiding (id; _∘_)
 open import H-level equality-with-J
 open import H-level.Closure equality-with-J
 open import H-level.Truncation.Propositional equality-with-paths
@@ -197,3 +198,14 @@ one-can-restrict-attention-to-χ-ℕ-atoms :
   P χ-ℕ-atoms → ∀ a → P a
 one-can-restrict-attention-to-χ-ℕ-atoms univ P p a =
   invariant univ P χ-ℕ-atoms a p
+
+-- If ¬ P χ-ℕ-atoms holds, then ¬ P a holds for any choice of atoms a.
+
+one-can-restrict-attention-to-χ-ℕ-atoms-for-¬ :
+  ∀ {p} (P : χ-atoms → Type p) →
+  ¬ P χ-ℕ-atoms → ∀ a → ¬ P a
+one-can-restrict-attention-to-χ-ℕ-atoms-for-¬ P p a =
+  E.Stable-¬
+    E.[ one-can-restrict-attention-to-χ-ℕ-atoms
+          abstract-univ (¬_ ∘ P) p a
+      ]
