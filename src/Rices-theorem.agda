@@ -23,15 +23,12 @@ open import Monad equality-with-J
 
 open import Atom
 
-open import Cancellation   χ-ℕ-atoms
 open import Chi            χ-ℕ-atoms
 open import Coding         χ-ℕ-atoms
 open import Compatibility  χ-ℕ-atoms
 open import Computability  χ-ℕ-atoms hiding (_∘_)
 open import Constants      χ-ℕ-atoms
-open import Deterministic  χ-ℕ-atoms
 open import Free-variables χ-ℕ-atoms
-open import Propositional  χ-ℕ-atoms
 open import Reasoning      χ-ℕ-atoms
 open import Termination    χ-ℕ-atoms
 open import Values         χ-ℕ-atoms
