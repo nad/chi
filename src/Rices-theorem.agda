@@ -39,8 +39,6 @@ import Coding.Instances.Nat as I
 open import Combinators as χ hiding (id; if_then_else_)
 open import Free-variables.Remove-substs
 open import Halting-problem
-open import Internal-coding
-open import Self-interpreter
 
 ------------------------------------------------------------------------
 -- The theorem
@@ -85,26 +83,21 @@ module _
       arg e p =
           lambda v-x
             (apply (lambda v-underscore (apply (proj₁ e) (var v-x)))
-                   (apply eval (proj₁ p)))
+                   (proj₁ p))
         , (Closed′-closed-under-lambda $
            Closed′-closed-under-apply
              (Closed′-closed-under-lambda $
               Closed′-closed-under-apply
                 (Closed→Closed′ $ proj₂ e)
                 (Closed′-closed-under-var (inj₂ (inj₁ refl))))
-             (Closed′-closed-under-apply
-                (Closed→Closed′ eval-closed)
-                (Closed→Closed′ (proj₂ p))))
+             (Closed→Closed′ (proj₂ p)))
 
       coded-arg : Closed-exp → Exp
       coded-arg e =
         const c-lambda (⌜ v-x ⌝ ∷
           const c-apply (
             ⌜ Exp.lambda v-underscore (apply (proj₁ e) (var v-x)) ⌝ ∷
-            const c-apply (
-              ⌜ eval ⌝ ∷
-              apply internal-code (var v-p) ∷
-              []) ∷ []) ∷ [])
+            var v-p ∷ []) ∷ [])
 
       branches : List Br
       branches =
@@ -138,15 +131,7 @@ module _
                 Closed→Closed′ $
                 rep-closed (Exp.lambda v-underscore (apply (proj₁ e) (var v-x)))
               _ (inj₂ (inj₁ refl)) →
-                Closed′-closed-under-const λ where
-                  _ (inj₂ (inj₂ ()))
-                  _ (inj₁ refl) →
-                    Closed→Closed′ $
-                    rep-closed eval
-                  _ (inj₂ (inj₁ refl)) →
-                    Closed′-closed-under-apply
-                      (Closed→Closed′ internal-code-closed)
-                      (Closed′-closed-under-var (inj₁ refl))
+                Closed′-closed-under-var (inj₁ refl)
 
       cl-halts : Closed halts
       cl-halts =
@@ -168,7 +153,7 @@ module _
 
       coded-arg⇓⌜arg⌝ :
         (e p : Closed-exp) →
-        coded-arg e [ v-p ← ⌜ p ⌝ ] ⇓ ⌜ arg e ⌜ p ⌝ ⌝
+        coded-arg e [ v-p ← ⌜ p ⌝ ] ⇓ ⌜ arg e p ⌝
       coded-arg⇓⌜arg⌝ e p =
         coded-arg e [ v-p ← ⌜ p ⌝ ]                                    ≡⟨⟩⟶
 
@@ -176,34 +161,19 @@ module _
           const c-apply (
             ⌜ Exp.lambda v-underscore (apply (proj₁ e) (var v-x)) ⌝
               [ v-p ← ⌜ p ⌝ ] ∷
-            const c-apply (
-              ⌜ eval ⌝ [ v-p ← ⌜ p ⌝ ] ∷
-              apply (internal-code [ v-p ← ⌜ p ⌝ ]) ⌜ p ⌝ ∷
-                []) ∷ []) ∷ [])                                        ≡⟨ remove-substs ((internal-code , internal-code-closed) ∷ []) ⟩⟶
+            ⌜ p ⌝ ∷ []) ∷ [])                                          ≡⟨ remove-substs [] ⟩⟶
 
         const c-lambda (⌜ v-x ⌝ ∷
           const c-apply (
             ⌜ Exp.lambda v-underscore (apply (proj₁ e) (var v-x)) ⌝ ∷
-            const c-apply (
-              ⌜ eval ⌝ ∷
-              apply internal-code ⌜ p ⌝ ∷
-                []) ∷ []) ∷ [])                                        ⟶⟨ []⇓ (const (there (here (const (there (here
-                                                                                 (const (there (here ∙)))))))))
-                                                                              (internal-code-correct (proj₁ p)) ⟩
-        const c-lambda (⌜ v-x ⌝ ∷
-          const c-apply (
-            ⌜ Exp.lambda v-underscore (apply (proj₁ e) (var v-x)) ⌝ ∷
-            const c-apply (
-              ⌜ eval ⌝ ∷
-              ⌜ ⌜ p ⌝ ⦂ Exp ⌝ ∷
-                []) ∷ []) ∷ [])                                        ≡⟨⟩⟶
+            ⌜ p ⌝ ∷ []) ∷ [])                                          ≡⟨⟩⟶
 
-        ⌜ arg e ⌜ p ⌝ ⌝                                                ■⟨ rep-value (arg e ⌜ p ⌝) ⟩
+        ⌜ arg e p ⌝                                                    ■⟨ rep-value (arg e p) ⟩
 
       arg-lemma-⇓ :
         (e p : Closed-exp) →
         Terminates (proj₁ p) →
-        Pointwise-semantically-equivalent (arg e ⌜ p ⌝) e
+        Pointwise-semantically-equivalent (arg e p) e
       arg-lemma-⇓ (e , cl-e) (p , cl-p) (vp , p⇓vp)
                   (e′ , cl-e′) (v , _) = record
         { to = λ where
@@ -227,16 +197,15 @@ module _
         ; from = λ where
             (apply {v₂ = ve′} q₁ q₂ q₃) →
 
-              proj₁ (apply-cl (arg (e , cl-e) ⌜ p ⌝) (e′ , cl-e′))       ⟶⟨ apply lambda q₂ ⟩
+              proj₁ (apply-cl (arg (e , cl-e) (p , cl-p)) (e′ , cl-e′))  ⟶⟨ apply lambda q₂ ⟩
 
               apply (lambda v-underscore (apply (e [ v-x ← ve′ ]) ve′))
-                    (apply (eval [ v-x ← ve′ ]) (⌜ p ⌝ [ v-x ← ve′ ]))   ≡⟨ remove-substs ((e , cl-e) ∷ (eval , eval-closed) ∷ []) ⟩⟶
+                    (p [ v-x ← ve′ ])                                    ≡⟨ remove-substs ((e , cl-e) ∷ (p , cl-p) ∷ []) ⟩⟶
 
-              apply (lambda v-underscore (apply e ve′))
-                    (apply eval ⌜ p ⌝)                                   ⟶⟨ apply lambda (eval-correct₁ p⇓vp) ⟩
+              apply (lambda v-underscore (apply e ve′)) p                ⟶⟨ apply lambda p⇓vp ⟩
 
-              apply (e [ v-underscore ← ⌜ vp ⌝ ])
-                (ve′ [ v-underscore ← ⌜ vp ⌝ ])                          ≡⟨ remove-substs ((e , cl-e) ∷ (ve′ , closed⇓closed q₂ cl-e′) ∷ []) ⟩⟶
+              apply (e [ v-underscore ← vp ])
+                (ve′ [ v-underscore ← vp ])                              ≡⟨ remove-substs ((e , cl-e) ∷ (ve′ , closed⇓closed q₂ cl-e′) ∷ []) ⟩⟶
 
               apply e ve′                                                ⇓⟨ apply q₁ (values-compute-to-themselves (⇓-Value q₂)) q₃ ⟩■
 
@@ -246,32 +215,33 @@ module _
       arg-lemma-⇓-true :
         (e : Closed-exp) →
         Terminates (proj₁ e) →
-        P′ [ arg e∈ ⌜ e ⌝ ]= true
-      arg-lemma-⇓-true e e⇓ =      $⟨ Pe∈ ⟩
-        P′ [ e∈ ]= true            ↝⟨ resp _ _ (symmetric (arg e∈ ⌜ e ⌝) e∈ (arg-lemma-⇓ e∈ e e⇓)) ⟩□
-        P′ [ arg e∈ ⌜ e ⌝ ]= true  □
+        P′ [ arg e∈ e ]= true
+      arg-lemma-⇓-true e e⇓ =  $⟨ Pe∈ ⟩
+        P′ [ e∈ ]= true        ↝⟨ resp _ _ (symmetric (arg e∈ e) e∈ (arg-lemma-⇓ e∈ e e⇓)) ⟩□
+        P′ [ arg e∈ e ]= true  □
 
       arg-lemma-⇓-false :
         (e : Closed-exp) →
         Terminates (proj₁ e) →
-        P′ [ arg e∉ ⌜ e ⌝ ]= false
-      arg-lemma-⇓-false e e⇓ =      $⟨ ¬Pe∉ ⟩
-        P′ [ e∉ ]= false            ↝⟨ resp _ _ (symmetric (arg e∉ ⌜ e ⌝) e∉ (arg-lemma-⇓ e∉ e e⇓)) ⟩□
-        P′ [ arg e∉ ⌜ e ⌝ ]= false  □
+        P′ [ arg e∉ e ]= false
+      arg-lemma-⇓-false e e⇓ =  $⟨ ¬Pe∉ ⟩
+        P′ [ e∉ ]= false        ↝⟨ resp _ _ (symmetric (arg e∉ e) e∉ (arg-lemma-⇓ e∉ e e⇓)) ⟩□
+        P′ [ arg e∉ e ]= false  □
 
       arg-lemma-¬⇓′ :
         (e p : Closed-exp) →
         ¬ Terminates (proj₁ p) →
-        Pointwise-semantically-equivalent (arg e ⌜ p ⌝) const-loop
+        Pointwise-semantically-equivalent (arg e p) const-loop
       arg-lemma-¬⇓′ (e , cl-e) (p , cl-p) ¬p⇓
                     (e′ , cl-e′) (v , _) = record
         { to = λ where
             (apply {v₂ = ve′} lambda _ (apply {v₂ = vp} _ q _)) →
-              ⊥-elim $ ¬p⇓ $ Σ-map id proj₁ $
-                eval-correct₂ (
-                  apply eval ⌜ p ⌝                                  ≡⟨ sym $ remove-substs ((eval , eval-closed) ∷ []) ⟩⟶
-                  apply (eval [ v-x ← ve′ ]) (⌜ p ⌝ [ v-x ← ve′ ])  ⇓⟨ q ⟩■
-                  vp)
+              ⊥-elim $ ¬p⇓
+                ( vp
+                , (p                ≡⟨ sym $ remove-substs ((p , cl-p) ∷ []) ⟩⟶
+                   p [ v-x ← ve′ ]  ⇓⟨ q ⟩■
+                   vp)
+                )
         ; from = λ where
             (apply lambda _ loop⇓) → ⊥-elim $ ¬loop⇓ (_ , loop⇓)
         }
@@ -280,10 +250,10 @@ module _
         ∀ {b} (e₀ e : Closed-exp) →
         ¬ Terminates (proj₁ e) →
         P′ [ const-loop ]= b →
-        P′ [ arg e₀ ⌜ e ⌝ ]= b
+        P′ [ arg e₀ e ]= b
       arg-lemma-¬⇓ {b} e₀ e ¬e⇓ =
-        P′ [ const-loop ]= b    ↝⟨ resp _ _ (symmetric (arg e₀ ⌜ e ⌝) const-loop (arg-lemma-¬⇓′ e₀ e ¬e⇓)) ⟩□
-        P′ [ arg e₀ ⌜ e ⌝ ]= b  □
+        P′ [ const-loop ]= b  ↝⟨ resp _ _ (symmetric (arg e₀ e) const-loop (arg-lemma-¬⇓′ e₀ e ¬e⇓)) ⟩□
+        P′ [ arg e₀ e ]= b    □
 
       ∃Bool : Type
       ∃Bool = ∃ λ (b : Bool) →
@@ -314,9 +284,9 @@ module _
         ∃Bool →
         (e : Closed-exp) →
         (P′ [ const-loop ]= false →
-         apply p (⌜ arg e∈ ⌜ e ⌝ ⌝) ⇓ v) →
+         apply p (⌜ arg e∈ e ⌝) ⇓ v) →
         (P′ [ const-loop ]= true →
-         χ.not (apply p (⌜ arg e∉ ⌜ e ⌝ ⌝)) ⇓ v) →
+         χ.not (apply p (⌜ arg e∉ e ⌝)) ⇓ v) →
         apply halts ⌜ e ⌝ ⇓ v
       halts⇓-lemma {v} ∃bool e e∈⇓v e∉⇓v =
         apply halts ⌜ e ⌝                                                 ⟶⟨ apply lambda (rep⇓rep e) ⟩
@@ -333,14 +303,14 @@ module _
           case (apply p (proj₁ ⌜const-loop⌝)) (branches [ v-p ← ⌜ e ⌝ ]B⋆)  ⟶⟨ case p⌜const-loop⌝⇓true (there (λ ()) here) [] ⟩
           χ.not (apply (p [ v-p ← ⌜ e ⌝ ]) (coded-arg e∉ [ v-p ← ⌜ e ⌝ ]))  ≡⟨ remove-substs ((p , cl-p) ∷ []) ⟩⟶
           χ.not (apply p (coded-arg e∉ [ v-p ← ⌜ e ⌝ ]))                    ⟶⟨ []⇓ (case (apply→ ∙)) (coded-arg⇓⌜arg⌝ e∉ e) ⟩
-          χ.not (apply p (⌜ arg e∉ ⌜ e ⌝ ⌝))                                ⇓⟨ e∉⇓v P-const-loop ⟩■
+          χ.not (apply p (⌜ arg e∉ e ⌝))                                    ⇓⟨ e∉⇓v P-const-loop ⟩■
           v
 
         lemma (false , p⌜const-loop⌝⇓false , ¬P-const-loop) =
           case (apply p (proj₁ ⌜const-loop⌝)) (branches [ v-p ← ⌜ e ⌝ ]B⋆)  ⟶⟨ case p⌜const-loop⌝⇓false here [] ⟩
           apply (p [ v-p ← ⌜ e ⌝ ]) (coded-arg e∈ [ v-p ← ⌜ e ⌝ ])          ≡⟨ remove-substs ((p , cl-p) ∷ []) ⟩⟶
           apply p (coded-arg e∈ [ v-p ← ⌜ e ⌝ ])                            ⟶⟨ []⇓ (apply→ ∙) (coded-arg⇓⌜arg⌝ e∈ e) ⟩
-          apply p (⌜ arg e∈ ⌜ e ⌝ ⌝)                                        ⇓⟨ e∈⇓v ¬P-const-loop ⟩■
+          apply p (⌜ arg e∈ e ⌝)                                            ⇓⟨ e∈⇓v ¬P-const-loop ⟩■
           v
 
       ⇓-lemma :
@@ -351,12 +321,12 @@ module _
       ⇓-lemma ∃bool e e⇓ = halts⇓-lemma ∃bool e
 
         (λ _ →
-           apply p (⌜ arg e∈ ⌜ e ⌝ ⌝)  ⇓⟨ hyp (arg e∈ ⌜ e ⌝) true (arg-lemma-⇓-true e e⇓) ⟩■
+           apply p (⌜ arg e∈ e ⌝)  ⇓⟨ hyp (arg e∈ e) true (arg-lemma-⇓-true e e⇓) ⟩■
            ⌜ true ⦂ Bool ⌝)
 
         (λ _ →
-           χ.not (apply p (⌜ arg e∉ ⌜ e ⌝ ⌝))  ⟶⟨ []⇓ (case ∙) (hyp (arg e∉ ⌜ e ⌝) false (arg-lemma-⇓-false e e⇓)) ⟩
-           χ.not ⌜ false ⦂ Bool ⌝              ⇓⟨ not-correct false (rep⇓rep (false ⦂ Bool)) ⟩■
+           χ.not (apply p (⌜ arg e∉ e ⌝))  ⟶⟨ []⇓ (case ∙) (hyp (arg e∉ e) false (arg-lemma-⇓-false e e⇓)) ⟩
+           χ.not ⌜ false ⦂ Bool ⌝          ⇓⟨ not-correct false (rep⇓rep (false ⦂ Bool)) ⟩■
            ⌜ true ⦂ Bool ⌝)
 
       ¬⇓-lemma :
@@ -367,12 +337,12 @@ module _
       ¬⇓-lemma ∃bool e ¬e⇓ = halts⇓-lemma ∃bool e
 
         (λ ¬P-const-loop →
-           apply p (⌜ arg e∈ ⌜ e ⌝ ⌝)  ⇓⟨ hyp (arg e∈ ⌜ e ⌝) false (arg-lemma-¬⇓ e∈ e ¬e⇓ ¬P-const-loop) ⟩■
+           apply p (⌜ arg e∈ e ⌝)  ⇓⟨ hyp (arg e∈ e) false (arg-lemma-¬⇓ e∈ e ¬e⇓ ¬P-const-loop) ⟩■
            ⌜ false ⦂ Bool ⌝)
 
         (λ P-const-loop →
-           χ.not (apply p (⌜ arg e∉ ⌜ e ⌝ ⌝))  ⟶⟨ []⇓ (case ∙) (hyp (arg e∉ ⌜ e ⌝) true (arg-lemma-¬⇓ e∉ e ¬e⇓ P-const-loop)) ⟩
-           χ.not ⌜ true ⦂ Bool ⌝               ⇓⟨ not-correct true (rep⇓rep (true ⦂ Bool)) ⟩■
+           χ.not (apply p (⌜ arg e∉ e ⌝))  ⟶⟨ []⇓ (case ∙) (hyp (arg e∉ e) true (arg-lemma-¬⇓ e∉ e ¬e⇓ P-const-loop)) ⟩
+           χ.not ⌜ true ⦂ Bool ⌝           ⇓⟨ not-correct true (rep⇓rep (true ⦂ Bool)) ⟩■
            ⌜ false ⦂ Bool ⌝)
 
   rice's-theorem : ¬ Decidable P
