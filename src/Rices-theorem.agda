@@ -350,14 +350,14 @@ module _
         apply halts ⌜ e ⌝ ⇓ ⌜ true ⦂ Bool ⌝
       ⇓-lemma ∃bool e e⇓ = halts⇓-lemma ∃bool e
 
-          (λ _ →
-             apply p (⌜ arg e∈ ⌜ e ⌝ ⌝)  ⇓⟨ hyp (arg e∈ ⌜ e ⌝) true (arg-lemma-⇓-true e e⇓) ⟩■
-             ⌜ true ⦂ Bool ⌝)
+        (λ _ →
+           apply p (⌜ arg e∈ ⌜ e ⌝ ⌝)  ⇓⟨ hyp (arg e∈ ⌜ e ⌝) true (arg-lemma-⇓-true e e⇓) ⟩■
+           ⌜ true ⦂ Bool ⌝)
 
-          (λ _ →
-             χ.not (apply p (⌜ arg e∉ ⌜ e ⌝ ⌝))  ⟶⟨ []⇓ (case ∙) (hyp (arg e∉ ⌜ e ⌝) false (arg-lemma-⇓-false e e⇓)) ⟩
-             χ.not ⌜ false ⦂ Bool ⌝              ⇓⟨ not-correct false (rep⇓rep (false ⦂ Bool)) ⟩■
-             ⌜ true ⦂ Bool ⌝)
+        (λ _ →
+           χ.not (apply p (⌜ arg e∉ ⌜ e ⌝ ⌝))  ⟶⟨ []⇓ (case ∙) (hyp (arg e∉ ⌜ e ⌝) false (arg-lemma-⇓-false e e⇓)) ⟩
+           χ.not ⌜ false ⦂ Bool ⌝              ⇓⟨ not-correct false (rep⇓rep (false ⦂ Bool)) ⟩■
+           ⌜ true ⦂ Bool ⌝)
 
       ¬⇓-lemma :
         ∃Bool →
@@ -366,14 +366,14 @@ module _
         apply halts ⌜ e ⌝ ⇓ ⌜ false ⦂ Bool ⌝
       ¬⇓-lemma ∃bool e ¬e⇓ = halts⇓-lemma ∃bool e
 
-          (λ ¬P-const-loop →
-             apply p (⌜ arg e∈ ⌜ e ⌝ ⌝)  ⇓⟨ hyp (arg e∈ ⌜ e ⌝) false (arg-lemma-¬⇓ e∈ e ¬e⇓ ¬P-const-loop) ⟩■
-             ⌜ false ⦂ Bool ⌝)
+        (λ ¬P-const-loop →
+           apply p (⌜ arg e∈ ⌜ e ⌝ ⌝)  ⇓⟨ hyp (arg e∈ ⌜ e ⌝) false (arg-lemma-¬⇓ e∈ e ¬e⇓ ¬P-const-loop) ⟩■
+           ⌜ false ⦂ Bool ⌝)
 
-          (λ P-const-loop →
-             χ.not (apply p (⌜ arg e∉ ⌜ e ⌝ ⌝))  ⟶⟨ []⇓ (case ∙) (hyp (arg e∉ ⌜ e ⌝) true (arg-lemma-¬⇓ e∉ e ¬e⇓ P-const-loop)) ⟩
-             χ.not ⌜ true ⦂ Bool ⌝               ⇓⟨ not-correct true (rep⇓rep (true ⦂ Bool)) ⟩■
-             ⌜ false ⦂ Bool ⌝)
+        (λ P-const-loop →
+           χ.not (apply p (⌜ arg e∉ ⌜ e ⌝ ⌝))  ⟶⟨ []⇓ (case ∙) (hyp (arg e∉ ⌜ e ⌝) true (arg-lemma-¬⇓ e∉ e ¬e⇓ P-const-loop)) ⟩
+           χ.not ⌜ true ⦂ Bool ⌝               ⇓⟨ not-correct true (rep⇓rep (true ⦂ Bool)) ⟩■
+           ⌜ false ⦂ Bool ⌝)
 
   rice's-theorem : ¬ Decidable P
   rice's-theorem (p , cl-p , hyp , _) = ¬¬¬⊥ $
