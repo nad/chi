@@ -226,25 +226,28 @@ mutual
   -- expression had been encoded in the regular way.
 
   ⌜⌜⌝⌝E≡⌜⌝ : (e : Exp) → ⌜ ⌜ e ⌝ ⌝E ≡ ⌜ e ⌝
-  ⌜⌜⌝⌝E≡⌜⌝ (apply e₁ e₂) =
-    Exp.const c-apply (⟨ ⌜ ⌜ e₁ ⌝ ⌝E ⟩ ∷ ⌜ ⌜ e₂ ⌝ ⌝E ∷ [])  ≡⟨ ⟨by⟩ (⌜⌜⌝⌝E≡⌜⌝ e₁) ⟩
-    const c-apply (⌜ e₁ ⌝ ∷ ⟨ ⌜ ⌜ e₂ ⌝ ⌝E ⟩ ∷ [])           ≡⟨ ⟨by⟩ (⌜⌜⌝⌝E≡⌜⌝ e₂) ⟩∎
-    const c-apply (⌜ e₁ ⌝ ∷ ⌜ e₂ ⌝ ∷ [])                    ∎
-  ⌜⌜⌝⌝E≡⌜⌝ (lambda x e) =
-    Exp.const c-lambda (⌜ x ⌝ ∷ ⟨ ⌜ ⌜ e ⌝ ⌝E ⟩ ∷ [])  ≡⟨ ⟨by⟩ (⌜⌜⌝⌝E≡⌜⌝ e) ⟩∎
-    const c-lambda (⌜ x ⌝ ∷ ⌜ e ⌝ ∷ [])               ∎
-  ⌜⌜⌝⌝E≡⌜⌝ (case e bs) =
-    Exp.const c-case (⟨ ⌜ ⌜ e ⌝ ⌝E ⟩ ∷ ⌜ ⌜ bs ⌝ ⌝B⋆ ∷ [])  ≡⟨ ⟨by⟩ (⌜⌜⌝⌝E≡⌜⌝ e) ⟩
-    const c-case (⌜ e ⌝ ∷ ⟨ ⌜ ⌜ bs ⌝ ⌝B⋆ ⟩ ∷ [])           ≡⟨ ⟨by⟩ (⌜⌜⌝⌝B⋆≡⌜⌝ bs) ⟩∎
-    const c-case (⌜ e ⌝ ∷ ⌜ bs ⌝ ∷ [])                     ∎
-  ⌜⌜⌝⌝E≡⌜⌝ (rec x e) =
-    Exp.const c-rec (⌜ x ⌝ ∷ ⟨ ⌜ ⌜ e ⌝ ⌝E ⟩ ∷ [])  ≡⟨ ⟨by⟩ (⌜⌜⌝⌝E≡⌜⌝ e) ⟩∎
-    const c-rec (⌜ x ⌝ ∷ ⌜ e ⌝ ∷ [])               ∎
-  ⌜⌜⌝⌝E≡⌜⌝ (var x) =
-    ⌜ var x ⌝  ∎
-  ⌜⌜⌝⌝E≡⌜⌝ (const c es) =
-    Exp.const c-const (⌜ c ⌝ ∷ ⟨ ⌜ ⌜ es ⌝ ⌝E⋆ ⟩ ∷ [])  ≡⟨ ⟨by⟩ (⌜⌜⌝⌝E⋆≡⌜⌝ es) ⟩∎
-    const c-const (⌜ c ⌝ ∷ ⌜ es ⌝ ∷ [])                ∎
+  ⌜⌜⌝⌝E≡⌜⌝ e = ⌜⌜⌝⌝E≡⌜⌝′ e
+    where
+    ⌜⌜⌝⌝E≡⌜⌝′ : (e : Exp) → ⌜ ⌜ e ⌝ ⌝E ≡ ⌜ e ⌝
+    ⌜⌜⌝⌝E≡⌜⌝′ (apply e₁ e₂) =
+      Exp.const c-apply (⟨ ⌜ ⌜ e₁ ⌝ ⌝E ⟩ ∷ ⌜ ⌜ e₂ ⌝ ⌝E ∷ [])  ≡⟨ ⟨by⟩ (⌜⌜⌝⌝E≡⌜⌝ e₁) ⟩
+      const c-apply (⌜ e₁ ⌝ ∷ ⟨ ⌜ ⌜ e₂ ⌝ ⌝E ⟩ ∷ [])           ≡⟨ ⟨by⟩ (⌜⌜⌝⌝E≡⌜⌝ e₂) ⟩∎
+      const c-apply (⌜ e₁ ⌝ ∷ ⌜ e₂ ⌝ ∷ [])                    ∎
+    ⌜⌜⌝⌝E≡⌜⌝′ (lambda x e) =
+      Exp.const c-lambda (⌜ x ⌝ ∷ ⟨ ⌜ ⌜ e ⌝ ⌝E ⟩ ∷ [])  ≡⟨ ⟨by⟩ (⌜⌜⌝⌝E≡⌜⌝ e) ⟩∎
+      const c-lambda (⌜ x ⌝ ∷ ⌜ e ⌝ ∷ [])               ∎
+    ⌜⌜⌝⌝E≡⌜⌝′ (case e bs) =
+      Exp.const c-case (⟨ ⌜ ⌜ e ⌝ ⌝E ⟩ ∷ ⌜ ⌜ bs ⌝ ⌝B⋆ ∷ [])  ≡⟨ ⟨by⟩ (⌜⌜⌝⌝E≡⌜⌝ e) ⟩
+      const c-case (⌜ e ⌝ ∷ ⟨ ⌜ ⌜ bs ⌝ ⌝B⋆ ⟩ ∷ [])           ≡⟨ ⟨by⟩ (⌜⌜⌝⌝B⋆≡⌜⌝ bs) ⟩∎
+      const c-case (⌜ e ⌝ ∷ ⌜ bs ⌝ ∷ [])                     ∎
+    ⌜⌜⌝⌝E≡⌜⌝′ (rec x e) =
+      Exp.const c-rec (⌜ x ⌝ ∷ ⟨ ⌜ ⌜ e ⌝ ⌝E ⟩ ∷ [])  ≡⟨ ⟨by⟩ (⌜⌜⌝⌝E≡⌜⌝ e) ⟩∎
+      const c-rec (⌜ x ⌝ ∷ ⌜ e ⌝ ∷ [])               ∎
+    ⌜⌜⌝⌝E≡⌜⌝′ (var x) =
+      ⌜ var x ⌝  ∎
+    ⌜⌜⌝⌝E≡⌜⌝′ (const c es) =
+      Exp.const c-const (⌜ c ⌝ ∷ ⟨ ⌜ ⌜ es ⌝ ⌝E⋆ ⟩ ∷ [])  ≡⟨ ⟨by⟩ (⌜⌜⌝⌝E⋆≡⌜⌝ es) ⟩∎
+      const c-const (⌜ c ⌝ ∷ ⌜ es ⌝ ∷ [])                ∎
 
   ⌜⌜⌝⌝B≡⌜⌝ : (b : Br) → ⌜ ⌜ b ⌝ ⌝B ≡ ⌜ b ⌝
   ⌜⌜⌝⌝B≡⌜⌝ (branch c xs e) =
@@ -252,17 +255,23 @@ mutual
     const c-branch (⌜ c ⌝ ∷ ⌜ xs ⌝ ∷ ⌜ e ⌝ ∷ [])               ∎
 
   ⌜⌜⌝⌝E⋆≡⌜⌝ : (es : List Exp) → ⌜ ⌜ es ⌝ ⌝E⋆ ≡ ⌜ es ⌝
-  ⌜⌜⌝⌝E⋆≡⌜⌝ [] =
-    ⌜ [] ⦂ List Exp ⌝  ∎
-  ⌜⌜⌝⌝E⋆≡⌜⌝ (e ∷ es) =
-    Exp.const c-cons (⟨ ⌜ ⌜ e ⌝ ⌝E ⟩ ∷ ⌜ ⌜ es ⌝ ⌝E⋆ ∷ [])  ≡⟨ ⟨by⟩ (⌜⌜⌝⌝E≡⌜⌝ e) ⟩
-    const c-cons (⌜ e ⌝ ∷ ⟨ ⌜ ⌜ es ⌝ ⌝E⋆ ⟩ ∷ [])           ≡⟨ ⟨by⟩ (⌜⌜⌝⌝E⋆≡⌜⌝ es) ⟩∎
-    const c-cons (⌜ e ⌝ ∷ ⌜ es ⌝ ∷ [])                     ∎
+  ⌜⌜⌝⌝E⋆≡⌜⌝ es = ⌜⌜⌝⌝E⋆≡⌜⌝′ es
+    where
+    ⌜⌜⌝⌝E⋆≡⌜⌝′ : (es : List Exp) → ⌜ ⌜ es ⌝ ⌝E⋆ ≡ ⌜ es ⌝
+    ⌜⌜⌝⌝E⋆≡⌜⌝′ [] =
+      ⌜ [] ⦂ List Exp ⌝  ∎
+    ⌜⌜⌝⌝E⋆≡⌜⌝′ (e ∷ es) =
+      Exp.const c-cons (⟨ ⌜ ⌜ e ⌝ ⌝E ⟩ ∷ ⌜ ⌜ es ⌝ ⌝E⋆ ∷ [])  ≡⟨ ⟨by⟩ (⌜⌜⌝⌝E≡⌜⌝ e) ⟩
+      const c-cons (⌜ e ⌝ ∷ ⟨ ⌜ ⌜ es ⌝ ⌝E⋆ ⟩ ∷ [])           ≡⟨ ⟨by⟩ (⌜⌜⌝⌝E⋆≡⌜⌝ es) ⟩∎
+      const c-cons (⌜ e ⌝ ∷ ⌜ es ⌝ ∷ [])                     ∎
 
   ⌜⌜⌝⌝B⋆≡⌜⌝ : (bs : List Br) → ⌜ ⌜ bs ⌝ ⌝B⋆ ≡ ⌜ bs ⌝
-  ⌜⌜⌝⌝B⋆≡⌜⌝ [] =
-    ⌜ [] ⦂ List Br ⌝  ∎
-  ⌜⌜⌝⌝B⋆≡⌜⌝ (b ∷ bs) =
-    Exp.const c-cons (⟨ ⌜ ⌜ b ⌝ ⌝B ⟩ ∷ ⌜ ⌜ bs ⌝ ⌝B⋆ ∷ [])  ≡⟨ ⟨by⟩ (⌜⌜⌝⌝B≡⌜⌝ b) ⟩
-    const c-cons (⌜ b ⌝ ∷ ⟨ ⌜ ⌜ bs ⌝ ⌝B⋆ ⟩ ∷ [])           ≡⟨ ⟨by⟩ (⌜⌜⌝⌝B⋆≡⌜⌝ bs) ⟩∎
-    const c-cons (⌜ b ⌝ ∷ ⌜ bs ⌝ ∷ [])                     ∎
+  ⌜⌜⌝⌝B⋆≡⌜⌝ bs = ⌜⌜⌝⌝B⋆≡⌜⌝′ bs
+    where
+    ⌜⌜⌝⌝B⋆≡⌜⌝′ : (bs : List Br) → ⌜ ⌜ bs ⌝ ⌝B⋆ ≡ ⌜ bs ⌝
+    ⌜⌜⌝⌝B⋆≡⌜⌝′ [] =
+      ⌜ [] ⦂ List Br ⌝  ∎
+    ⌜⌜⌝⌝B⋆≡⌜⌝′ (b ∷ bs) =
+      Exp.const c-cons (⟨ ⌜ ⌜ b ⌝ ⌝B ⟩ ∷ ⌜ ⌜ bs ⌝ ⌝B⋆ ∷ [])  ≡⟨ ⟨by⟩ (⌜⌜⌝⌝B≡⌜⌝ b) ⟩
+      const c-cons (⌜ b ⌝ ∷ ⟨ ⌜ ⌜ bs ⌝ ⌝B⋆ ⟩ ∷ [])           ≡⟨ ⟨by⟩ (⌜⌜⌝⌝B⋆≡⌜⌝ bs) ⟩∎
+      const c-cons (⌜ b ⌝ ∷ ⌜ bs ⌝ ∷ [])                     ∎
