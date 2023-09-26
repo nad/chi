@@ -207,5 +207,5 @@ one-can-restrict-attention-to-χ-ℕ-atoms-for-¬ :
 one-can-restrict-attention-to-χ-ℕ-atoms-for-¬ P p a =
   E.Stable-¬
     E.[ one-can-restrict-attention-to-χ-ℕ-atoms
-          abstract-univ (¬_ ∘ P) p a
+          opaque-univ (¬_ ∘ P) p a
       ]
