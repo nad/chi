@@ -1543,7 +1543,7 @@ private
     .Q.[]ʳ (v , _) →
       (∃ λ v′ → e ⇓ v′ × v ≈α v′) , ∃⇓≈α-propositional
     .Q.is-setʳ →
-      ∃-H-level-H-level-1+ ext opaque-univ 1
+      ∃-H-level-H-level-1+ ext univ 1
     .Q.[]-respects-relationʳ {x = v₁ , _} {y = v₂ , _} →
       v₁ ≈α v₂                                               →⟨ (λ v₁≈v₂ →
                                                                    ∃-cong λ _ → ∃-cong λ _ →
@@ -1551,7 +1551,7 @@ private
                                                                           ; from = trans-α v₁≈v₂
                                                                           }) ⟩
 
-      (∃ λ v → e ⇓ v × v₁ ≈α v) ⇔ (∃ λ v → e ⇓ v × v₂ ≈α v)  ↔⟨ ⇔↔≡ ext opaque-univ ∃⇓≈α-propositional ∃⇓≈α-propositional ⟩
+      (∃ λ v → e ⇓ v × v₁ ≈α v) ⇔ (∃ λ v → e ⇓ v × v₂ ≈α v)  ↔⟨ ⇔↔≡ ext univ ∃⇓≈α-propositional ∃⇓≈α-propositional ⟩
 
       (∃ λ v → e ⇓ v × v₁ ≈α v) ≡ (∃ λ v → e ⇓ v × v₂ ≈α v)  ↔⟨ ignore-propositional-component
                                                                   (H-level-propositional ext 1) ⟩□
@@ -1564,11 +1564,11 @@ private
       Semantics′
     .Q.is-setʳ →
       Π-closure ext 2 λ _ →
-      ∃-H-level-H-level-1+ ext opaque-univ 1
+      ∃-H-level-H-level-1+ ext univ 1
     .Q.[]-respects-relationʳ {x = e₁ , cl-e₁} {y = e₂ , cl-e₂} e₁≈e₂ →
       ⟨ext⟩ $ Q.elim-prop λ @0 where
         .Q.Elim-prop.is-propositionʳ _ →
-          ∃-H-level-H-level-1+ ext opaque-univ 1
+          ∃-H-level-H-level-1+ ext univ 1
         .Q.Elim-prop.[]ʳ (v , _) →                                     $⟨ e₁≈e₂ ⟩
 
           e₁ ≈α e₂                                                     →⟨ (λ e₁≈e₂ → record
@@ -1580,7 +1580,7 @@ private
                                                                                         ⇓-α cl-e₂ e₂⇓v′ (sym-α e₁≈e₂)
                                                                              }) ⟩
 
-          (∃ λ v′ → e₁ ⇓ v′ × v ≈α v′) ⇔ (∃ λ v′ → e₂ ⇓ v′ × v ≈α v′)  ↔⟨ ⇔↔≡ ext opaque-univ ∃⇓≈α-propositional ∃⇓≈α-propositional ⟩
+          (∃ λ v′ → e₁ ⇓ v′ × v ≈α v′) ⇔ (∃ λ v′ → e₂ ⇓ v′ × v ≈α v′)  ↔⟨ ⇔↔≡ ext univ ∃⇓≈α-propositional ∃⇓≈α-propositional ⟩
 
           (∃ λ v′ → e₁ ⇓ v′ × v ≈α v′) ≡ (∃ λ v′ → e₂ ⇓ v′ × v ≈α v′)  ↔⟨ ignore-propositional-component
                                                                             (H-level-propositional ext 1) ⟩□
