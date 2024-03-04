@@ -145,21 +145,21 @@ mutual
   Alpha-propositional :
     (∀ x₁ x₂ → Is-proposition (R x₁ x₂)) →
     Is-proposition (Alpha R e₁ e₂)
-  Alpha-propositional r (apply p₁ p₂) (apply q₁ q₂) =
+  Alpha-propositional {e₁ = apply _ _} r (apply p₁ p₂) (apply q₁ q₂) =
     cong₂ apply
       (Alpha-propositional r p₁ q₁)
       (Alpha-propositional r p₂ q₂)
-  Alpha-propositional r (lambda p) (lambda q) =
+  Alpha-propositional {e₁ = lambda _ _} r (lambda p) (lambda q) =
     cong lambda (Alpha-binders-propositional r p q)
-  Alpha-propositional r (case p ps) (case q qs) =
+  Alpha-propositional {e₁ = case _ _} r (case p ps) (case q qs) =
     cong₂ case
       (Alpha-propositional r p q)
       (Listᴾ-Alpha-Br-propositional r ps qs)
-  Alpha-propositional r (rec p) (rec q) =
+  Alpha-propositional {e₁ = rec _ _} r (rec p) (rec q) =
     cong rec (Alpha-binders-propositional r p q)
   Alpha-propositional r (var p) (var q) =
     cong var (r _ _ p q)
-  Alpha-propositional r (const p ps) (const q qs) =
+  Alpha-propositional {e₁ = const _ _} r (const p ps) (const q qs) =
     cong₂ const
       (C.Name-set p q)
       (Listᴾ-Alpha-propositional r ps qs)
@@ -167,7 +167,8 @@ mutual
   Alpha-Br-propositional :
     (∀ x₁ x₂ → Is-proposition (R x₁ x₂)) →
     Is-proposition (Alpha-Br R b₁ b₂)
-  Alpha-Br-propositional r (branch p₁ p₂) (branch q₁ q₂) =
+  Alpha-Br-propositional
+    {b₁ = branch _ _ _} r (branch p₁ p₂) (branch q₁ q₂) =
     cong₂ branch
       (C.Name-set p₁ q₁)
       (Alpha-binders-propositional r p₂ q₂)
@@ -415,26 +416,26 @@ mutual
 
   map-Alpha r (var Rx₁x₂) = var (r Rx₁x₂)
 
-  map-Alpha r (lambda e₁≈e₂) =
+  map-Alpha {e₁ = lambda _ _} r (lambda e₁≈e₂) =
     lambda (map-Alpha-binders r e₁≈e₂)
 
-  map-Alpha r (rec e₁≈e₂) =
+  map-Alpha {e₁ = rec _ _} r (rec e₁≈e₂) =
     rec (map-Alpha-binders r e₁≈e₂)
 
-  map-Alpha r (apply e₁₁≈e₁₂ e₂₁≈e₂₂) =
+  map-Alpha {e₁ = apply _ _} r (apply e₁₁≈e₁₂ e₂₁≈e₂₂) =
     apply (map-Alpha r e₁₁≈e₁₂) (map-Alpha r e₂₁≈e₂₂)
 
-  map-Alpha r (const c₁≡c₂ es₁≈es₂) =
+  map-Alpha {e₁ = const _ _} r (const c₁≡c₂ es₁≈es₂) =
     const c₁≡c₂ (map-Alpha-⋆ r es₁≈es₂)
 
-  map-Alpha r (case e₁≈e₂ bs₁≈bs₂) =
+  map-Alpha {e₁ = case _ _} r (case e₁≈e₂ bs₁≈bs₂) =
     case (map-Alpha r e₁≈e₂)
          (map-Alpha-Br-⋆ r bs₁≈bs₂)
 
   map-Alpha-Br :
     (∀ {x₁ x₂} → R₁ x₁ x₂ → R₂ x₁ x₂) →
     Alpha-Br R₁ b₁ b₂ → Alpha-Br R₂ b₁ b₂
-  map-Alpha-Br r (branch c₁≡c₂ bs₁≈bs₂) =
+  map-Alpha-Br {b₁ = branch _ _ _} r (branch c₁≡c₂ bs₁≈bs₂) =
     branch c₁≡c₂ (map-Alpha-binders r bs₁≈bs₂)
 
   map-Alpha-binders :
@@ -509,25 +510,25 @@ mutual
 
   sym-Alpha (var Rx₁x₂) = var Rx₁x₂
 
-  sym-Alpha (lambda e₁≈e₂) =
+  sym-Alpha {e₁ = lambda _ _} (lambda e₁≈e₂) =
     lambda (sym-Alpha-binders e₁≈e₂)
 
-  sym-Alpha (rec e₁≈e₂) =
+  sym-Alpha {e₁ = rec _ _} (rec e₁≈e₂) =
     rec (sym-Alpha-binders e₁≈e₂)
 
-  sym-Alpha (apply e₁₁≈e₁₂ e₂₁≈e₂₂) =
+  sym-Alpha {e₁ = apply _ _} (apply e₁₁≈e₁₂ e₂₁≈e₂₂) =
     apply (sym-Alpha e₁₁≈e₁₂) (sym-Alpha e₂₁≈e₂₂)
 
-  sym-Alpha (const c₁≡c₂ es₁≈es₂) =
+  sym-Alpha {e₁ = const _ _} (const c₁≡c₂ es₁≈es₂) =
     const (sym c₁≡c₂) (sym-Alpha-⋆ es₁≈es₂)
 
-  sym-Alpha (case e₁≈e₂ bs₁≈bs₂) =
+  sym-Alpha {e₁ = case _ _} (case e₁≈e₂ bs₁≈bs₂) =
     case (sym-Alpha e₁≈e₂)
          (sym-Alpha-Br-⋆ bs₁≈bs₂)
 
   sym-Alpha-Br :
     Alpha-Br R b₁ b₂ → Alpha-Br (flip R) b₂ b₁
-  sym-Alpha-Br (branch c₁≡c₂ bs₁≈bs₂) =
+  sym-Alpha-Br {b₁ = branch _ _ _} (branch c₁≡c₂ bs₁≈bs₂) =
     branch (sym c₁≡c₂) (sym-Alpha-binders bs₁≈bs₂)
 
   sym-Alpha-binders :
@@ -628,26 +629,26 @@ mutual
 
   trans-Alpha r (var p) (var q) = var (r _ _ _ p q)
 
-  trans-Alpha r (lambda p) (lambda q) =
+  trans-Alpha {e₁ = lambda _ _} r (lambda p) (lambda q) =
     lambda (trans-Alpha-binders r p q)
 
-  trans-Alpha r (rec p) (rec q) =
+  trans-Alpha {e₁ = rec _ _} r (rec p) (rec q) =
     rec (trans-Alpha-binders r p q)
 
-  trans-Alpha r (apply p₁ p₂) (apply q₁ q₂) =
+  trans-Alpha {e₁ = apply _ _} r (apply p₁ p₂) (apply q₁ q₂) =
     apply (trans-Alpha r p₁ q₁) (trans-Alpha r p₂ q₂)
 
-  trans-Alpha r (const p ps) (const q qs) =
+  trans-Alpha {e₁ = const _ _} r (const p ps) (const q qs) =
     const (trans p q) (trans-Alpha-⋆ r ps qs)
 
-  trans-Alpha r (case p ps) (case q qs) =
+  trans-Alpha {e₁ = case _ _} r (case p ps) (case q qs) =
     case (trans-Alpha r p q)
          (trans-Alpha-Br-⋆ r ps qs)
 
   trans-Alpha-Br :
     (∀ y₁ y₂ y₃ → R₁ y₁ y₂ → R₂ y₂ y₃ → R₃ y₁ y₃) →
     Alpha-Br R₁ b₁ b₂ → Alpha-Br R₂ b₂ b₃ → Alpha-Br R₃ b₁ b₃
-  trans-Alpha-Br r (branch p₁ p₂) (branch q₁ q₂) =
+  trans-Alpha-Br {b₁ = branch _ _ _} r (branch p₁ p₂) (branch q₁ q₂) =
     branch (trans p₁ q₁) (trans-Alpha-binders r p₂ q₂)
 
   trans-Alpha-binders :
@@ -869,19 +870,19 @@ mutual
     Closed′ (List.map proj₁ xs) e₁ →
     Alpha (_≡_ [ xs ]ʳ) e₁ e₂ →
     Alpha (R   [ xs ]ʳ) e₁ e₂
-  Alpha-≡→Alpha xs cl (apply p q) = apply
+  Alpha-≡→Alpha {e₁ = apply _ _} xs cl (apply p q) = apply
     (Alpha-≡→Alpha xs (_≃_.to Closed′-apply≃ cl .proj₁) p)
     (Alpha-≡→Alpha xs (_≃_.to Closed′-apply≃ cl .proj₂) q)
-  Alpha-≡→Alpha xs cl (lambda p) = lambda
+  Alpha-≡→Alpha {e₁ = lambda _ _} xs cl (lambda p) = lambda
     (Alpha-binders-≡→Alpha-binders xs (_≃_.to Closed′-lambda≃ cl) p)
-  Alpha-≡→Alpha xs cl (case p q) = case
+  Alpha-≡→Alpha {e₁ = case _ _} xs cl (case p q) = case
     (Alpha-≡→Alpha xs (_≃_.to Closed′-case≃ cl .proj₁) p)
     (Alpha-Br-⋆-≡→Alpha-Br-⋆ xs (_≃_.to Closed′-case≃ cl .proj₂) q)
-  Alpha-≡→Alpha xs cl (rec p) = rec
+  Alpha-≡→Alpha {e₁ = rec _ _} xs cl (rec p) = rec
     (Alpha-binders-≡→Alpha-binders xs (_≃_.to Closed′-rec≃ cl) p)
   Alpha-≡→Alpha xs cl (var {x₁ = x₁} {x₂ = x₂} p) = var
     (≡-[]ʳ→[]ʳ xs (_≃_.to Closed′-var≃ cl) p)
-  Alpha-≡→Alpha xs cl (const c₁≡c₂ p) = const c₁≡c₂
+  Alpha-≡→Alpha {e₁ = const _ _} xs cl (const c₁≡c₂ p) = const c₁≡c₂
     (Alpha-⋆-≡→Alpha-⋆ xs (_≃_.to Closed′-const≃ cl) p)
 
   Alpha-Br-≡→Alpha-Br :
@@ -889,8 +890,8 @@ mutual
     Closed′-Br (List.map proj₁ xs) b₁ →
     Alpha-Br (_≡_ [ xs ]ʳ) b₁ b₂ →
     Alpha-Br (R   [ xs ]ʳ) b₁ b₂
-  Alpha-Br-≡→Alpha-Br xs cl (branch c₁≡c₂ p) = branch c₁≡c₂
-    (Alpha-binders-≡→Alpha-binders xs cl p)
+  Alpha-Br-≡→Alpha-Br {b₁ = branch _ _ _} xs cl (branch c₁≡c₂ p) =
+    branch c₁≡c₂ (Alpha-binders-≡→Alpha-binders xs cl p)
 
   Alpha-binders-≡→Alpha-binders :
     ∀ xs →
@@ -941,30 +942,31 @@ mutual
   Alpha-∈ {R = R} (var Ry₁y₂) (var x₁≡y₁) =
     _ , subst (flip R _) (sym x₁≡y₁) Ry₁y₂ , var refl
 
-  Alpha-∈ (lambda e₁≈e₂) (lambda x₁≢y₁ x₁∈) =
+  Alpha-∈ {e₁ = lambda _ _} (lambda e₁≈e₂) (lambda x₁≢y₁ x₁∈) =
     let (x₂ , x₁Rx₂ , x₂∈e₂ , x₂∉[x₃]) =
           Alpha-binders-∈ e₁≈e₂ x₁∈ [ x₁≢y₁ , id ]
     in x₂ , x₁Rx₂ , lambda (x₂∉[x₃] ∘ inj₁) x₂∈e₂
 
-  Alpha-∈ (rec e₁≈e₂) (rec x₁≢y₁ x₁∈) =
+  Alpha-∈ {e₁ = rec _ _} (rec e₁≈e₂) (rec x₁≢y₁ x₁∈) =
     let (x₂ , x₁Rx₂ , x₂∈e₂ , x₂∉[x₃]) =
           Alpha-binders-∈ e₁≈e₂ x₁∈ [ x₁≢y₁ , id ]
     in x₂ , x₁Rx₂ , rec (x₂∉[x₃] ∘ inj₁) x₂∈e₂
 
-  Alpha-∈ (apply e₁₁≈e₁₂ e₂₁≈e₂₂) (apply-left x₁∈) =
+  Alpha-∈ {e₁ = apply _ _} (apply e₁₁≈e₁₂ e₂₁≈e₂₂) (apply-left x₁∈) =
     Σ-map id (Σ-map id apply-left) $ Alpha-∈ e₁₁≈e₁₂ x₁∈
-  Alpha-∈ (apply e₁₁≈e₁₂ e₂₁≈e₂₂) (apply-right x₁∈) =
+  Alpha-∈ {e₁ = apply _ _} (apply e₁₁≈e₁₂ e₂₁≈e₂₂) (apply-right x₁∈) =
     Σ-map id (Σ-map id apply-right) $ Alpha-∈ e₂₁≈e₂₂ x₁∈
 
-  Alpha-∈ (const _ es₁≈es₂) (const x₁∈ ∈es₁) =
+  Alpha-∈ {e₁ = const _ _} (const _ es₁≈es₂) (const x₁∈ ∈es₁) =
     Σ-map id (Σ-map id $ uncurry λ _ → uncurry const) $
     Alpha-⋆-∈ es₁≈es₂ x₁∈ ∈es₁
 
-  Alpha-∈ (case e₁≈e₂ bs₁≈bs₂) (case-head x₁∈) =
+  Alpha-∈ {e₁ = case _ _} (case e₁≈e₂ bs₁≈bs₂) (case-head x₁∈) =
     Σ-map id (Σ-map id case-head) $
     Alpha-∈ e₁≈e₂ x₁∈
 
-  Alpha-∈ (case e₁≈e₂ bs₁≈bs₂) (case-body x₁∈ ∈bs₁ ∉xs₁) =
+  Alpha-∈
+    {e₁ = case _ _} (case e₁≈e₂ bs₁≈bs₂) (case-body x₁∈ ∈bs₁ ∉xs₁) =
     Σ-map id (Σ-map id λ (_ , _ , _ , x₂∈ , ∈bs₂ , ∉xs₂) →
                 case-body x₂∈ ∈bs₂ ∉xs₂) $
     Alpha-Br-⋆-∈ bs₁≈bs₂ x₁∈ ∈bs₁ ∉xs₁
@@ -1139,23 +1141,23 @@ mutual
   … | yes x₁≡y₁ | _         | inj₂ (x₁≢y₁ , _)     = ⊥-elim $ x₁≢y₁ x₁≡y₁
   … | _         | yes x₂≡y₂ | inj₂ (_ , x₂≢y₂ , _) = ⊥-elim $ x₂≢y₂ x₂≡y₂
 
-  subst-Alpha cl (lambda e₁≈e₂) e₁′≈e₂′ =
+  subst-Alpha {e₁ = lambda _ _} cl (lambda e₁≈e₂) e₁′≈e₂′ =
     lambda (subst-Alpha-binders cl e₁≈e₂ e₁′≈e₂′)
 
-  subst-Alpha cl (apply e₁₁≈e₁₂ e₂₁≈e₂₂) e₁′≈e₂′ =
+  subst-Alpha {e₁ = apply _ _} cl (apply e₁₁≈e₁₂ e₂₁≈e₂₂) e₁′≈e₂′ =
     apply
       (subst-Alpha cl e₁₁≈e₁₂ e₁′≈e₂′)
       (subst-Alpha cl e₂₁≈e₂₂ e₁′≈e₂′)
 
-  subst-Alpha cl (case e₁≈e₂ bs₁≈bs₂) e₁′≈e₂′ =
+  subst-Alpha {e₁ = case _ _} cl (case e₁≈e₂ bs₁≈bs₂) e₁′≈e₂′ =
     case
       (subst-Alpha cl e₁≈e₂ e₁′≈e₂′)
       (subst-Alpha-Br-⋆ cl bs₁≈bs₂ e₁′≈e₂′)
 
-  subst-Alpha cl (rec e₁≈e₂) e₁′≈e₂′ =
+  subst-Alpha {e₁ = rec _ _} cl (rec e₁≈e₂) e₁′≈e₂′ =
     rec (subst-Alpha-binders cl e₁≈e₂ e₁′≈e₂′)
 
-  subst-Alpha cl (const c₁≡c₂ es₁≈es₂) e₁′≈e₂′ =
+  subst-Alpha {e₁ = const _ _} cl (const c₁≡c₂ es₁≈es₂) e₁′≈e₂′ =
     const c₁≡c₂ (subst-Alpha-⋆ cl es₁≈es₂ e₁′≈e₂′)
 
   subst-Alpha-Br :
@@ -1164,7 +1166,8 @@ mutual
     e₁′ ≈α e₂′ →
     Alpha-Br R (b₁ [ x₁ ← e₁′ ]B) (b₂ [ x₂ ← e₂′ ]B)
   subst-Alpha-Br
-    {e₁′ = e₁′} {R = R} {x₁ = x₁} {x₂ = x₂} {e₂′ = e₂′} cl
+    {e₁′ = e₁′} {R = R} {x₁ = x₁} {x₂ = x₂} {b₁ = branch _ _ _}
+    {e₂′ = e₂′} cl
     (branch
        {c₁ = c₁} {c₂ = c₂} {xs₁ = xs₁} {e₁ = e₁} {xs₂ = xs₂} {e₂ = e₂}
        c₁≡c₂ p)
@@ -1206,7 +1209,7 @@ mutual
     nil (subst-Alpha cl p e₁′≈e₂′)
 
   subst-Alpha-binders
-    {e₁′ = e₁′} {R = R} {x₁ = x₁} {x₂ = x₂} {e₂′ = e₂′} cl
+    {e₁′ = e₁′} {R = R} {x₁ = x₁} {x₂ = x₂} {xs₁ = _ ∷ _} {e₂′ = e₂′} cl
     (cons {x₁ = y₁} {x₂ = y₂}
        {xs₁ = xs₁} {e₁ = e₁} {xs₂ = xs₂} {e₂ = e₂} p)
     e₁′≈e₂′ =
