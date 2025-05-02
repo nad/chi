@@ -181,15 +181,15 @@ code-Consts = record
 
     dc∘cd : ∀ c → dc (cd c) ≡ just c
     dc∘cd (const c cs) =
-      const c ⟨$⟩ ⟨ dc⋆ (cd⋆ cs) ⟩  ≡⟨ ⟨by⟩ (dc∘cd⋆ cs) ⟩
-      const c ⟨$⟩ return cs         ≡⟨ refl ⟩∎
-      return (const c cs)           ∎
+      const c ⟨$⟩ dc⋆ (cd⋆ cs)  ≡⟨ cong (_ ⟨$⟩_) (dc∘cd⋆ cs) ⟩
+      const c ⟨$⟩ return cs     ≡⟨ refl ⟩∎
+      return (const c cs)       ∎
 
     dc∘cd⋆ : ∀ cs → dc⋆ (cd⋆ cs) ≡ just cs
     dc∘cd⋆ [] = refl
     dc∘cd⋆ (c ∷ cs) =
       _∷_ ⟨$⟩ ⟨ dc (cd c) ⟩ ⊛ dc⋆ (cd⋆ cs)  ≡⟨ ⟨by⟩ (dc∘cd c) ⟩
-      _∷_ ⟨$⟩ return c ⊛ ⟨ dc⋆ (cd⋆ cs) ⟩   ≡⟨ ⟨by⟩ (dc∘cd⋆ cs) ⟩
+      _∷_ ⟨$⟩ return c ⊛ dc⋆ (cd⋆ cs)       ≡⟨ cong (λ cs → _∷_ ⟨$⟩ return c ⊛ cs) (dc∘cd⋆ cs) ⟩
       _∷_ ⟨$⟩ return c ⊛ return cs          ≡⟨⟩
       return (c ∷ cs)                       ∎
 
@@ -472,7 +472,7 @@ module _ {a} {A : Type a} where
                                        (λ ()) n≡c)
     ... | no _    | yes _  =
       _∷_ ⟨$⟩ ⟨ decode (code x) ⟩ ⊛ dc (cd xs)  ≡⟨ ⟨by⟩ decode∘code ⟩
-      _∷_ ⟨$⟩ return x ⊛ ⟨ dc (cd xs) ⟩         ≡⟨ ⟨by⟩ (dc∘cd xs) ⟩
+      _∷_ ⟨$⟩ return x ⊛ dc (cd xs)             ≡⟨ cong (λ xs → _∷_ ⟨$⟩ return x ⊛ xs) (dc∘cd xs) ⟩
       _∷_ ⟨$⟩ return x ⊛ return xs              ≡⟨⟩
       return (x ∷ xs)                           ∎
 
@@ -575,10 +575,9 @@ private
     decode∘code-E (apply e₁ e₂) with c-apply C.≟ c-apply
     ... | no c≢c = ⊥-elim (c≢c refl)
     ... | yes _  =
-      apply ⟨$⟩ ⟨ decode-E (code-E e₁) ⟩ ⊛ decode-E (code-E e₂)  ≡⟨ ⟨by⟩ (decode∘code-E e₁) ⟩
-      apply ⟨$⟩ return e₁ ⊛ ⟨ decode-E (code-E e₂) ⟩             ≡⟨ ⟨by⟩ (decode∘code-E e₂) ⟩
-      apply ⟨$⟩ return e₁ ⊛ return e₂                            ≡⟨⟩
-      return (apply e₁ e₂)                                       ∎
+      apply ⟨$⟩ decode-E (code-E e₁) ⊛ decode-E (code-E e₂)  ≡⟨ cong₂ (λ e₁ e₂ → apply ⟨$⟩ e₁ ⊛ e₂) (decode∘code-E e₁) (decode∘code-E e₂) ⟩
+      apply ⟨$⟩ return e₁ ⊛ return e₂                        ≡⟨⟩
+      return (apply e₁ e₂)                                   ∎
 
     decode∘code-E (lambda x e) with c-apply  C.≟ c-lambda
                                   | c-lambda C.≟ c-lambda
@@ -586,10 +585,9 @@ private
     ... | yes a≡l | _      = ⊥-elim (C.distinct-codes→distinct-names
                                        (λ ()) a≡l)
     ... | no _    | yes _  =
-      lambda ⟨$⟩ ⟨ Var.decode (code ⦃ code-Var ⦄ x) ⟩ ⊛ decode-E (code-E e)  ≡⟨ ⟨by⟩ Var.decode∘code ⟩
-      lambda ⟨$⟩ return x ⊛ ⟨ decode-E (code-E e) ⟩                          ≡⟨ ⟨by⟩ (decode∘code-E e) ⟩
-      lambda ⟨$⟩ return x ⊛ return e                                         ≡⟨⟩
-      return (lambda x e)                                                    ∎
+      lambda ⟨$⟩ Var.decode (code ⦃ code-Var ⦄ x) ⊛ decode-E (code-E e)  ≡⟨ cong₂ (λ x e → lambda ⟨$⟩ x ⊛ e) (Var.decode∘code x) (decode∘code-E e) ⟩
+      lambda ⟨$⟩ return x ⊛ return e                                     ≡⟨⟩
+      return (lambda x e)                                                ∎
 
     decode∘code-E (case e bs) with c-apply  C.≟ c-case
                                  | c-lambda C.≟ c-case
@@ -600,10 +598,9 @@ private
     ... | yes a≡c | _       | _      = ⊥-elim (C.distinct-codes→distinct-names
                                                  (λ ()) a≡c)
     ... | no _    | no _    | yes _  =
-      case ⟨$⟩ ⟨ decode-E (code-E e) ⟩ ⊛ decode-B⋆ (code-B⋆ bs)  ≡⟨ ⟨by⟩ (decode∘code-E e) ⟩
-      case ⟨$⟩ return e ⊛ ⟨ decode-B⋆ (code-B⋆ bs) ⟩             ≡⟨ ⟨by⟩ (decode∘code-B⋆ bs) ⟩
-      case ⟨$⟩ return e ⊛ return bs                              ≡⟨⟩
-      return (case e bs)                                         ∎
+      case ⟨$⟩ decode-E (code-E e) ⊛ decode-B⋆ (code-B⋆ bs)  ≡⟨ cong₂ (λ e bs → case ⟨$⟩ e ⊛ bs) (decode∘code-E e) (decode∘code-B⋆ bs) ⟩
+      case ⟨$⟩ return e ⊛ return bs                          ≡⟨⟩
+      return (case e bs)                                     ∎
 
     decode∘code-E (rec x e) with c-apply  C.≟ c-rec
                                | c-lambda C.≟ c-rec
@@ -617,10 +614,9 @@ private
     ... | yes a≡r | _       | _       | _      = ⊥-elim (C.distinct-codes→distinct-names
                                                            (λ ()) a≡r)
     ... | no _    | no _    | no _    | yes _  =
-      rec ⟨$⟩ ⟨ Var.decode (code ⦃ code-Var ⦄ x) ⟩ ⊛ decode-E (code-E e)  ≡⟨ ⟨by⟩ Var.decode∘code ⟩
-      rec ⟨$⟩ return x ⊛ ⟨ decode-E (code-E e) ⟩                          ≡⟨ ⟨by⟩ (decode∘code-E e) ⟩
-      rec ⟨$⟩ return x ⊛ return e                                         ≡⟨⟩
-      return (rec x e)                                                    ∎
+      rec ⟨$⟩ Var.decode (code ⦃ code-Var ⦄ x) ⊛ decode-E (code-E e)  ≡⟨ cong₂ (λ x e → rec ⟨$⟩ x ⊛ e) (Var.decode∘code x) (decode∘code-E e) ⟩
+      rec ⟨$⟩ return x ⊛ return e                                     ≡⟨⟩
+      return (rec x e)                                                ∎
 
     decode∘code-E (var x) with c-apply  C.≟ c-var
                              | c-lambda C.≟ c-var
@@ -659,14 +655,12 @@ private
     ... | yes a≡c | _       | _       | _       | _       | _      = ⊥-elim (C.distinct-codes→distinct-names
                                                                                (λ ()) a≡c)
     ... | no _    | no _    | no _    | no _    | no _    | yes _  =
-      const ⟨$⟩ ⟨ Const.decode (code ⦃ code-Const ⦄ c) ⟩ ⊛
-                decode-⋆ (code-⋆ es)                       ≡⟨ ⟨by⟩ Const.decode∘code ⟩
+      const ⟨$⟩ Const.decode (code ⦃ code-Const ⦄ c) ⊛
+                decode-⋆ (code-⋆ es)                    ≡⟨ cong₂ (λ c es → const ⟨$⟩ c ⊛ es) (Const.decode∘code c) (decode∘code-⋆ es) ⟩
 
-      const ⟨$⟩ return c ⊛ ⟨ decode-⋆ (code-⋆ es) ⟩        ≡⟨ ⟨by⟩ (decode∘code-⋆ es) ⟩
+      const ⟨$⟩ return c ⊛ return es                    ≡⟨⟩
 
-      const ⟨$⟩ return c ⊛ return es                       ≡⟨⟩
-
-      return (const c es)                                  ∎
+      return (const c es)                               ∎
 
     decode∘code-B : ∀ b → decode-B (code-B b) ≡ just b
     decode∘code-B (branch c xs e) with c-branch C.≟ c-branch
@@ -674,17 +668,17 @@ private
     ... | yes _  =
       branch ⟨$⟩ ⟨ Const.decode (code ⦃ code-Const ⦄ c) ⟩ ⊛
                  Var⋆.decode (code ⦃ code-Var⋆ ⦄ xs) ⊛
-                 decode-E (code-E e)                             ≡⟨ ⟨by⟩ Const.decode∘code ⟩
+                 decode-E (code-E e)                         ≡⟨ ⟨by⟩ Const.decode∘code ⟩
 
       branch ⟨$⟩ return c ⊛
                  ⟨ Var⋆.decode (code ⦃ code-Var⋆ ⦄ xs) ⟩ ⊛
-                 decode-E (code-E e)                             ≡⟨ ⟨by⟩ Var⋆.decode∘code ⟩
+                 decode-E (code-E e)                         ≡⟨ ⟨by⟩ Var⋆.decode∘code ⟩
 
-      branch ⟨$⟩ return c ⊛ return xs ⊛ ⟨ decode-E (code-E e) ⟩  ≡⟨ ⟨by⟩ (decode∘code-E e) ⟩
+      branch ⟨$⟩ return c ⊛ return xs ⊛ decode-E (code-E e)  ≡⟨ cong (λ e → branch ⟨$⟩ return c ⊛ return xs ⊛ e) (decode∘code-E e) ⟩
 
-      branch ⟨$⟩ return c ⊛ return xs ⊛ return e                 ≡⟨⟩
+      branch ⟨$⟩ return c ⊛ return xs ⊛ return e             ≡⟨⟩
 
-      return (branch c xs e)                                     ∎
+      return (branch c xs e)                                 ∎
 
     decode∘code-⋆ : ∀ es → decode-⋆ (code-⋆ es) ≡ just es
     decode∘code-⋆ [] with c-nil C.≟ c-nil
@@ -695,10 +689,9 @@ private
     ... | yes n≡c | _      = ⊥-elim (C.distinct-codes→distinct-names
                                        (λ ()) n≡c)
     ... | no _    | yes _  =
-      _∷_ ⟨$⟩ ⟨ decode-E (code-E e) ⟩ ⊛ decode-⋆ (code-⋆ es)  ≡⟨ ⟨by⟩ (decode∘code-E e) ⟩
-      _∷_ ⟨$⟩ return e ⊛ ⟨ decode-⋆ (code-⋆ es) ⟩             ≡⟨ ⟨by⟩ (decode∘code-⋆ es) ⟩
-      _∷_ ⟨$⟩ return e ⊛ return es                            ≡⟨⟩
-      return (e ∷ es)                                         ∎
+      _∷_ ⟨$⟩ decode-E (code-E e) ⊛ decode-⋆ (code-⋆ es)  ≡⟨ cong₂ (λ e es → _∷_ ⟨$⟩ e ⊛ es) (decode∘code-E e) (decode∘code-⋆ es) ⟩
+      _∷_ ⟨$⟩ return e ⊛ return es                        ≡⟨⟩
+      return (e ∷ es)                                     ∎
 
     decode∘code-B⋆ : ∀ bs → decode-B⋆ (code-B⋆ bs) ≡ just bs
     decode∘code-B⋆ [] with c-nil C.≟ c-nil
@@ -709,10 +702,9 @@ private
     ... | yes n≡c | _      = ⊥-elim (C.distinct-codes→distinct-names
                                        (λ ()) n≡c)
     ... | no _    | yes _  =
-      _∷_ ⟨$⟩ ⟨ decode-B (code-B b) ⟩ ⊛ decode-B⋆ (code-B⋆ bs)  ≡⟨ ⟨by⟩ (decode∘code-B b) ⟩
-      _∷_ ⟨$⟩ return b ⊛ ⟨ decode-B⋆ (code-B⋆ bs) ⟩             ≡⟨ ⟨by⟩ (decode∘code-B⋆ bs) ⟩
-      _∷_ ⟨$⟩ return b ⊛ return bs                              ≡⟨⟩
-      return (b ∷ bs)                                           ∎
+      _∷_ ⟨$⟩ decode-B (code-B b) ⊛ decode-B⋆ (code-B⋆ bs)  ≡⟨ cong₂ (λ b bs → _∷_ ⟨$⟩ b ⊛ bs) (decode∘code-B b) (decode∘code-B⋆ bs) ⟩
+      _∷_ ⟨$⟩ return b ⊛ return bs                          ≡⟨⟩
+      return (b ∷ bs)                                       ∎
 
 code-Exp : Code Exp Consts
 Code.code        code-Exp = code-E
