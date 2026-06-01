@@ -1436,6 +1436,7 @@ Closed-br/α = ∃ Closed-Br /ᴱ (Alpha-Br _≡_ on proj₁)
 
 apply/α : Closed-exp/α → Closed-exp/α → Closed-exp/α
 apply/α = Q./ᴱ-zip
+  ext
   (Σ-zip apply Closed′-closed-under-apply)
   refl-α
   refl-α
@@ -1451,8 +1452,9 @@ lambda/α =
 
 case/α : Closed-exp/α → List Closed-br/α → Closed-exp/α
 case/α e =
-  List Closed-br/α                                     ↔⟨ inverse $ Q.List/ᴱ refl-α-Br ⟩
+  List Closed-br/α                                     ↔⟨ inverse $ Q.List/ᴱ ext refl-α-Br ⟩
   List (∃ Closed-Br) /ᴱ Listᴾ (Alpha-Br _≡_ on proj₁)  →⟨ Q./ᴱ-zip
+                                                            ext
                                                             case′
                                                             refl-α
                                                             (Listᴾ-preserves-reflexivity refl-α-Br)
@@ -1486,7 +1488,7 @@ rec/α =
 
 const/α : Const → List Closed-exp/α → Closed-exp/α
 const/α c =
-  List Closed-exp/α                         ↔⟨ inverse $ Q.List/ᴱ refl-α ⟩
+  List Closed-exp/α                         ↔⟨ inverse $ Q.List/ᴱ ext refl-α ⟩
   List Closed-exp /ᴱ Listᴾ (_≈α_ on proj₁)  →⟨ const′ Q./ᴱ-map lemma ⟩□
   Closed-exp/α                              □
   where
@@ -1516,6 +1518,7 @@ branch/α c =
 
 _[_] : Almost-closed-exp/α → Closed-exp/α → Closed-exp/α
 _[_] = Q./ᴱ-zip
+  ext
   (λ (x , e , cl) (e′ , cl′) →
      e [ x ← e′ ] , Closed′-closed-under-subst cl cl′)
   (refl-Alpha _ λ _ _ → [≢→[∼]]→[∼] _≡_ λ _ → refl)
@@ -1525,13 +1528,17 @@ _[_] = Q./ᴱ-zip
        Alpha (_≡_ [ x₁ ∼ x₂ ]) e₁ e₂ × e₁′ ≈α e₂′  →⟨ uncurry (subst-α cl-e₁′) ⟩□
        e₁ [ x₁ ← e₁′ ] ≈α e₂ [ x₂ ← e₂′ ]          □))
 
--- The function _[_] computes in a certain way.
+opaque
+  unfolding Q./ᴱ-zip Q.rec
 
-_ : Q.[ x , e , p ] [ Q.[ e′ , q ] ] ≡
-    Q.[ e [ x ← e′ ] , Closed′-closed-under-subst p q ]
-_ = refl
+  -- The function _[_] computes in a certain way.
 
-private
+  _ : Q.[ x , e , p ] [ Q.[ e′ , q ] ] ≡
+      Q.[ e [ x ← e′ ] , Closed′-closed-under-subst p q ]
+  _ = refl
+
+private opaque
+  unfolding Q.rec
 
   -- Helper functions used to define _⇓α_ and ⇓α-propositional.
 
@@ -1605,7 +1612,10 @@ record _⇓α_ (e v : Closed-exp/α) : Type where
 ⇓α-propositional {e = e} {v = v} (wrap p) (wrap q) =
   cong wrap $ Semantics e v .proj₂ p q
 
--- A "computation rule" for _⇓α_.
+opaque
+  unfolding Semantics
 
-⇓α≃⇓ : (Q.[ e , p ] ⇓α Q.[ v , q ]) ≃ (∃ λ v′ → e ⇓ v′ × v ≈α v′)
-⇓α≃⇓ = Eq.↔→≃ _⇓α_.unwrap wrap (λ _ → refl) (λ _ → refl)
+  -- A "computation rule" for _⇓α_.
+
+  ⇓α≃⇓ : (Q.[ e , p ] ⇓α Q.[ v , q ]) ≃ (∃ λ v′ → e ⇓ v′ × v ≈α v′)
+  ⇓α≃⇓ = Eq.↔→≃ _⇓α_.unwrap wrap (λ _ → refl) (λ _ → refl)
