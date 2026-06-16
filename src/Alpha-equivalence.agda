@@ -1436,7 +1436,6 @@ Closed-br/α = ∃ Closed-Br /ᴱ (Alpha-Br _≡_ on proj₁)
 
 apply/α : Closed-exp/α → Closed-exp/α → Closed-exp/α
 apply/α = Q./ᴱ-zip
-  ext
   (Σ-zip apply Closed′-closed-under-apply)
   refl-α
   refl-α
@@ -1452,9 +1451,8 @@ lambda/α =
 
 case/α : Closed-exp/α → List Closed-br/α → Closed-exp/α
 case/α e =
-  List Closed-br/α                                     ↔⟨ inverse $ Q.List/ᴱ ext refl-α-Br ⟩
+  List Closed-br/α                                     ↔⟨ inverse $ Q.List/ᴱ refl-α-Br ⟩
   List (∃ Closed-Br) /ᴱ Listᴾ (Alpha-Br _≡_ on proj₁)  →⟨ Q./ᴱ-zip
-                                                            ext
                                                             case′
                                                             refl-α
                                                             (Listᴾ-preserves-reflexivity refl-α-Br)
@@ -1488,7 +1486,7 @@ rec/α =
 
 const/α : Const → List Closed-exp/α → Closed-exp/α
 const/α c =
-  List Closed-exp/α                         ↔⟨ inverse $ Q.List/ᴱ ext refl-α ⟩
+  List Closed-exp/α                         ↔⟨ inverse $ Q.List/ᴱ refl-α ⟩
   List Closed-exp /ᴱ Listᴾ (_≈α_ on proj₁)  →⟨ const′ Q./ᴱ-map lemma ⟩□
   Closed-exp/α                              □
   where
@@ -1518,7 +1516,6 @@ branch/α c =
 
 _[_] : Almost-closed-exp/α → Closed-exp/α → Closed-exp/α
 _[_] = Q./ᴱ-zip
-  ext
   (λ (x , e , cl) (e′ , cl′) →
      e [ x ← e′ ] , Closed′-closed-under-subst cl cl′)
   (refl-Alpha _ λ _ _ → [≢→[∼]]→[∼] _≡_ λ _ → refl)
@@ -1529,7 +1526,7 @@ _[_] = Q./ᴱ-zip
        e₁ [ x₁ ← e₁′ ] ≈α e₂ [ x₂ ← e₂′ ]          □))
 
 opaque
-  unfolding Q./ᴱ-zip Q.rec
+  unfolding Q./ᴱ-zip Q.elim₂ Q.rec Q.rec₂
 
   -- The function _[_] computes in a certain way.
 
